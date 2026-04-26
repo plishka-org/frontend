@@ -1,0 +1,40 @@
+.site-footer {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  width: 100vw;
+  min-height: 132px;
+  margin-left: calc(50% - 50vw);
+  padding: 16px 80px;
+  background: var(--color-surface);
+  color: var(--color-heading);
+
+  &::before {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 100vw;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.1);
+    content: "";
+    transform: translateX(-50%);
+  }
+
+  p {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+  }
+}
+
+.brand-mark {
+  flex: 0 0 auto;
+  width: 100px;
+  height: 100px;
+  object-fit: contain;
+}
