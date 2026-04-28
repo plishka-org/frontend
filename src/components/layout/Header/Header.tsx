@@ -1,19 +1,21 @@
 import { useState } from 'react'
 import { BrandMark } from '../Footer/BrandMark'
 import { CartIcon, CloseIcon, HeartIcon, MenuIcon, UserIcon } from '../../icons/UiIcons'
+import { getGalleryUrl, getHomeUrl } from '../../../utils/productUrl'
 import type { SiteVariant } from '../../../utils/siteVariant'
 
 type HeaderProps = {
+  activePage?: 'home' | 'gallery'
   cartCount?: number
   siteVariant: SiteVariant
 }
 
-export function Header({ cartCount = 0, siteVariant }: HeaderProps) {
+export function Header({ activePage, cartCount = 0, siteVariant }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const homeHref = siteVariant === 'order' ? '/?site=order' : '/'
+  const homeHref = getHomeUrl(siteVariant)
   const navItems = [
-    { href: homeHref, label: 'Головна' },
-    { href: `${homeHref}#gallery`, label: 'Галерея' },
+    { href: homeHref, label: 'Головна', page: 'home' },
+    { href: getGalleryUrl(siteVariant), label: 'Галерея', page: 'gallery' },
     { href: `${homeHref}#about`, label: 'Про майстерню' },
     { href: `${homeHref}#reviews`, label: 'Відгуки' },
     { href: '#favorites', label: 'Обрані' },
@@ -28,7 +30,11 @@ export function Header({ cartCount = 0, siteVariant }: HeaderProps) {
 
       <nav className="site-header__nav" aria-label="Головна навігація">
         {navItems.slice(0, 4).map((item) => (
-          <a href={item.href} key={item.label}>
+          <a
+            className={item.page === activePage ? 'is-active' : undefined}
+            href={item.href}
+            key={item.label}
+          >
             {item.label}
           </a>
         ))}
@@ -81,9 +87,9 @@ export function Header({ cartCount = 0, siteVariant }: HeaderProps) {
         </div>
 
         <nav className="site-header__drawer-nav" aria-label="Мобільна навігація">
-          {navItems.map((item, index) => (
+          {navItems.map((item) => (
             <a
-              className={index === 0 ? 'is-active' : undefined}
+              className={item.page === activePage ? 'is-active' : undefined}
               href={item.href}
               key={item.label}
               onClick={() => setIsMenuOpen(false)}

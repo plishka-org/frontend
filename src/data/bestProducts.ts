@@ -1,7 +1,7 @@
-import product1 from '../assets/best-products/product-1.svg'
-import product2 from '../assets/best-products/product-2.svg'
-import product3 from '../assets/best-products/product-3.svg'
-import product4 from '../assets/best-products/product-4.svg'
+import product1 from '../assets/best-products-block/product-1.svg'
+import product2 from '../assets/best-products-block/product-2.svg'
+import product3 from '../assets/best-products-block/product-3.svg'
+import product4 from '../assets/best-products-block/product-4.svg'
 
 export type BestProduct = {
   id: string

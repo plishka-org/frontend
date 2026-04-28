@@ -122,33 +122,52 @@
       text-overflow: clip;
       white-space: nowrap;
     }
+
+    span {
+      display: block;
+      margin-top: 10px;
+      color: var(--color-heading);
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.35;
+    }
   }
 
-  &__favorite {
+  &[data-cart-actions='true'] {
+    min-height: 468px;
+  }
+
+  &__actions {
     position: absolute;
+    left: 24px;
     right: 24px;
     bottom: 24px;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border: 1px solid rgba(222, 217, 210, 0.8);
-    border-radius: 50%;
-    background: var(--color-surface);
-    color: var(--color-text);
-    cursor: pointer;
+    gap: 16px;
     opacity: 0;
     transition:
-      border-color 160ms ease,
-      color 160ms ease,
       opacity 160ms ease,
       transform 160ms ease;
     visibility: hidden;
+  }
+
+  &__cart,
+  &__favorite {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(222, 217, 210, 0.8);
+    background: var(--color-surface);
+    color: var(--color-primary);
+    cursor: pointer;
+    transition:
+      border-color 160ms ease,
+      color 160ms ease,
+      transform 160ms ease;
 
     &:hover {
-      border-color: var(--color-heading);
-      color: var(--color-heading);
+      border-color: var(--color-primary);
       transform: scale(1.04);
     }
 
@@ -158,11 +177,68 @@
     }
   }
 
+  &__cart {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 48px;
+    gap: 8px;
+    border-color: var(--color-primary);
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    text-transform: uppercase;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  &__favorite {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    color: var(--color-text);
+
+    &:hover {
+      border-color: var(--color-heading);
+      color: var(--color-heading);
+    }
+
+    &[data-active='true'] {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+
+      svg path {
+        fill: currentColor;
+      }
+    }
+
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    &:only-child {
+      margin-left: auto;
+    }
+  }
+
   &:hover,
   &:focus-within {
-    .best-product-card__favorite {
+    .best-product-card__actions {
       opacity: 1;
       visibility: visible;
     }
+  }
+}
+
+@media (hover: none) {
+  .best-product-card__actions {
+    opacity: 1;
+    visibility: visible;
   }
 }

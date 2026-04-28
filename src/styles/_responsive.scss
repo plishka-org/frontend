@@ -1,7 +1,7 @@
 @media (max-width: 1100px) {
   .site-header {
     min-height: 88px;
-    padding: 12px 32px;
+    padding: 12px 24px;
 
     &__brand .brand-mark {
       width: 64px;
@@ -20,7 +20,7 @@
 
   .product-page {
     &__content {
-      padding: 56px 32px 96px;
+      padding: 56px 24px 96px;
     }
   }
 
@@ -114,6 +114,10 @@
     flex: 0 0 254px;
     min-height: 376px;
     scroll-snap-align: start;
+
+    &[data-cart-actions='true'] {
+      min-height: 448px;
+    }
   }
 
   .contacts-section {
@@ -146,23 +150,23 @@
 
 @media (max-width: 760px) {
   .site-header {
-    min-height: 88px;
-    padding: 12px 20px;
+    min-height: 96px;
+    padding: 12px 16px;
 
     &__brand .brand-mark {
-      width: 56px;
-      height: 56px;
+      width: 72px;
+      height: 72px;
     }
 
     &__menu {
-      width: 58px;
-      height: 58px;
+      width: 64px;
+      height: 64px;
     }
   }
 
   .product-page {
     &__content {
-      padding: 28px 20px 72px;
+      padding: 28px 16px 72px;
     }
   }
 
@@ -266,8 +270,8 @@
 
     &__scroller {
       gap: 20px;
-      margin-right: -20px;
-      padding-right: 20px;
+      margin-right: -16px;
+      padding-right: 16px;
     }
   }
 
@@ -331,6 +335,10 @@
     min-height: 374px;
     padding: 12px;
 
+    &[data-cart-actions='true'] {
+      min-height: 426px;
+    }
+
     &__body {
       padding-top: 14px;
 
@@ -342,11 +350,25 @@
       h2 {
         font-size: 20px;
       }
+
+      span {
+        font-size: 16px;
+      }
+    }
+
+    &__actions {
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      gap: 10px;
+    }
+
+    &__cart {
+      height: 40px;
+      font-size: 14px;
     }
 
     &__favorite {
-      right: 12px;
-      bottom: 12px;
       width: 40px;
       height: 40px;
     }
@@ -401,7 +423,7 @@
 @media (min-width: 601px) and (max-width: 760px) {
   .product-page {
     &__content {
-      padding: 56px 32px 96px;
+      padding: 56px 16px 96px;
     }
   }
 
