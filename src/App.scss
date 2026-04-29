@@ -1,4 +1,10 @@
 @use "./styles/page";
+@use "./styles/layout/header";
+@use "./styles/sections/best-products";
+@use "./styles/sections/reviews";
+@use "./styles/sections/product-detail";
+@use "./styles/sections/product-rails";
+@use "./styles/sections/gallery";
 @use "./styles/sections/contacts";
 @use "./styles/layout/footer";
 @use "./styles/responsive";
