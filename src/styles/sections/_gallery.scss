@@ -179,10 +179,11 @@
 
   &__scroll {
     display: flex;
-    max-height: 348px;
+    height: 408px;
     flex-direction: column;
     gap: 12px;
-    overflow-y: auto;
+    overflow-x: hidden;
+    overflow-y: scroll;
     padding-right: 4px;
   }
 
@@ -381,9 +382,14 @@
     top: 0;
     bottom: 0;
     left: 0;
+    display: flex;
+    height: 100dvh;
+    max-height: 100dvh;
+    flex-direction: column;
+    overflow: hidden;
     width: clamp(300px, 34vw, 360px);
     border-radius: 0 24px 24px 0;
-    padding: 40px 24px;
+    padding: 24px;
     transform: translateX(-100%);
     transition: transform 180ms ease;
 
@@ -392,6 +398,8 @@
     }
 
     &__top {
+      margin-bottom: 20px;
+
       button {
         display: inline-flex;
         align-items: center;
@@ -411,8 +419,34 @@
       }
     }
 
+    &__top,
+    &__reset {
+      flex: 0 0 auto;
+    }
+
+    &__group {
+      margin-bottom: 20px;
+      flex: 0 0 auto;
+
+      h3 {
+        margin-bottom: 10px;
+      }
+
+      &:first-of-type {
+        display: flex;
+        min-height: 0;
+        flex: 1 1 auto;
+        flex-direction: column;
+      }
+    }
+
     &__scroll {
-      max-height: 276px;
+      height: auto;
+      min-height: 0;
+      flex: 1 1 auto;
+      max-height: min(calc(16 * 24px + 15 * 8px), calc(100dvh - 244px));
+      gap: 8px;
+      overflow-y: auto;
     }
   }
 }
@@ -508,10 +542,23 @@
   .gallery-filters {
     width: 100vw;
     border-radius: 0;
-    padding: 40px 16px;
+    padding: 20px 16px;
+
+    &__top {
+      margin-bottom: 18px;
+    }
+
+    &__group {
+      margin-bottom: 18px;
+
+      h3 {
+        margin-bottom: 8px;
+      }
+    }
 
     &__scroll {
-      max-height: 276px;
+      max-height: min(calc(13 * 24px + 12 * 8px), calc(100dvh - 224px));
+      gap: 8px;
     }
   }
 }
