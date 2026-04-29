@@ -1,0 +1,154 @@
+.hero {
+  position: relative;
+  width: 100%;
+  min-height: 480px;
+  background: url("../../icons/main_page_img.svg") center / cover no-repeat;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.hero__content {
+  padding: 40px 80px 0;
+}
+
+.hero__title {
+  font-family: var(--font-heading);
+  font-size: 80px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  line-height: 1.1;
+  margin: 0 0 36px 0;
+}
+
+.hero__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 80px 48px 80px;
+  gap: 32px;
+}
+
+.hero__buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hero__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-family: var(--font-body);
+  height: 48px;
+  width: 290px;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-radius: 50px;
+  cursor: pointer;
+}
+
+.hero__btn--primary {
+  background: var(--color-cta);
+  color: #fff;
+  border: none;
+}
+
+.hero__btn--primary:hover {
+  background-color: var(--color-primary-hover);
+  transition: all 0.3s ease;
+}
+
+.hero__btn--outline {
+  background-color: #fff;
+  color: var(--color-text);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+}
+
+.hero__btn--outline:hover {
+  background-color: #e2cece;
+  transition: all 0.3s ease;
+}
+
+.hero__description p {
+  font-family: var(--font-body);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  line-height: 1.7;
+  text-align: right;
+  max-width: 260px;
+  margin: 0;
+}
+
+@media (max-width: 1100px) {
+  .hero__content {
+    padding: 40px 24px 0;
+  }
+
+  .hero__title {
+    font-size: 52px;
+    font-weight: 600;
+  }
+
+  .hero__bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 24px 40px;
+    gap: 24px;
+  }
+
+  .hero__description p {
+    text-align: left;
+    max-width: 100%;
+  }
+
+  .hero__buttons {
+    width: 100%;
+    display: flex; 
+  }
+
+  .hero__btn {
+    flex: 1;
+    width: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero__content {
+    padding: 24px 16px 0;
+  }
+
+  .hero__title {
+    font-size: 36px;
+    font-weight: 400;
+  }
+
+  .hero__bottom {
+    padding: 16px 16px 32px;
+    gap: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero__description {
+    order: 1; 
+  }
+
+  .hero__buttons {
+    order: 2;
+    flex-direction: column;
+    align-items: center; 
+    width: 100%;
+  }
+
+  .hero__btn {
+    flex: none;         
+    width: 100%;      
+    max-width: 344px;    
+    height: 48px;        
+  }
+}

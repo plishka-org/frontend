@@ -7,6 +7,7 @@
   --color-text: #6F6F6F;
   --color-muted: #B2B2B2;
   --color-border: #E0DED9;
+  --color-bg-two: #EAE4DC;
   --color-cta: #8B5E3C;
   --color-primary: #2F4F3E;
   --color-primary-hover: #3E2A1F;
@@ -35,6 +36,7 @@ body,
 #root {
   max-width: 100%;
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 * {

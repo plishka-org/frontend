@@ -10,6 +10,8 @@ import { getProductById } from "./data/bestProducts";
 import { getAppPath } from "./utils/productUrl";
 import { getSiteVariant } from "./utils/siteVariant";
 import "./App.scss";
+import { InformBlock } from "./components/sections/InformBlock/InformBlock";
+import Advantages from "./components/sections/Advantages/Advantages";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -47,6 +49,8 @@ function App() {
   return (
     <main className="page-shell">
       <Header activePage="home" siteVariant={siteVariant} />
+      <InformBlock siteVariant={siteVariant}/>
+      <Advantages />
       <BestProductsSection siteVariant={siteVariant} />
       <ReviewsSection />
       <ContactsSection />
