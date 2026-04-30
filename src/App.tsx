@@ -13,6 +13,7 @@ import "./App.scss";
 import { InformBlock } from "./components/sections/InformBlock/InformBlock";
 import Advantages from "./components/sections/Advantages/Advantages";
 
+
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
 
