@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import filterButtonIcon from '../../../assets/galery-block/icons/button-filter-2.svg'
 import { galleryCategories, galleryProducts } from '../../../data/galleryProducts'
+import { getProductUrl } from '../../../utils/productUrl'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { CloseIcon, HeartIcon, TrashIcon } from '../../icons/UiIcons'
 import { Footer } from '../../layout/Footer/Footer'
@@ -135,10 +136,12 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
           <div className="gallery-products__grid" aria-label="Вироби галереї">
             {visibleProducts.map((product) => (
               <article className="gallery-card" key={product.id}>
-                <img src={product.image} alt={product.name} />
-                <p>{product.category}</p>
-                <h2 title={product.name}>{product.name}</h2>
-                {siteVariant === 'order' && <span>Ціна у грн</span>}
+                <a className="gallery-card__link" href={getProductUrl(product.id, siteVariant)}>
+                  <img src={product.image} alt={product.name} />
+                  <p>{product.category}</p>
+                  <h2 title={product.name}>{product.name}</h2>
+                  {siteVariant === 'order' && <span>Ціна у грн</span>}
+                </a>
                 {siteVariant === 'usual' && (
                   <button
                     className="gallery-card__favorite"
@@ -270,10 +273,7 @@ type FilterGroupProps = {
 function FilterGroup({ children, title }: FilterGroupProps) {
   return (
     <section className="gallery-filters__group">
-      <h3>
-        {title}
-        <span aria-hidden="true">⌃</span>
-      </h3>
+      <h3>{title}</h3>
       {children}
     </section>
   )

@@ -2,6 +2,7 @@ import product1 from '../assets/best-products-block/product-1.svg'
 import product2 from '../assets/best-products-block/product-2.svg'
 import product3 from '../assets/best-products-block/product-3.svg'
 import product4 from '../assets/best-products-block/product-4.svg'
+import { galleryProducts } from './galleryProducts'
 
 export type BestProduct = {
   id: string
@@ -59,7 +60,28 @@ export const bestProducts: BestProduct[] = [
 ]
 
 export function getProductById(productId: string) {
-  return bestProducts.find((product) => product.id === productId)
+  const bestProduct = bestProducts.find((product) => product.id === productId)
+
+  if (bestProduct) {
+    return bestProduct
+  }
+
+  const galleryProduct = galleryProducts.find((product) => product.id === productId)
+
+  if (!galleryProduct) {
+    return undefined
+  }
+
+  return {
+    id: galleryProduct.id,
+    category: galleryProduct.category,
+    name: galleryProduct.name,
+    description:
+      'Дерев’яний виріб ручної роботи, створений з увагою до міцності, практичності та природного вигляду. Деталі виготовляються під конкретний простір і потреби замовника.',
+    image: galleryProduct.image,
+    gallery: [galleryProduct.image],
+    price: galleryProduct.price,
+  }
 }
 
 export function getRelatedProducts(product: BestProduct) {

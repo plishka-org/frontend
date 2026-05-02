@@ -307,6 +307,7 @@
   img {
     position: relative;
     z-index: 1;
+    width: min(1032px, 92vw);
     max-width: min(1120px, 92vw);
     max-height: 82vh;
     border-radius: 24px;
