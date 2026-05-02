@@ -12,6 +12,8 @@ import { getSiteVariant } from "./utils/siteVariant";
 import "./App.scss";
 import { InformBlock } from "./components/sections/InformBlock/InformBlock";
 import Advantages from "./components/sections/Advantages/Advantages";
+import ContactForm from "./components/sections/ContactForm/ContactForm";
+import { AuthProvider } from "./hooks/useAuth";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -35,27 +37,37 @@ function App() {
   const siteVariant = getSiteVariant();
 
   if (appPath.match(/^\/gallery\/?$/)) {
-    return <GalleryPage siteVariant={siteVariant} />;
+    return (
+      <AuthProvider>
+        <GalleryPage siteVariant={siteVariant} />
+      </AuthProvider>
+    );
   }
 
   if (productMatch) {
     const product = getProductById(productMatch[1]);
-
     if (product) {
-      return <ProductPage product={product} siteVariant={siteVariant} />;
+      return (
+        <AuthProvider>
+          <ProductPage product={product} siteVariant={siteVariant} />
+        </AuthProvider>
+      );
     }
   }
 
   return (
-    <main className="page-shell">
-      <Header activePage="home" siteVariant={siteVariant} />
-      <InformBlock siteVariant={siteVariant}/>
-      <Advantages />
-      <BestProductsSection siteVariant={siteVariant} />
-      <ReviewsSection />
-      <ContactsSection />
-      <Footer />
-    </main>
+    <AuthProvider>
+      <main className="page-shell">
+        <Header activePage="home" siteVariant={siteVariant} />
+        <InformBlock siteVariant={siteVariant} />
+        <Advantages />
+        <BestProductsSection siteVariant={siteVariant} />
+        <ReviewsSection />
+        <ContactForm />
+        <ContactsSection />
+        <Footer />
+      </main>
+    </AuthProvider>
   );
 }
 
