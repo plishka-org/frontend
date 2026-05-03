@@ -36,6 +36,11 @@ export function ProductDetailSection({
     })
   }
 
+  function openGalleryImage(image: string, index: number) {
+    setSelectedIndex(index)
+    setLightboxImage(image)
+  }
+
   return (
     <section className="product-detail" aria-labelledby="product-title">
       <div className="product-gallery" aria-label={`Фотографії виробу ${product.name}`}>
@@ -46,8 +51,8 @@ export function ProductDetailSection({
               data-active={index === selectedIndex}
               key={`${image}-${index}`}
               type="button"
-              onClick={() => setSelectedIndex(index)}
-              aria-label={`Показати фото ${index + 1}`}
+              onClick={() => openGalleryImage(image, index)}
+              aria-label={`Відкрити фото ${index + 1}`}
             >
               <img src={image} alt="" />
             </button>
