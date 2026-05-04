@@ -109,116 +109,113 @@ const ContactForm = () => {
 
   return (
     <section className="contact-form-section">
-      <div className="contact-form__wrapper">
-        <h2 className="contact-form__title">Контактна форма</h2>
-        <p className="contact-form__subtitle">Лише для авторизованих</p>
-
-        {isSubmitted ? (
-          <div className="contact-form__success">
-            <h3 className="contact-form__success-title">Заявку надіслано!</h3>
-            <p className="contact-form__success-text">
-              Ми зв'яжемося з вами найближчим часом. Заявку збережено в історії.
-            </p>
-            <button className="contact-form__button" onClick={handleReset}>
-              Надіслати ще
-            </button>
-          </div>
-        ) : (
-          <form className="contact-form" onSubmit={handleSubmit}>
-            <div className="contact-form__row">
-              {/* Ім'я */}
-              <div className="contact-form__field">
-                <label className="contact-form__label" htmlFor="name" >
-                  Ім'я
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  autoComplete="name"
-                  value={name}
-                  placeholder="Ваше ім'я"
-                  onChange={handleNameChange}
-                  onBlur={() => {
-                    setNameTouched(true);
-                    setNameError(validateName(name));
-                  }}
-                  className={`contact-form__input ${nameTouched && nameError ? "contact-form__input--error" : ""}`}
-                />
-                {nameTouched && nameError && (
-                  <span className="contact-form__error">{nameError}</span>
-                )}
-              </div>
-
-              {/* Телефон */}
-              <div className="contact-form__field">
-                <label className="contact-form__label" htmlFor="phone">
-                  Телефон *
-                </label>
-                <div className="contact-form__phone-wrapper">
-                  <span className="contact-form__prefix">+38</span>
+      <div className="contact-form__inner">
+        <div className="contact-form__wrapper">
+          <h2 className="contact-form__title">Контактна форма</h2>
+          <p className="contact-form__subtitle">Лише для авторизованих</p>
+          {isSubmitted ? (
+            <div className="contact-form__success">
+              <h3 className="contact-form__success-title">Заявку надіслано!</h3>
+              <p className="contact-form__success-text">
+                Ми зв'яжемося з вами найближчим часом. Заявку збережено в історії.
+              </p>
+              <button className="contact-form__button" onClick={handleReset}>
+                Надіслати ще
+              </button>
+            </div>
+          ) : (
+            <form className="contact-form" onSubmit={handleSubmit}>
+              <div className="contact-form__row">
+                {/* Ім'я */}
+                <div className="contact-form__field">
+                  <label className="contact-form__label" htmlFor="name" >
+                    Ім'я
+                  </label>
                   <input
-                    id="phone"
+                    id="name"
                     type="text"
-                    autoComplete="tel-national"
-                    value={phone}
-                    placeholder="0XXXXXXXXX"
-                    onChange={handlePhoneChange}
+                    autoComplete="name"
+                    value={name}
+                    placeholder="Ваше ім'я"
+                    onChange={handleNameChange}
                     onBlur={() => {
-                      setPhoneTouched(true);
-                      setPhoneError(validatePhone(phone));
+                      setNameTouched(true);
+                      setNameError(validateName(name));
                     }}
-                    maxLength={10}
-                    className={`contact-form__input ${phoneTouched && phoneError ? "contact-form__input--error" : ""}`}
+                    className={`contact-form__input ${nameTouched && nameError ? "contact-form__input--error" : ""}`}
                   />
+                  {nameTouched && nameError && (
+                    <span className="contact-form__error">{nameError}</span>
+                  )}
                 </div>
-                {phoneTouched && phoneError && (
-                  <span className="contact-form__error">{phoneError}</span>
+                {/* Телефон */}
+                <div className="contact-form__field">
+                  <label className="contact-form__label" htmlFor="phone">
+                    Телефон *
+                  </label>
+                  <div className="contact-form__phone-wrapper">
+                    <span className="contact-form__prefix">+38</span>
+                    <input
+                      id="phone"
+                      type="text"
+                      autoComplete="tel-national"
+                      value={phone}
+                      placeholder="0XXXXXXXXX"
+                      onChange={handlePhoneChange}
+                      onBlur={() => {
+                        setPhoneTouched(true);
+                        setPhoneError(validatePhone(phone));
+                      }}
+                      maxLength={10}
+                      className={`contact-form__input ${phoneTouched && phoneError ? "contact-form__input--error" : ""}`}
+                    />
+                  </div>
+                  {phoneTouched && phoneError && (
+                    <span className="contact-form__error">{phoneError}</span>
+                  )}
+                </div>
+              </div>
+              {/* Причина дзвінка */}
+              <div className="contact-form__field">
+                <label className="contact-form__label" htmlFor="description">
+                  Причина дзвінка *
+                </label>
+                <div className="contact-form__textarea-wrapper">
+                  <textarea
+                    id="description"
+                     autoComplete="off"
+                    value={description}
+                    placeholder="Коротко опишіть ваше питання або що вас цікавить..."
+                    onChange={handleDescriptionChange}
+                    onBlur={() => {
+                      setDescriptionTouched(true);
+                      setDescriptionError(validateDescription(description));
+                    }}
+                    className={`contact-form__textarea ${descriptionTouched && descriptionError ? "contact-form__input--error" : ""}`}
+                  />
+                  <span className="contact-form__counter">
+                    {description.length}/300
+                  </span>
+                </div>
+                {descriptionTouched && descriptionError && (
+                  <span className="contact-form__error">{descriptionError}</span>
                 )}
               </div>
-            </div>
-
-            {/* Причина дзвінка */}
-            <div className="contact-form__field">
-              <label className="contact-form__label" htmlFor="description">
-                Причина дзвінка *
-              </label>
-              <div className="contact-form__textarea-wrapper">
-                <textarea
-                  id="description"
-                   autoComplete="off"
-                  value={description}
-                  placeholder="Коротко опишіть ваше питання або що вас цікавить..."
-                  onChange={handleDescriptionChange}
-                  onBlur={() => {
-                    setDescriptionTouched(true);
-                    setDescriptionError(validateDescription(description));
-                  }}
-                  className={`contact-form__textarea ${descriptionTouched && descriptionError ? "contact-form__input--error" : ""}`}
-                />
-                <span className="contact-form__counter">
-                  {description.length}/300
-                </span>
-              </div>
-              {descriptionTouched && descriptionError && (
-                <span className="contact-form__error">{descriptionError}</span>
-              )}
-            </div>
-
-            {/* TODO: ТИМЧАСОВО — кнопка активна для всіх авторизованих з хардкодженим user у useAuth.tsx
-                Після підключення реальної авторизації — user буде братись з API/токену */}
-            <button
-              type="submit"
-              disabled={!isFormValid || !user}
-              className="contact-form__button"
-            >
-              {user ? "Відправити заявку" : "Увійдіть щоб надіслати"}
-            </button>
-          </form>
-        )}
-      </div>
-
-      <div className="contact-form__image-wrapper">
-        <img src={contactImage} alt="Контактна форма" />
+              {/* TODO: ТИМЧАСОВО — кнопка активна для всіх авторизованих з хардкодженим user у useAuth.tsx
+                  Після підключення реальної авторизації — user буде братись з API/токену */}
+              <button
+                type="submit"
+                disabled={!isFormValid || !user}
+                className="contact-form__button"
+              >
+                {user ? "Відправити заявку" : "Увійдіть щоб надіслати"}
+              </button>
+            </form>
+          )}
+        </div>
+        <div className="contact-form__image-wrapper">
+          <img src={contactImage} alt="Контактна форма" />
+        </div>
       </div>
     </section>
   );
