@@ -8,6 +8,7 @@ import { CloseIcon, HeartIcon, TrashIcon } from '../../icons/UiIcons'
 import { Footer } from '../../layout/Footer/Footer'
 import { Header } from '../../layout/Header/Header'
 import { ContactsSection } from '../../sections/Contacts/ContactsSection'
+import ContactForm from '../../sections/ContactForm/ContactForm'
 
 type GalleryPageProps = {
   siteVariant: SiteVariant
@@ -156,6 +157,7 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
           </div>
         </div>
       </section>
+      <ContactForm />
       <ContactsSection />
       <Footer />
     </main>
