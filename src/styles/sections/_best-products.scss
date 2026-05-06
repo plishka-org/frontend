@@ -61,14 +61,18 @@
 }
 
 .best-products-carousel {
-  display: grid;
-  grid-template-columns: repeat(4, 302px);
+  display: flex;
   gap: 24px;
+  overflow-x: auto;
+  padding-bottom: 14px;
+  scroll-padding-inline: 0;
+  scroll-snap-type: x proximity;
 }
 
 .best-product-card {
   position: relative;
   display: flex;
+  flex: 0 0 302px;
   min-width: 0;
   min-height: 414px;
   flex-direction: column;
@@ -76,6 +80,7 @@
   border-radius: 24px;
   background: var(--color-surface);
   padding: 24px;
+  scroll-snap-align: start;
   transition:
     border-color 160ms ease;
 

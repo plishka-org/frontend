@@ -71,18 +71,13 @@
     }
 
     &__scroller {
-      display: flex;
-      overflow-x: auto;
-      padding-bottom: 8px;
       scroll-padding-inline: 0;
-      scroll-snap-type: x proximity;
     }
   }
 
   .product-rail-card {
     flex: 0 0 360px;
     min-height: 0;
-    scroll-snap-align: start;
   }
 
   .best-products-section {
@@ -103,17 +98,13 @@
   }
 
   .best-products-carousel {
-    display: flex;
     gap: 24px;
-    overflow-x: auto;
     scroll-padding-inline: 24px;
-    scroll-snap-type: x proximity;
   }
 
   .best-product-card {
     flex: 0 0 254px;
     min-height: 376px;
-    scroll-snap-align: start;
 
     &[data-cart-actions='true'] {
       min-height: 448px;
@@ -327,6 +318,7 @@
 
   .best-products-carousel {
     gap: 16px;
+    padding-bottom: 16px;
     scroll-padding-inline: 16px;
   }
 

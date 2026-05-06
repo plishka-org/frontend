@@ -14,7 +14,7 @@ import { InformBlock } from "./components/sections/InformBlock/InformBlock";
 import Advantages from "./components/sections/Advantages/Advantages";
 import ContactForm from "./components/sections/ContactForm/ContactForm";
 import { AuthProvider } from "./hooks/useAuth";
-
+import { ShopProvider } from "./hooks/useShop";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -37,38 +37,40 @@ function App() {
   const productMatch = appPath.match(/^\/products\/([^/]+)\/?$/);
   const siteVariant = getSiteVariant();
 
-  if (appPath.match(/^\/gallery\/?$/)) {
-    return (
-      <AuthProvider>
-        <GalleryPage siteVariant={siteVariant} />
-      </AuthProvider>
-    );
-  }
+  let pageContent;
 
-  if (productMatch) {
+  if (appPath.match(/^\/gallery\/?$/)) {
+    pageContent = <GalleryPage siteVariant={siteVariant} />;
+  } else if (productMatch) {
     const product = getProductById(productMatch[1]);
-    if (product) {
-      return (
-        <AuthProvider>
-          <ProductPage product={product} siteVariant={siteVariant} />
-        </AuthProvider>
-      );
-    }
+    pageContent = product ? (
+      <ProductPage product={product} siteVariant={siteVariant} />
+    ) : (
+      <HomePage siteVariant={siteVariant} />
+    );
+  } else {
+    pageContent = <HomePage siteVariant={siteVariant} />;
   }
 
   return (
     <AuthProvider>
-      <main className="page-shell">
-        <Header activePage="home" siteVariant={siteVariant} />
-        <InformBlock siteVariant={siteVariant} />
-        <Advantages />
-        <BestProductsSection siteVariant={siteVariant} />
-        <ReviewsSection />
-        <ContactForm />
-        <ContactsSection />
-        <Footer />
-      </main>
+      <ShopProvider>{pageContent}</ShopProvider>
     </AuthProvider>
+  );
+}
+
+function HomePage({ siteVariant }: { siteVariant: ReturnType<typeof getSiteVariant> }) {
+  return (
+    <main className="page-shell">
+      <Header activePage="home" siteVariant={siteVariant} />
+      <InformBlock siteVariant={siteVariant} />
+      <Advantages />
+      <BestProductsSection siteVariant={siteVariant} />
+      <ReviewsSection />
+      <ContactForm />
+      <ContactsSection />
+      <Footer />
+    </main>
   );
 }
 

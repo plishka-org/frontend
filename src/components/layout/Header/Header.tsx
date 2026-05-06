@@ -3,16 +3,18 @@ import { BrandMark } from '../Footer/BrandMark'
 import { CartIcon, CloseIcon, HeartIcon, MenuIcon, UserIcon } from '../../icons/UiIcons'
 import { getGalleryUrl, getHomeUrl } from '../../../utils/productUrl'
 import type { SiteVariant } from '../../../utils/siteVariant'
+import { useShop } from '../../../hooks/useShop'
 
 type HeaderProps = {
   activePage?: 'home' | 'gallery'
-  cartCount?: number
   siteVariant: SiteVariant
 }
 
-export function Header({ activePage, cartCount = 0, siteVariant }: HeaderProps) {
+export function Header({ activePage, siteVariant }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const { cartCount } = useShop()
   const homeHref = getHomeUrl(siteVariant)
+  const switchHref = getVariantSwitchUrl(siteVariant === 'order' ? 'usual' : 'order')
   const navItems = [
     { href: homeHref, label: 'Головна', page: 'home' },
     { href: getGalleryUrl(siteVariant), label: 'Галерея', page: 'gallery' },
@@ -41,6 +43,7 @@ export function Header({ activePage, cartCount = 0, siteVariant }: HeaderProps) 
       </nav>
 
       <div className="site-header__actions">
+        <VariantSwitch siteVariant={siteVariant} href={switchHref} />
         <button className="icon-button" type="button" aria-label="Обрані вироби">
           <HeartIcon />
         </button>
@@ -87,6 +90,7 @@ export function Header({ activePage, cartCount = 0, siteVariant }: HeaderProps) 
         </div>
 
         <nav className="site-header__drawer-nav" aria-label="Мобільна навігація">
+          <VariantSwitch siteVariant={siteVariant} href={switchHref} />
           {navItems.map((item) => (
             <a
               className={item.page === activePage ? 'is-active' : undefined}
@@ -100,5 +104,41 @@ export function Header({ activePage, cartCount = 0, siteVariant }: HeaderProps) 
         </nav>
       </div>
     </header>
+  )
+}
+
+function getVariantSwitchUrl(siteVariant: SiteVariant) {
+  if (typeof window === 'undefined') {
+    return siteVariant === 'order' ? '?site=order' : '/'
+  }
+
+  const nextUrl = new URL(window.location.href)
+
+  if (siteVariant === 'order') {
+    nextUrl.searchParams.set('site', 'order')
+  } else {
+    nextUrl.searchParams.delete('site')
+  }
+
+  return `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`
+}
+
+type VariantSwitchProps = {
+  href: string
+  siteVariant: SiteVariant
+}
+
+function VariantSwitch({ href, siteVariant }: VariantSwitchProps) {
+  return (
+    <a
+      className="site-variant-switch"
+      data-variant={siteVariant}
+      href={href}
+      aria-label={`Перемкнути на ${siteVariant === 'order' ? 'звичайний сайт' : 'сайт замовлення'}`}
+      title="Тимчасовий перемикач режиму сайту"
+    >
+      <span>Сайт</span>
+      <strong>Замовлення</strong>
+    </a>
   )
 }
