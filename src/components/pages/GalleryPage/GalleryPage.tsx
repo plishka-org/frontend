@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import filterButtonIcon from '../../../assets/galery-block/icons/button-filter-2.svg'
 import { galleryCategories, galleryProducts } from '../../../data/galleryProducts'
+import { useShop } from '../../../hooks/useShop'
+import { formatPrice } from '../../../utils/formatPrice'
 import { getProductUrl } from '../../../utils/productUrl'
 import type { SiteVariant } from '../../../utils/siteVariant'
-import { CloseIcon, HeartIcon, TrashIcon } from '../../icons/UiIcons'
+import { ArrowIcon, CloseIcon, HeartIcon, TrashIcon } from '../../icons/UiIcons'
 import { Footer } from '../../layout/Footer/Footer'
 import { Header } from '../../layout/Header/Header'
 import { ContactsSection } from '../../sections/Contacts/ContactsSection'
@@ -16,15 +18,128 @@ type GalleryPageProps = {
 
 type GallerySort = 'az' | 'za' | 'priceHigh' | 'priceLow'
 
-const defaultSelectedCategories = ['Альтанки']
+const gallerySorts: GallerySort[] = ['az', 'za', 'priceHigh', 'priceLow']
+const galleryStateStorageKey = 'plishkaGalleryState'
+
+type GalleryUrlState = {
+  activeCategories: string[]
+  sort: GallerySort
+}
+
+function filterProductsByCategories(activeCategories: string[]) {
+  if (activeCategories.length === 0) {
+    return galleryProducts
+  }
+
+  return galleryProducts.filter((product) => activeCategories.includes(product.category))
+}
+
+function readStoredGalleryState(): GalleryUrlState | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  try {
+    const rawValue = window.sessionStorage.getItem(galleryStateStorageKey)
+
+    if (!rawValue) {
+      return null
+    }
+
+    const parsedValue = JSON.parse(rawValue) as Partial<GalleryUrlState>
+    const activeCategories = Array.isArray(parsedValue.activeCategories)
+      ? parsedValue.activeCategories.filter(
+          (category) => galleryCategories.includes(category) && category !== 'Усі категорії',
+        )
+      : []
+
+    return {
+      activeCategories,
+      sort: gallerySorts.includes(parsedValue.sort as GallerySort)
+        ? (parsedValue.sort as GallerySort)
+        : 'az',
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeStoredGalleryState(activeCategories: string[], sort: GallerySort) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.sessionStorage.setItem(
+    galleryStateStorageKey,
+    JSON.stringify({ activeCategories, sort }),
+  )
+}
+
+function readGalleryUrlState() {
+  if (typeof window === 'undefined') {
+    return { activeCategories: [] as string[], sort: 'az' as GallerySort }
+  }
+
+  const searchParams = new URLSearchParams(window.location.search)
+  const activeCategories = searchParams
+    .getAll('category')
+    .filter((category) => galleryCategories.includes(category) && category !== 'Усі категорії')
+  const sort = searchParams.get('sort')
+
+  if (activeCategories.length === 0 && !sort) {
+    return readStoredGalleryState() ?? { activeCategories, sort: 'az' }
+  }
+
+  return {
+    activeCategories,
+    sort: gallerySorts.includes(sort as GallerySort) ? (sort as GallerySort) : 'az',
+  }
+}
+
+function writeGalleryUrlState(activeCategories: string[], sort: GallerySort) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const nextUrl = new URL(window.location.href)
+  nextUrl.searchParams.delete('category')
+
+  activeCategories.forEach((category) => nextUrl.searchParams.append('category', category))
+
+  if (sort === 'az') {
+    nextUrl.searchParams.delete('sort')
+  } else {
+    nextUrl.searchParams.set('sort', sort)
+  }
+
+  writeStoredGalleryState(activeCategories, sort)
+  window.history.replaceState(null, '', `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`)
+}
 
 export function GalleryPage({ siteVariant }: GalleryPageProps) {
-  const [selectedCategories, setSelectedCategories] = useState(defaultSelectedCategories)
-  const [sort, setSort] = useState<GallerySort>('az')
+  const [activeCategories, setActiveCategories] = useState(
+    () => readGalleryUrlState().activeCategories,
+  )
+  const [sort, setSort] = useState<GallerySort>(() => readGalleryUrlState().sort)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const activeFilterCount = selectedCategories.includes('Усі категорії')
-    ? 0
-    : selectedCategories.length
+  const { isFavorite, toggleFavorite } = useShop()
+  const activeFilterCount = activeCategories.length
+
+  useEffect(() => {
+    function syncFromUrl() {
+      const nextState = readGalleryUrlState()
+      setActiveCategories(nextState.activeCategories)
+      setSort(nextState.sort)
+    }
+
+    window.addEventListener('popstate', syncFromUrl)
+    window.addEventListener('hashchange', syncFromUrl)
+
+    return () => {
+      window.removeEventListener('popstate', syncFromUrl)
+      window.removeEventListener('hashchange', syncFromUrl)
+    }
+  }, [])
 
   useEffect(() => {
     const isDrawerLayout = window.matchMedia('(max-width: 1100px)').matches
@@ -57,10 +172,7 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
   }, [isFilterOpen])
 
   const visibleProducts = useMemo(() => {
-    const filteredProducts =
-      selectedCategories.length === 0 || selectedCategories.includes('Усі категорії')
-        ? galleryProducts
-        : galleryProducts.filter((product) => selectedCategories.includes(product.category))
+    const filteredProducts = filterProductsByCategories(activeCategories)
 
     return [...filteredProducts].sort((firstProduct, secondProduct) => {
       if (sort === 'za') {
@@ -77,30 +189,37 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
 
       return firstProduct.name.localeCompare(secondProduct.name, 'uk')
     })
-  }, [selectedCategories, sort])
+  }, [activeCategories, sort])
 
   function toggleCategory(category: string) {
     if (category === 'Усі категорії') {
-      setSelectedCategories((currentCategories) =>
-        currentCategories.includes(category) ? [] : [category],
-      )
+      setActiveCategories([])
+      writeGalleryUrlState([], sort)
       return
     }
 
-    setSelectedCategories((currentCategories) => {
-      const withoutAll = currentCategories.filter((item) => item !== 'Усі категорії')
-
-      if (withoutAll.includes(category)) {
-        return withoutAll.filter((item) => item !== category)
+    setActiveCategories((currentCategories) => {
+      if (currentCategories.includes(category)) {
+        const nextCategories = currentCategories.filter((item) => item !== category)
+        writeGalleryUrlState(nextCategories, sort)
+        return nextCategories
       }
 
-      return [...withoutAll, category]
+      const nextCategories = [...currentCategories, category]
+      writeGalleryUrlState(nextCategories, sort)
+      return nextCategories
     })
   }
 
+  function changeSort(nextSort: GallerySort) {
+    setSort(nextSort)
+    writeGalleryUrlState(activeCategories, nextSort)
+  }
+
   function resetFilters() {
-    setSelectedCategories([])
+    setActiveCategories([])
     setSort('az')
+    writeGalleryUrlState([], 'az')
   }
 
   return (
@@ -112,9 +231,9 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
           onReset={resetFilters}
-          onSortChange={setSort}
+          onSortChange={changeSort}
           onToggleCategory={toggleCategory}
-          selectedCategories={selectedCategories}
+          activeCategories={activeCategories}
           siteVariant={siteVariant}
           sort={sort}
         />
@@ -134,27 +253,38 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
             </button>
           </div>
 
-          <div className="gallery-products__grid" aria-label="Вироби галереї">
-            {visibleProducts.map((product) => (
-              <article className="gallery-card" key={product.id}>
-                <a className="gallery-card__link" href={getProductUrl(product.id, siteVariant)}>
-                  <img src={product.image} alt={product.name} />
-                  <p>{product.category}</p>
-                  <h2 title={product.name}>{product.name}</h2>
-                  {siteVariant === 'order' && <span>Ціна у грн</span>}
-                </a>
-                {siteVariant === 'usual' && (
-                  <button
-                    className="gallery-card__favorite"
-                    type="button"
-                    aria-label={`Додати ${product.name} до обраного`}
-                  >
-                    <HeartIcon />
-                  </button>
-                )}
-              </article>
-            ))}
-          </div>
+          {visibleProducts.length === 0 ? (
+            <p className="gallery-products__empty">Немає виробів за вибраними фільтрами</p>
+          ) : (
+            <div className="gallery-products__grid" aria-label="Вироби галереї">
+              {visibleProducts.map((product) => (
+                <article className="gallery-card" key={product.id}>
+                  <a className="gallery-card__link" href={getProductUrl(product.id, siteVariant)}>
+                    <img src={product.image} alt={product.name} />
+                    <p>{product.category}</p>
+                    <h2 title={product.name}>{product.name}</h2>
+                    {siteVariant === 'order' && <span>{formatPrice(product.price)}</span>}
+                  </a>
+                  {siteVariant === 'usual' && (
+                    <button
+                      className="gallery-card__favorite"
+                      data-active={isFavorite(product.id)}
+                      type="button"
+                      aria-pressed={isFavorite(product.id)}
+                      aria-label={
+                        isFavorite(product.id)
+                          ? 'Прибрати з обраного'
+                          : `Додати ${product.name} до обраного`
+                      }
+                      onClick={() => toggleFavorite(product.id)}
+                    >
+                      <HeartIcon />
+                    </button>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </section>
       <ContactForm />
@@ -171,7 +301,7 @@ type GalleryFiltersProps = {
   onReset: () => void
   onSortChange: (sort: GallerySort) => void
   onToggleCategory: (category: string) => void
-  selectedCategories: string[]
+  activeCategories: string[]
   siteVariant: SiteVariant
   sort: GallerySort
 }
@@ -183,10 +313,45 @@ function GalleryFilters({
   onReset,
   onSortChange,
   onToggleCategory,
-  selectedCategories,
+  activeCategories,
   siteVariant,
   sort,
 }: GalleryFiltersProps) {
+  const categoryListRef = useRef<HTMLDivElement>(null)
+  const [categoryScrollState, setCategoryScrollState] = useState({
+    canScrollBackward: false,
+    canScrollForward: false,
+  })
+
+  const updateCategoryScrollState = useCallback(() => {
+    const categoryList = categoryListRef.current
+
+    if (!categoryList) {
+      return
+    }
+
+    const maxScrollTop = categoryList.scrollHeight - categoryList.clientHeight
+
+    setCategoryScrollState({
+      canScrollBackward: categoryList.scrollTop > 0,
+      canScrollForward: categoryList.scrollTop < maxScrollTop - 1,
+    })
+  }, [])
+
+  useEffect(() => {
+    updateCategoryScrollState()
+    window.addEventListener('resize', updateCategoryScrollState)
+
+    return () => window.removeEventListener('resize', updateCategoryScrollState)
+  }, [updateCategoryScrollState])
+
+  function scrollCategoryList(direction: -1 | 1) {
+    categoryListRef.current?.scrollBy({
+      top: direction * 168,
+      behavior: 'smooth',
+    })
+  }
+
   return (
     <>
       <button
@@ -205,18 +370,44 @@ function GalleryFilters({
         </div>
 
         <FilterGroup title="Категорії">
-          <div className="gallery-filters__scroll">
-            {galleryCategories.map((category) => (
-              <label className="gallery-checkbox" key={category}>
-                <input
-                  checked={selectedCategories.includes(category)}
-                  type="checkbox"
-                  onChange={() => onToggleCategory(category)}
+          <div className="gallery-filters__category-list">
+            <button
+              className="gallery-filters__category-nav"
+              type="button"
+              aria-label="Прокрутити категорії вгору"
+              disabled={!categoryScrollState.canScrollBackward}
+              onClick={() => scrollCategoryList(-1)}
+            >
+              <ArrowIcon />
+            </button>
+            <div
+              className="gallery-filters__scroll"
+              ref={categoryListRef}
+              aria-label="Категорії виробів"
+              onScroll={updateCategoryScrollState}
+            >
+              {galleryCategories.map((category) => (
+                <CategoryTag
+                  isActive={
+                    category === 'Усі категорії'
+                      ? activeCategories.length === 0
+                      : activeCategories.includes(category)
+                  }
+                  key={category}
+                  label={category}
+                  onClick={() => onToggleCategory(category)}
                 />
-                <span aria-hidden="true" />
-                {category}
-              </label>
-            ))}
+              ))}
+            </div>
+            <button
+              className="gallery-filters__category-nav"
+              type="button"
+              aria-label="Прокрутити категорії вниз"
+              disabled={!categoryScrollState.canScrollForward}
+              onClick={() => scrollCategoryList(1)}
+            >
+              <ArrowIcon />
+            </button>
           </div>
         </FilterGroup>
 
@@ -264,6 +455,27 @@ function GalleryFilters({
         </span>
       </aside>
     </>
+  )
+}
+
+type CategoryTagProps = {
+  isActive: boolean
+  label: string
+  onClick: () => void
+}
+
+function CategoryTag({ isActive, label, onClick }: CategoryTagProps) {
+  return (
+    <button
+      className="category-tag"
+      data-active={isActive}
+      type="button"
+      aria-pressed={isActive}
+      onClick={onClick}
+    >
+      <span aria-hidden="true" />
+      {label}
+    </button>
   )
 }
 

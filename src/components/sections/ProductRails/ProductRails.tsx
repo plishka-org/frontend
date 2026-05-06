@@ -8,17 +8,25 @@ type ProductRailsProps = {
   siteVariant: SiteVariant
 }
 
+function repeatProducts(products: BestProduct[], count: number) {
+  return Array.from({ length: count }, (_, index) => ({
+    product: products[index % products.length],
+    renderKey: `${products[index % products.length].id}-${index}`,
+  }))
+}
+
 export function ProductRails({ product, siteVariant }: ProductRailsProps) {
   const relatedProducts = getRelatedProducts(product)
-  const recentlyViewed = relatedProducts.slice(0, 10)
+  const relatedRailProducts = repeatProducts(relatedProducts, 10)
+  const recentlyViewed = repeatProducts(relatedProducts, 10)
 
   return (
     <div className="product-rails">
       <section className="product-rail" aria-labelledby="related-products-title">
         <h2 id="related-products-title">Схожі вироби</h2>
         <div className="product-rail__scroller">
-          {relatedProducts.map((item) => (
-            <ProductCard key={item.id} product={item} siteVariant={siteVariant} />
+          {relatedRailProducts.map(({ product: item, renderKey }) => (
+            <ProductCard key={renderKey} product={item} siteVariant={siteVariant} />
           ))}
         </div>
       </section>
@@ -26,8 +34,8 @@ export function ProductRails({ product, siteVariant }: ProductRailsProps) {
       <section className="product-rail" aria-labelledby="recent-products-title">
         <h2 id="recent-products-title">Останні переглянуті вироби</h2>
         <div className="product-rail__scroller">
-          {recentlyViewed.map((item) => (
-            <ProductCard key={item.id} product={item} siteVariant={siteVariant} />
+          {recentlyViewed.map(({ product: item, renderKey }) => (
+            <ProductCard key={renderKey} product={item} siteVariant={siteVariant} />
           ))}
         </div>
       </section>

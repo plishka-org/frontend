@@ -1,24 +1,21 @@
 import { useState } from 'react'
 import type { BestProduct } from '../../../data/bestProducts'
+import { useShop } from '../../../hooks/useShop'
+import { formatPrice } from '../../../utils/formatPrice'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { ArrowIcon, CheckIcon, HeartIcon } from '../../icons/UiIcons'
 
 type ProductDetailSectionProps = {
-  isInCart: boolean
-  onAddToCart: () => void
   product: BestProduct
   siteVariant: SiteVariant
 }
 
-export function ProductDetailSection({
-  isInCart,
-  onAddToCart,
-  product,
-  siteVariant,
-}: ProductDetailSectionProps) {
+export function ProductDetailSection({ product, siteVariant }: ProductDetailSectionProps) {
   const [selectedIndex, setSelectedIndex] = useState(Math.min(1, product.gallery.length - 1))
-  const [isFavorite, setIsFavorite] = useState(false)
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  const { addToCart, isFavorite, isInCart, toggleFavorite } = useShop()
+  const productIsFavorite = isFavorite(product.id)
+  const productIsInCart = isInCart(product.id)
   const selectedImage = product.gallery[selectedIndex]
   const visibleThumbnails = product.gallery.slice(0, 5)
   const hasLongTitle = product.name.length > 14
@@ -81,11 +78,11 @@ export function ProductDetailSection({
       <div className="product-detail__info" data-long-title={hasLongTitle}>
         <button
           className="product-detail__favorite"
-          data-active={isFavorite}
+          data-active={productIsFavorite}
           type="button"
-          onClick={() => setIsFavorite((value) => !value)}
-          aria-pressed={isFavorite}
-          aria-label={isFavorite ? 'Прибрати з обраного' : 'Додати до обраного'}
+          onClick={() => toggleFavorite(product.id)}
+          aria-pressed={productIsFavorite}
+          aria-label={productIsFavorite ? 'Прибрати з обраного' : 'Додати до обраного'}
         >
           <HeartIcon />
         </button>
@@ -96,16 +93,16 @@ export function ProductDetailSection({
 
         {siteVariant === 'order' && (
           <div className="product-purchase">
-            <strong>{product.price} грн</strong>
+            <strong>{formatPrice(product.price)}</strong>
             <button
               className="product-purchase__button"
-              data-added={isInCart}
+              data-added={productIsInCart}
               type="button"
-              onClick={onAddToCart}
-              aria-pressed={isInCart}
+              onClick={() => addToCart(product.id)}
+              aria-pressed={productIsInCart}
             >
-              <span>{isInCart ? 'Додано до кошика' : 'Додати до кошика'}</span>
-              {isInCart && <CheckIcon />}
+              <span>{productIsInCart ? 'Додано до кошика' : 'Додати до кошика'}</span>
+              {productIsInCart && <CheckIcon />}
             </button>
           </div>
         )}
