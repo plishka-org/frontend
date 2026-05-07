@@ -325,7 +325,7 @@
   .best-product-card {
     flex-basis: min(248px, calc(100vw - 32px));
     min-height: 374px;
-    padding: 12px;
+    padding: 12px 12px 68px;
 
     &[data-cart-actions='true'] {
       min-height: 426px;

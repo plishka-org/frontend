@@ -24,6 +24,10 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
     { href: '#profile', label: 'Особистий кабінет' },
   ]
 
+  function getNavItemClassName(item: (typeof navItems)[number]) {
+    return item.page && item.page === activePage ? 'is-active' : undefined
+  }
+
   return (
     <header className="site-header">
       <a className="site-header__brand" href={homeHref} aria-label="На головну Plishka">
@@ -33,7 +37,7 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
       <nav className="site-header__nav" aria-label="Головна навігація">
         {navItems.slice(0, 4).map((item) => (
           <a
-            className={item.page === activePage ? 'is-active' : undefined}
+            className={getNavItemClassName(item)}
             href={item.href}
             key={item.label}
           >
@@ -93,7 +97,7 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
           <VariantSwitch siteVariant={siteVariant} href={switchHref} />
           {navItems.map((item) => (
             <a
-              className={item.page === activePage ? 'is-active' : undefined}
+              className={getNavItemClassName(item)}
               href={item.href}
               key={item.label}
               onClick={() => setIsMenuOpen(false)}
