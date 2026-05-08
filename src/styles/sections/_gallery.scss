@@ -172,6 +172,8 @@
 
 .gallery-filters {
   align-self: start;
+  position: sticky;
+  top: 24px;
   border-radius: 24px;
   background: var(--color-surface-alt);
   padding: 24px;
@@ -274,6 +276,7 @@
     gap: 12px;
     overflow-x: hidden;
     overflow-y: scroll;
+    overscroll-behavior: contain;
     padding-right: 4px;
   }
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
+import cartIcon from '../../../assets/header/icons-header/cart-shopping-2.svg'
 import { BrandMark } from '../Footer/BrandMark'
-import { CartIcon, CloseIcon, HeartIcon, MenuIcon, UserIcon } from '../../icons/UiIcons'
+import { CloseIcon, HeartIcon, MenuIcon, UserIcon } from '../../icons/UiIcons'
 import { getGalleryUrl, getHomeUrl } from '../../../utils/productUrl'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { useShop } from '../../../hooks/useShop'
@@ -58,7 +59,7 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
             type="button"
             aria-label={`Кошик, ${cartCount} товарів`}
           >
-            <CartIcon />
+            <img src={cartIcon} alt="" aria-hidden="true" />
             <span>({cartCount})</span>
           </button>
         )}
