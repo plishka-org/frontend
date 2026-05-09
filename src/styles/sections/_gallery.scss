@@ -58,19 +58,21 @@
   background: var(--color-surface);
   padding: 24px 24px 88px;
 
-  &__link {
-    color: inherit;
-    cursor: pointer;
+  &__image-link {
     display: block;
     text-decoration: none;
 
-    &::after {
-      position: absolute;
-      z-index: 1;
-      inset: 0;
-      border-radius: inherit;
-      content: "";
+    &:focus-visible {
+      outline: 2px solid var(--color-heading);
+      outline-offset: 4px;
+      border-radius: 16px;
     }
+  }
+
+  &__title-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
 
     &:focus-visible {
       outline: 2px solid var(--color-heading);
@@ -106,7 +108,7 @@
     white-space: nowrap;
   }
 
-  &__link > span {
+  &__price {
     display: block;
     max-width: 100%;
     margin-top: 10px;
@@ -472,7 +474,7 @@
     pointer-events: none;
     transition: opacity 180ms ease;
 
-    &[data-open='true'] {
+    &[data-open="true"] {
       opacity: 1;
       pointer-events: auto;
     }
@@ -495,7 +497,7 @@
     transform: translateX(-100%);
     transition: transform 180ms ease;
 
-    &[data-open='true'] {
+    &[data-open="true"] {
       transform: translateX(0);
     }
 
