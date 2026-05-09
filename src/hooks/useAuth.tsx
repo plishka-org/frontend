@@ -17,14 +17,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  // TODO: ТИМЧАСОВО — хардкоджений user для тестування форми
-  // Після підключення реальної авторизації (JWT/API) — замінити на null
-  // і реалізувати login() через API запит
-  const [user, setUser] = useState<User | null>({
-    id: 1,
-    name: "Тест Користувач",
-    email: "test@test.com",
-  });
+  // TODO: Після підключення реальної авторизації (JWT/API) — реалізувати login() через API запит
+  const [user, setUser] = useState<User | null>(null);
 
   const login = (userData: User) => setUser(userData);
   const logout = () => setUser(null);
