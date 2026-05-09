@@ -1,5 +1,17 @@
 # React + TypeScript + Vite
 
+## Getting started
+
+Use the Node.js version pinned in `.nvmrc`:
+
+```bash
+nvm use
+npm install
+npm run dev
+```
+
+The project is pinned to Node.js `22.22.2`. Using Node.js 24 can break Vite/Rolldown native bindings on macOS.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
