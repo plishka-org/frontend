@@ -3,6 +3,7 @@ import { Footer } from '../../layout/Footer/Footer'
 import { Header } from '../../layout/Header/Header'
 import { ProductDetailSection } from '../../sections/ProductDetail/ProductDetailSection'
 import { ProductRails } from '../../sections/ProductRails/ProductRails'
+import ContactForm from '../../sections/ContactForm/ContactForm'
 import type { BestProduct } from '../../../data/bestProducts'
 import type { SiteVariant } from '../../../utils/siteVariant'
 
@@ -19,6 +20,7 @@ export function ProductPage({ product, siteVariant }: ProductPageProps) {
         <ProductDetailSection product={product} siteVariant={siteVariant} />
         <ProductRails product={product} siteVariant={siteVariant} />
       </div>
+      <ContactForm />
       <ContactsSection />
       <Footer />
     </main>

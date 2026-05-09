@@ -38,21 +38,32 @@
       text-transform: uppercase;
       transition: color 160ms ease;
 
-      &:hover {
+      &::after {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -15px;
+        height: 1px;
+        background: var(--color-primary);
+        content: "";
+        opacity: 0;
+        transition: opacity 160ms ease;
+      }
+
+      &:hover,
+      &:focus-visible {
         color: var(--color-heading);
+
+        &::after {
+          opacity: 1;
+        }
       }
 
       &.is-active {
         color: var(--color-primary);
 
         &::after {
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: -15px;
-          height: 1px;
-          background: var(--color-primary);
-          content: "";
+          opacity: 1;
         }
       }
     }
@@ -183,9 +194,14 @@
     color: var(--color-primary);
   }
 
-  svg {
+  svg,
+  img {
     width: 22px;
     height: 22px;
+  }
+
+  img {
+    display: block;
   }
 
   span {

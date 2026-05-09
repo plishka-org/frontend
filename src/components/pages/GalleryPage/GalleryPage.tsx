@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import type { MouseEvent } from 'react'
 import filterButtonIcon from '../../../assets/galery-block/icons/button-filter-2.svg'
 import { galleryCategories, galleryProducts } from '../../../data/galleryProducts'
+import type { GalleryProduct } from '../../../data/galleryProducts'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
 import { getProductUrl } from '../../../utils/productUrl'
@@ -122,7 +124,6 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
   )
   const [sort, setSort] = useState<GallerySort>(() => readGalleryUrlState().sort)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const { isFavorite, toggleFavorite } = useShop()
   const activeFilterCount = activeCategories.length
 
   useEffect(() => {
@@ -258,30 +259,7 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
           ) : (
             <div className="gallery-products__grid" aria-label="Вироби галереї">
               {visibleProducts.map((product) => (
-                <article className="gallery-card" key={product.id}>
-                  <a className="gallery-card__link" href={getProductUrl(product.id, siteVariant)}>
-                    <img src={product.image} alt={product.name} />
-                    <p>{product.category}</p>
-                    <h2 title={product.name}>{product.name}</h2>
-                    {siteVariant === 'order' && <span>{formatPrice(product.price)}</span>}
-                  </a>
-                  {siteVariant === 'usual' && (
-                    <button
-                      className="gallery-card__favorite"
-                      data-active={isFavorite(product.id)}
-                      type="button"
-                      aria-pressed={isFavorite(product.id)}
-                      aria-label={
-                        isFavorite(product.id)
-                          ? 'Прибрати з обраного'
-                          : `Додати ${product.name} до обраного`
-                      }
-                      onClick={() => toggleFavorite(product.id)}
-                    >
-                      <HeartIcon />
-                    </button>
-                  )}
-                </article>
+                <GalleryProductCard key={product.id} product={product} siteVariant={siteVariant} />
               ))}
             </div>
           )}
@@ -291,6 +269,47 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
       <ContactsSection />
       <Footer />
     </main>
+  )
+}
+
+type GalleryProductCardProps = {
+  product: GalleryProduct
+  siteVariant: SiteVariant
+}
+
+function GalleryProductCard({ product, siteVariant }: GalleryProductCardProps) {
+  const { isFavorite, toggleFavorite } = useShop()
+  const productIsFavorite = isFavorite(product.id)
+
+  function handleFavoriteClick(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    event.stopPropagation()
+    toggleFavorite(product.id)
+  }
+
+  return (
+    <article className="gallery-card">
+      <a className="gallery-card__link" href={getProductUrl(product.id, siteVariant)}>
+        <img src={product.image} alt={product.name} />
+        <p>{product.category}</p>
+        <h2 title={product.name}>{product.name}</h2>
+        {siteVariant === 'order' && <span>{formatPrice(product.price)}</span>}
+      </a>
+      {siteVariant === 'usual' && (
+        <button
+          className="gallery-card__favorite"
+          data-active={productIsFavorite}
+          type="button"
+          aria-pressed={productIsFavorite}
+          aria-label={
+            productIsFavorite ? 'Прибрати з обраного' : `Додати ${product.name} до обраного`
+          }
+          onClick={handleFavoriteClick}
+        >
+          <HeartIcon />
+        </button>
+      )}
+    </article>
   )
 }
 
