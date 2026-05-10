@@ -280,6 +280,7 @@ type GalleryProductCardProps = {
 function GalleryProductCard({ product, siteVariant }: GalleryProductCardProps) {
   const { isFavorite, toggleFavorite } = useShop()
   const productIsFavorite = isFavorite(product.id)
+  const productUrl = getProductUrl(product.id, siteVariant)
 
   function handleFavoriteClick(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault()
@@ -289,12 +290,16 @@ function GalleryProductCard({ product, siteVariant }: GalleryProductCardProps) {
 
   return (
     <article className="gallery-card">
-      <a className="gallery-card__link" href={getProductUrl(product.id, siteVariant)}>
+      <a className="gallery-card__image-link" href={productUrl} tabIndex={-1} aria-hidden="true">
         <img src={product.image} alt={product.name} />
-        <p>{product.category}</p>
-        <h2 title={product.name}>{product.name}</h2>
-        {siteVariant === 'order' && <span>{formatPrice(product.price)}</span>}
       </a>
+      <p>{product.category}</p>
+      <a className="gallery-card__title-link" href={productUrl}>
+        <h2 title={product.name}>{product.name}</h2>
+      </a>
+      {siteVariant === 'order' && (
+        <span className="gallery-card__price">{formatPrice(product.price)}</span>
+      )}
       {siteVariant === 'usual' && (
         <button
           className="gallery-card__favorite"
