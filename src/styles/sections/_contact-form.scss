@@ -103,13 +103,20 @@
     color: var(--color-muted);
   }
 
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px var(--color-surface) inset;
+    -webkit-text-fill-color: var(--color-heading);
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
   &:focus {
     border-color: var(--color-primary);
   }
 
   &--error {
     border-color: var(--color-error) !important;
-    background: #fff0f0;
   }
 }
 
@@ -129,7 +136,6 @@
 
   &:has(.contact-form__input--error) {
     border-color: var(--color-error);
-    background: var(--color-surface);
 
     .contact-form__prefix {
       background: var(--color-error) !important;
@@ -138,7 +144,6 @@
     }
 
     .contact-form__input {
-      background: var(--color-surface) !important;
       color: var(--color-error);
     }
   }
@@ -195,7 +200,6 @@
 
   &.contact-form__input--error {
     border-color: var(--color-error);
-    background: #fff0f0;
   }
 }
 

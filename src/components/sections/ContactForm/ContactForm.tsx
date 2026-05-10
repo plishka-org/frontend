@@ -24,7 +24,7 @@ const ContactForm = () => {
     if (!value) return "Поле обов'язкове";
     if (value.length < 2) return "Мінімум 2 символи";
     if (value.length > 50) return "Максимум 50 символів";
-    if (!/^[a-zA-Zа-яА-ЯіІїЇєЄ'-]+$/.test(value))
+    if (!/^[a-zA-Zа-яА-ЯіІїЇєЄ' -]+$/.test(value))
       return "Лише літери, дефіс та апостроф";
     return "";
   };
@@ -128,7 +128,7 @@ const ContactForm = () => {
               <div className="contact-form__row">
                 {/* Ім'я */}
                 <div className="contact-form__field">
-                  <label className="contact-form__label" htmlFor="name" >
+                  <label className="contact-form__label" htmlFor="name">
                     Ім'я
                   </label>
                   <input
@@ -183,7 +183,7 @@ const ContactForm = () => {
                 <div className="contact-form__textarea-wrapper">
                   <textarea
                     id="description"
-                     autoComplete="off"
+                    autoComplete="off"
                     value={description}
                     placeholder="Коротко опишіть ваше питання або що вас цікавить..."
                     onChange={handleDescriptionChange}
@@ -201,11 +201,15 @@ const ContactForm = () => {
                   <span className="contact-form__error">{descriptionError}</span>
                 )}
               </div>
-              {/* TODO: ТИМЧАСОВО — кнопка активна для всіх авторизованих з хардкодженим user у useAuth.tsx
-                  Після підключення реальної авторизації — user буде братись з API/токену */}
               <button
                 type="submit"
-                disabled={!isFormValid || !user}
+                disabled={!isFormValid}
+                onClick={(e) => {
+                  if (!user) {
+                    e.preventDefault();
+                    window.location.href = "/login";
+                  }
+                }}
                 className="contact-form__button"
               >
                 {user ? "Відправити заявку" : "Увійдіть щоб надіслати"}
