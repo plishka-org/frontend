@@ -26,11 +26,13 @@ export function BestProductsSection({ siteVariant = 'usual' }: BestProductsSecti
       <div className="best-products-section__inner">
         <div className="best-products-section__header">
           <h1 id="best-products-title">Наші найкращі вироби</h1>
+
           <a className="best-products-section__link" href={getGalleryUrl(siteVariant)}>
             <span>Всі товари</span>
             <span aria-hidden="true">→</span>
           </a>
         </div>
+
         <div className="best-products-carousel" aria-label="Найкращі вироби">
           {featuredProducts.map(({ product, renderKey }) => (
             <BestProductCard key={renderKey} product={product} siteVariant={siteVariant} />
@@ -56,6 +58,7 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
     <article className="best-product-card" data-cart-actions={features.showCartActions}>
       <a className="best-product-card__link" href={getProductUrl(product.id, siteVariant)}>
         <img src={product.image} alt={product.name} />
+
         <div className="best-product-card__body">
           <p>{product.category}</p>
           <h2 title={product.name}>{product.displayName ?? product.name}</h2>
@@ -79,13 +82,11 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
         {features.showFavorites && (
           <button
             className="best-product-card__favorite"
-            type="button"
             data-active={productIsFavorite}
+            type="button"
             aria-pressed={productIsFavorite}
             aria-label={
-              productIsFavorite
-                ? 'Прибрати з обраного'
-                : `Додати ${product.name} до обраного`
+              productIsFavorite ? 'Прибрати з обраного' : `Додати ${product.name} до обраного`
             }
             onClick={() => toggleFavorite(product.id)}
           >

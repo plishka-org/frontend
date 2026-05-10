@@ -2,8 +2,6 @@ type IconProps = {
   className?: string
 }
 
-import TrashPng from '../../icons/Button.png'
-
 export function HeartIcon({ className }: IconProps) {
   return (
     <svg className={className} aria-hidden="true" fill="none" viewBox="0 0 24 24">
@@ -123,6 +121,14 @@ export function FilterIcon({ className }: IconProps) {
 
 export function TrashIcon({ className }: IconProps) {
   return (
-    <img src={TrashPng} alt="Trash" aria-hidden="true" className={className} />
+    <svg className={className} aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path
+        d="M5 7h14M10 11v6M14 11v6M8 7l1-3h6l1 3M7 7l1 13h8l1-13"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.6"
+      />
+    </svg>
   )
 }

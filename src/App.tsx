@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BestProductsSection } from "./components/sections/BestProducts/BestProductsSection";
 import { ContactsSection } from "./components/sections/Contacts/ContactsSection";
 import { ReviewsSection } from "./components/sections/Reviews/ReviewsSection";
@@ -18,6 +18,8 @@ import { ShopProvider } from "./hooks/useShop";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
+  const appPath = getAppPath(window.location.pathname, window.location.hash);
+  const previousAppPathRef = useRef(appPath);
 
   useEffect(() => {
     function updateLocationKey() {
@@ -33,23 +35,23 @@ function App() {
     };
   }, []);
 
-  const appPath = getAppPath(window.location.pathname, window.location.hash);
+  useLayoutEffect(() => {
+    if (previousAppPathRef.current === appPath) {
+      return;
+    }
+
+    previousAppPathRef.current = appPath;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [appPath]);
+
   const productMatch = appPath.match(/^\/products\/([^/]+)\/?$/);
   const siteVariant = getSiteVariant();
 
-  if (appPath.match(/^\/gallery\/?$/)) {
-    return (
-      <AuthProvider>
-        <ShopProvider>
-          <GalleryPage siteVariant={siteVariant} />
-        </ShopProvider>
-      </AuthProvider>
-    );
-  }
-
   let pageContent;
 
-  if (productMatch) {
+  if (appPath.match(/^\/gallery\/?$/)) {
+    pageContent = <GalleryPage siteVariant={siteVariant} />;
+  } else if (productMatch) {
     const product = getProductById(productMatch[1]);
     pageContent = product ? (
       <ProductPage product={product} siteVariant={siteVariant} />
