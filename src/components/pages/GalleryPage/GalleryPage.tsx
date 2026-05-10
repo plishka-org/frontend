@@ -32,21 +32,15 @@ function filterProductsByCategories(activeCategories: string[]) {
   if (activeCategories.length === 0) {
     return galleryProducts
   }
-
   return galleryProducts.filter((product) => activeCategories.includes(product.category))
 }
 
 function readStoredGalleryState(): GalleryUrlState | null {
-  if (typeof window === 'undefined') {
-    return null
-  }
+  if (typeof window === 'undefined') return null
 
   try {
     const rawValue = window.sessionStorage.getItem(galleryStateStorageKey)
-
-    if (!rawValue) {
-      return null
-    }
+    if (!rawValue) return null
 
     const parsedValue = JSON.parse(rawValue) as Partial<GalleryUrlState>
     const activeCategories = Array.isArray(parsedValue.activeCategories)
@@ -67,10 +61,7 @@ function readStoredGalleryState(): GalleryUrlState | null {
 }
 
 function writeStoredGalleryState(activeCategories: string[], sort: GallerySort) {
-  if (typeof window === 'undefined') {
-    return
-  }
-
+  if (typeof window === 'undefined') return
   window.sessionStorage.setItem(
     galleryStateStorageKey,
     JSON.stringify({ activeCategories, sort }),
@@ -99,13 +90,10 @@ function readGalleryUrlState() {
 }
 
 function writeGalleryUrlState(activeCategories: string[], sort: GallerySort) {
-  if (typeof window === 'undefined') {
-    return
-  }
+  if (typeof window === 'undefined') return
 
   const nextUrl = new URL(window.location.href)
   nextUrl.searchParams.delete('category')
-
   activeCategories.forEach((category) => nextUrl.searchParams.append('category', category))
 
   if (sort === 'az') {
@@ -144,10 +132,7 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
 
   useEffect(() => {
     const isDrawerLayout = window.matchMedia('(max-width: 1100px)').matches
-
-    if (!isFilterOpen || !isDrawerLayout) {
-      return
-    }
+    if (!isFilterOpen || !isDrawerLayout) return
 
     const scrollY = window.scrollY
     const previousHtmlOverflow = document.documentElement.style.overflow
@@ -174,20 +159,10 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
 
   const visibleProducts = useMemo(() => {
     const filteredProducts = filterProductsByCategories(activeCategories)
-
     return [...filteredProducts].sort((firstProduct, secondProduct) => {
-      if (sort === 'za') {
-        return secondProduct.name.localeCompare(firstProduct.name, 'uk')
-      }
-
-      if (sort === 'priceHigh') {
-        return secondProduct.price - firstProduct.price
-      }
-
-      if (sort === 'priceLow') {
-        return firstProduct.price - secondProduct.price
-      }
-
+      if (sort === 'za') return secondProduct.name.localeCompare(firstProduct.name, 'uk')
+      if (sort === 'priceHigh') return secondProduct.price - firstProduct.price
+      if (sort === 'priceLow') return firstProduct.price - secondProduct.price
       return firstProduct.name.localeCompare(secondProduct.name, 'uk')
     })
   }, [activeCategories, sort])
@@ -205,7 +180,6 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
         writeGalleryUrlState(nextCategories, sort)
         return nextCategories
       }
-
       const nextCategories = [...currentCategories, category]
       writeGalleryUrlState(nextCategories, sort)
       return nextCategories
@@ -349,13 +323,9 @@ function GalleryFilters({
 
   const updateCategoryScrollState = useCallback(() => {
     const categoryList = categoryListRef.current
-
-    if (!categoryList) {
-      return
-    }
+    if (!categoryList) return
 
     const maxScrollTop = categoryList.scrollHeight - categoryList.clientHeight
-
     setCategoryScrollState({
       canScrollBackward: categoryList.scrollTop > 0,
       canScrollForward: categoryList.scrollTop < maxScrollTop - 1,
@@ -365,15 +335,11 @@ function GalleryFilters({
   useEffect(() => {
     updateCategoryScrollState()
     window.addEventListener('resize', updateCategoryScrollState)
-
     return () => window.removeEventListener('resize', updateCategoryScrollState)
   }, [updateCategoryScrollState])
 
   function scrollCategoryList(direction: -1 | 1) {
-    categoryListRef.current?.scrollBy({
-      top: direction * 168,
-      behavior: 'smooth',
-    })
+    categoryListRef.current?.scrollBy({ top: direction * 168, behavior: 'smooth' })
   }
 
   return (

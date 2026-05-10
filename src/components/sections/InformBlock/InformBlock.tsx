@@ -1,4 +1,5 @@
 import "../../../styles/sections/_inform-block.scss";
+import heroImage from "../../../icons/main_page_img.svg";
 import { getGalleryUrl } from '../../../utils/productUrl'
 import type { SiteVariant } from '../../../utils/siteVariant'
 
@@ -8,7 +9,10 @@ type InformBlockProps = {
 
 export function InformBlock({ siteVariant }: InformBlockProps) {
   return (
-    <section className="hero">
+    <section
+      className="hero"
+      style={{ backgroundImage: `url(${heroImage})` }}
+    >
       <div className="hero__content">
         <h1 className="hero__title">
           Вдячні, що ви
