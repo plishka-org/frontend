@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import { bestProducts } from '../../../data/bestProducts'
 import type { BestProduct } from '../../../data/bestProducts'
 import { useShop } from '../../../hooks/useShop'
@@ -54,6 +55,14 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
   const productIsFavorite = isFavorite(product.id)
   const productIsInCart = isInCart(product.id)
 
+  function handleFavoriteClick(event: MouseEvent<HTMLButtonElement>) {
+    if (event.detail > 0) {
+      event.currentTarget.blur()
+    }
+
+    toggleFavorite(product.id)
+  }
+
   return (
     <article className="best-product-card" data-cart-actions={features.showCartActions}>
       <a className="best-product-card__link" href={getProductUrl(product.id, siteVariant)}>
@@ -88,7 +97,7 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
             aria-label={
               productIsFavorite ? 'Прибрати з обраного' : `Додати ${product.name} до обраного`
             }
-            onClick={() => toggleFavorite(product.id)}
+            onClick={handleFavoriteClick}
           >
             <HeartIcon />
           </button>
