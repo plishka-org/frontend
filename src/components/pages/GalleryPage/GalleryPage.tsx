@@ -285,6 +285,11 @@ function GalleryProductCard({ product, siteVariant }: GalleryProductCardProps) {
   function handleFavoriteClick(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault()
     event.stopPropagation()
+
+    if (event.detail > 0) {
+      event.currentTarget.blur()
+    }
+
     toggleFavorite(product.id)
   }
 

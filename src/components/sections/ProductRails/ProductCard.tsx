@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import type { BestProduct } from '../../../data/bestProducts'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
@@ -14,6 +15,14 @@ export function ProductCard({ product, siteVariant }: ProductCardProps) {
   const href = getProductUrl(product.id, siteVariant)
   const { isFavorite, toggleFavorite } = useShop()
   const productIsFavorite = isFavorite(product.id)
+
+  function handleFavoriteClick(event: MouseEvent<HTMLButtonElement>) {
+    if (event.detail > 0) {
+      event.currentTarget.blur()
+    }
+
+    toggleFavorite(product.id)
+  }
 
   return (
     <article className="product-rail-card">
@@ -33,7 +42,7 @@ export function ProductCard({ product, siteVariant }: ProductCardProps) {
           aria-label={
             productIsFavorite ? 'Прибрати з обраного' : `Додати ${product.name} до обраного`
           }
-          onClick={() => toggleFavorite(product.id)}
+          onClick={handleFavoriteClick}
         >
           <HeartIcon />
         </button>
