@@ -21,7 +21,7 @@ const ContactForm = () => {
   const [descriptionTouched, setDescriptionTouched] = useState(false);
 
   const validateName = (value: string): string => {
-    if (!value) return "Поле обов'язкове";
+    if (!value) return "";
     if (value.length < 2) return "Мінімум 2 символи";
     if (value.length > 50) return "Максимум 50 символів";
     if (!/^[a-zA-Zа-яА-ЯіІїЇєЄ' -]+$/.test(value))
@@ -212,7 +212,7 @@ const ContactForm = () => {
                 }}
                 className="contact-form__button"
               >
-                {user ? "Відправити заявку" : "Увійдіть щоб надіслати"}
+                Відправити заявку
               </button>
             </form>
           )}

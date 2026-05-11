@@ -95,9 +95,7 @@
   background: var(--color-surface);
   color: var(--color-heading);
   outline: none;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
+  transition: border-color 0.2s;
 
   &::placeholder {
     color: var(--color-muted);
@@ -127,8 +125,7 @@
   border-radius: 50px;
   overflow: hidden;
   transition:
-    border-color 0.2s,
-    background 0.2s;
+    border-color 0.2s;
 
   &:focus-within {
     border-color: var(--color-primary);
@@ -138,13 +135,9 @@
     border-color: var(--color-error);
 
     .contact-form__prefix {
-      background: var(--color-error) !important;
-      color: #fff !important;
+      background: var(--color-error);
+      color: #fff;
       border-right-color: var(--color-error) !important;
-    }
-
-    .contact-form__input {
-      color: var(--color-error);
     }
   }
 
@@ -186,9 +179,7 @@
   color: var(--color-heading);
   resize: none;
   outline: none;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
+  transition: border-color 0.2s;
 
   &::placeholder {
     color: var(--color-muted);
