@@ -35,6 +35,10 @@ export function getGalleryUrl(siteVariant: SiteVariant = 'usual') {
   return withSiteVariant('/gallery', siteVariant, true)
 }
 
+export function getReviewsUrl(siteVariant: SiteVariant = 'usual') {
+  return withSiteVariant('/reviews', siteVariant, true)
+}
+
 export function getProductUrl(productId: string, siteVariant: SiteVariant = 'usual') {
   return withSiteVariant(`/products/${productId}`, siteVariant, true)
 }

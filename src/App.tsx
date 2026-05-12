@@ -6,6 +6,7 @@ import { Footer } from "./components/layout/Footer/Footer";
 import { Header } from "./components/layout/Header/Header";
 import { GalleryPage } from "./components/pages/GalleryPage/GalleryPage";
 import { ProductPage } from "./components/pages/ProductPage/ProductPage";
+import { ReviewsPage } from "./components/pages/ReviewsPage/ReviewsPage";
 import { getProductById } from "./data/bestProducts";
 import { getAppPath } from "./utils/productUrl";
 import { getSiteVariant } from "./utils/siteVariant";
@@ -51,6 +52,8 @@ function App() {
 
   if (appPath.match(/^\/gallery\/?$/)) {
     pageContent = <GalleryPage siteVariant={siteVariant} />;
+  } else if (appPath.match(/^\/reviews\/?$/)) {
+    pageContent = <ReviewsPage siteVariant={siteVariant} />;
   } else if (productMatch) {
     const product = getProductById(productMatch[1]);
     pageContent = product ? (
