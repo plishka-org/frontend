@@ -13,7 +13,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 32px;
-    margin-bottom: 40px;
+    margin-bottom: 32px;
   }
 
   h1 {
@@ -58,6 +58,10 @@
       outline-offset: 4px;
     }
   }
+}
+
+.best-products-section .order-unavailable-notice {
+  margin-bottom: 24px;
 }
 
 .best-products-carousel {

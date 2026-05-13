@@ -3,6 +3,7 @@ import type { BestProduct } from '../../../data/bestProducts'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
 import type { SiteVariant } from '../../../utils/siteVariant'
+import { OrderUnavailableNotice } from '../../OrderUnavailableNotice'
 import { ArrowIcon, CheckIcon, HeartIcon } from '../../icons/UiIcons'
 
 type ProductDetailSectionProps = {
@@ -90,6 +91,8 @@ export function ProductDetailSection({ product, siteVariant }: ProductDetailSect
         <h1 id="product-title">{product.name}</h1>
         <h2>Опис</h2>
         <p>{product.description}</p>
+
+        {siteVariant === 'usual' && <OrderUnavailableNotice />}
 
         {siteVariant === 'order' && (
           <div className="product-purchase">

@@ -172,6 +172,13 @@
   }
 }
 
+@media (hover: none) {
+  .gallery-card__favorite {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
 .gallery-filters {
   align-self: start;
   position: sticky;

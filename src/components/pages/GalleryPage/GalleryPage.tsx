@@ -7,6 +7,7 @@ import type { GalleryProduct } from '../../../data/galleryProducts'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
 import { getProductUrl } from '../../../utils/productUrl'
+import { siteVariantFeatures } from '../../../utils/siteVariant'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { ArrowIcon, CloseIcon, HeartIcon, TrashIcon } from '../../icons/UiIcons'
 import { Footer } from '../../layout/Footer/Footer'
@@ -279,6 +280,7 @@ type GalleryProductCardProps = {
 
 function GalleryProductCard({ product, siteVariant }: GalleryProductCardProps) {
   const { isFavorite, toggleFavorite } = useShop()
+  const features = siteVariantFeatures[siteVariant]
   const productIsFavorite = isFavorite(product.id)
   const productUrl = getProductUrl(product.id, siteVariant)
 
@@ -302,10 +304,10 @@ function GalleryProductCard({ product, siteVariant }: GalleryProductCardProps) {
       <a className="gallery-card__title-link" href={productUrl}>
         <h2 title={product.name}>{product.name}</h2>
       </a>
-      {siteVariant === 'order' && (
+      {features.showPrices && (
         <span className="gallery-card__price">{formatPrice(product.price)}</span>
       )}
-      {siteVariant === 'usual' && (
+      {features.showFavorites && (
         <button
           className="gallery-card__favorite"
           data-active={productIsFavorite}

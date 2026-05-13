@@ -105,6 +105,21 @@ export function CheckIcon({ className }: IconProps) {
   )
 }
 
+export function InfoIcon({ className }: IconProps) {
+  return (
+    <svg className={className} aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="M12 10.8v5.2M12 8h.01"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.9"
+      />
+    </svg>
+  )
+}
+
 export function FilterIcon({ className }: IconProps) {
   return (
     <svg className={className} aria-hidden="true" fill="none" viewBox="0 0 24 24">
