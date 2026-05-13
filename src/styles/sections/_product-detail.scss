@@ -155,6 +155,10 @@
   }
 }
 
+.product-detail__info .order-unavailable-notice {
+  margin-top: 32px;
+}
+
 .product-detail__favorite {
   position: absolute;
   top: 20px;
@@ -213,6 +217,7 @@
     }
 
     p,
+    .order-unavailable-notice,
     .product-purchase {
       grid-column: 1 / -1;
     }

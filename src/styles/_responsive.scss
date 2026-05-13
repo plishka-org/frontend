@@ -87,7 +87,7 @@
       align-items: flex-start;
       flex-direction: column;
       gap: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     h1 {
@@ -100,6 +100,10 @@
   .best-products-carousel {
     gap: 24px;
     scroll-padding-inline: 24px;
+  }
+
+  .best-products-section .order-unavailable-notice {
+    margin-bottom: 24px;
   }
 
   .best-product-card {
@@ -322,6 +326,17 @@
     scroll-padding-inline: 16px;
   }
 
+  .best-products-section .order-unavailable-notice {
+    max-width: 320px;
+    margin-bottom: 18px;
+    font-size: 14px;
+  }
+
+  .product-detail__info .order-unavailable-notice {
+    margin-top: 28px;
+    font-size: 16px;
+  }
+
   .best-product-card {
     flex-basis: min(248px, calc(100vw - 32px));
     min-height: 374px;
@@ -488,5 +503,10 @@
     top: 6px;
     width: 58px;
     height: 58px;
+  }
+
+  .product-detail__info .order-unavailable-notice {
+    max-width: 560px;
+    font-size: 16px;
   }
 }

@@ -6,6 +6,7 @@ import { formatPrice } from '../../../utils/formatPrice'
 import { getGalleryUrl, getProductUrl } from '../../../utils/productUrl'
 import { siteVariantFeatures } from '../../../utils/siteVariant'
 import type { SiteVariant } from '../../../utils/siteVariant'
+import { OrderUnavailableNotice } from '../../OrderUnavailableNotice'
 import { CheckIcon, HeartIcon } from '../../icons/UiIcons'
 
 type BestProductsSectionProps = {
@@ -29,10 +30,12 @@ export function BestProductsSection({ siteVariant = 'usual' }: BestProductsSecti
           <h1 id="best-products-title">Наші найкращі вироби</h1>
 
           <a className="best-products-section__link" href={getGalleryUrl(siteVariant)}>
-            <span>Всі товари</span>
+            <span>УСІ ВИРОБИ</span>
             <span aria-hidden="true">→</span>
           </a>
         </div>
+
+        {siteVariant === 'usual' && <OrderUnavailableNotice />}
 
         <div className="best-products-carousel" aria-label="Найкращі вироби">
           {featuredProducts.map(({ product, renderKey }) => (
