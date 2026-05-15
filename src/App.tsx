@@ -5,6 +5,7 @@ import { ReviewsSection } from "./components/sections/Reviews/ReviewsSection";
 import { Footer } from "./components/layout/Footer/Footer";
 import { Header } from "./components/layout/Header/Header";
 import { GalleryPage } from "./components/pages/GalleryPage/GalleryPage";
+import { NotFoundPage } from "./components/pages/NotFoundPage/NotFoundPage";
 import { ProductPage } from "./components/pages/ProductPage/ProductPage";
 import { ReviewsPage } from "./components/pages/ReviewsPage/ReviewsPage";
 import { getProductById } from "./data/bestProducts";
@@ -59,10 +60,16 @@ function App() {
     pageContent = product ? (
       <ProductPage product={product} siteVariant={siteVariant} />
     ) : (
-      <HomePage siteVariant={siteVariant} />
+      <NotFoundPage
+        description="Можливо, посилання застаріле або товар більше недоступний."
+        siteVariant={siteVariant}
+        title="Товар не знайдено"
+      />
     );
-  } else {
+  } else if (appPath.match(/^\/?$/)) {
     pageContent = <HomePage siteVariant={siteVariant} />;
+  } else {
+    pageContent = <NotFoundPage siteVariant={siteVariant} />;
   }
 
   return (

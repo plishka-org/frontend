@@ -1,0 +1,135 @@
+.not-found-page {
+  min-height: 100svh;
+}
+
+.not-found-page__content {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 560px;
+  min-width: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  padding: 96px 24px 112px;
+  text-align: center;
+}
+
+.not-found-page__eyebrow {
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  min-height: 40px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(47, 79, 62, 0.22);
+  border-radius: 999px;
+  background: rgba(47, 79, 62, 0.06);
+  color: var(--color-primary);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.not-found-page h1 {
+  width: 100%;
+  max-width: 760px;
+  min-width: 0;
+  margin: 0 auto;
+  color: var(--color-heading);
+  font-family: var(--font-heading);
+  font-size: 72px;
+  font-weight: 600;
+  line-height: 1.08;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+  text-align: center;
+}
+
+.not-found-page p {
+  width: 100%;
+  max-width: 560px;
+  min-width: 0;
+  margin: 24px auto 0;
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.not-found-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  margin: 36px auto 0;
+}
+
+.not-found-page__primary,
+.not-found-page__secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 168px;
+  min-height: 52px;
+  border: 1px solid var(--color-primary);
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.not-found-page__primary {
+  background: var(--color-primary);
+  color: var(--color-surface);
+}
+
+.not-found-page__secondary {
+  background: transparent;
+  color: var(--color-primary);
+}
+
+.not-found-page__primary:hover,
+.not-found-page__secondary:hover {
+  transform: translateY(-1px);
+}
+
+.not-found-page__secondary:hover {
+  background: rgba(47, 79, 62, 0.06);
+}
+
+@media (max-width: 760px) {
+  .not-found-page__content {
+    min-height: 520px;
+    padding: 72px 16px 88px;
+  }
+
+  .not-found-page h1 {
+    max-width: 360px;
+    font-size: 40px;
+    text-wrap: balance;
+  }
+
+  .not-found-page p {
+    font-size: 16px;
+  }
+
+  .not-found-page__actions {
+    max-width: 360px;
+    flex-direction: column;
+  }
+
+  .not-found-page__primary,
+  .not-found-page__secondary {
+    width: 100%;
+    min-width: 0;
+  }
+}
