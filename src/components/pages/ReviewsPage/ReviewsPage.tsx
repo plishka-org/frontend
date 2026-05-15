@@ -12,15 +12,10 @@ type ReviewsPageProps = {
   siteVariant: SiteVariant
 }
 
-const reviewsPerPage = 4
-
 export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
   const [activeReviewIndex, setActiveReviewIndex] = useState(0)
   const [activeImageIndex, setActiveImageIndex] = useState(1)
-  const [visibleReviewCount, setVisibleReviewCount] = useState(reviewsPerPage)
   const activeReview = testimonials[activeReviewIndex]
-  const visibleTestimonials = testimonials.slice(0, visibleReviewCount)
-  const hasMoreReviews = visibleReviewCount < testimonials.length
 
   function selectReview(reviewIndex: number) {
     setActiveReviewIndex(reviewIndex)
@@ -36,12 +31,6 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
   function showNextImage() {
     setActiveImageIndex((currentIndex) =>
       currentIndex === activeReview.images.length - 1 ? 0 : currentIndex + 1,
-    )
-  }
-
-  function showMoreReviews() {
-    setVisibleReviewCount((currentCount) =>
-      Math.min(currentCount + reviewsPerPage, testimonials.length),
     )
   }
 
@@ -108,10 +97,8 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
 
           <ReviewsGrid
             activeReviewId={activeReview.id}
-            hasMoreReviews={hasMoreReviews}
             onReviewSelect={selectReview}
-            onShowMore={showMoreReviews}
-            reviews={visibleTestimonials}
+            reviews={testimonials}
           />
         </div>
       </section>
@@ -124,17 +111,13 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
 
 type ReviewsGridProps = {
   activeReviewId: number
-  hasMoreReviews: boolean
   onReviewSelect: (reviewIndex: number) => void
-  onShowMore: () => void
   reviews: Testimonial[]
 }
 
 function ReviewsGrid({
   activeReviewId,
-  hasMoreReviews,
   onReviewSelect,
-  onShowMore,
   reviews,
 }: ReviewsGridProps) {
   return (
@@ -149,12 +132,6 @@ function ReviewsGrid({
           />
         ))}
       </div>
-
-      {hasMoreReviews && (
-        <button className="reviews-grid-block__more" type="button" onClick={onShowMore}>
-          Показати ще
-        </button>
-      )}
     </div>
   )
 }
