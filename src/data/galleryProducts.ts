@@ -13,7 +13,7 @@ export type GalleryProduct = {
   price: number
 }
 
-export const galleryProducts: GalleryProduct[] = [
+const galleryPageProducts: GalleryProduct[] = [
   {
     id: 'gallery-gazebo-classic',
     category: 'Альтанки',
@@ -56,7 +56,56 @@ export const galleryProducts: GalleryProduct[] = [
     image: gallery6,
     price: 2800,
   },
+  {
+    id: 'gallery-gazebo-bench-copy',
+    category: 'Альтанки',
+    name: 'Альтанка 3,5М*2,5М',
+    image: gallery4,
+    price: 2200,
+  },
+  {
+    id: 'gallery-gazebo-small-copy',
+    category: 'Альтанки',
+    name: 'Альтанка 3М*2М',
+    image: gallery5,
+    price: 2000,
+  },
+  {
+    id: 'gallery-gazebo-paving-copy',
+    category: 'Альтанки',
+    name: 'Альтанка на бруківці 3,30М*3,30М',
+    image: gallery6,
+    price: 2800,
+  },
+  {
+    id: 'gallery-gazebo-bench-extra',
+    category: 'Альтанки',
+    name: 'Альтанка 3,5М*2,5М',
+    image: gallery4,
+    price: 2200,
+  },
+  {
+    id: 'gallery-gazebo-small-extra',
+    category: 'Альтанки',
+    name: 'Альтанка 3М*2М',
+    image: gallery5,
+    price: 2000,
+  },
+  {
+    id: 'gallery-gazebo-paving-extra',
+    category: 'Альтанки',
+    name: 'Альтанка на бруківці 3,30М*3,30М',
+    image: gallery6,
+    price: 2800,
+  },
 ]
+
+export const galleryProducts: GalleryProduct[] = Array.from({ length: 4 }, (_, pageIndex) =>
+  galleryPageProducts.map((product) => ({
+    ...product,
+    id: pageIndex === 0 ? product.id : `${product.id}-page-${pageIndex + 1}`,
+  })),
+).flat()
 
 export const galleryCategories = [
   'Усі категорії',

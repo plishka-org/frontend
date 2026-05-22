@@ -1,28 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
-import type { MouseEvent } from 'react'
-import filterButtonIcon from '../../../assets/galery-block/icons/button-filter-2.svg'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { galleryCategories, galleryProducts } from '../../../data/galleryProducts'
-import type { GalleryProduct } from '../../../data/galleryProducts'
-import { useShop } from '../../../hooks/useShop'
-import { formatPrice } from '../../../utils/formatPrice'
-import { getProductUrl } from '../../../utils/productUrl'
 import { siteVariantFeatures } from '../../../utils/siteVariant'
 import type { SiteVariant } from '../../../utils/siteVariant'
-import { ArrowIcon, CloseIcon, HeartIcon, TrashIcon } from '../../icons/UiIcons'
+import { OrderUnavailableNotice } from '../../OrderUnavailableNotice'
 import { Footer } from '../../layout/Footer/Footer'
 import { Header } from '../../layout/Header/Header'
 import { ContactsSection } from '../../sections/Contacts/ContactsSection'
 import ContactForm from '../../sections/ContactForm/ContactForm'
+import { GalleryFilters, GalleryFilterTrigger } from './GalleryFilters'
+import { GalleryPagination } from './GalleryPagination'
+import { GalleryProductCard } from './GalleryProductCard'
+import { GalleryProductSkeletonCard } from './GalleryProductSkeletonCard'
+import type { GallerySort } from './types'
 
 type GalleryPageProps = {
   siteVariant: SiteVariant
 }
 
-type GallerySort = 'az' | 'za' | 'priceHigh' | 'priceLow'
-
 const gallerySorts: GallerySort[] = ['az', 'za', 'priceHigh', 'priceLow']
 const galleryStateStorageKey = 'plishkaGalleryState'
+const galleryProductsPerPage = 12
+const gallerySkeletonCardCount = 12
 
 type GalleryUrlState = {
   activeCategories: string[]
@@ -125,6 +123,9 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
   )
   const [sort, setSort] = useState<GallerySort>(() => readGalleryUrlState().sort)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isProductsLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const productsRef = useRef<HTMLDivElement>(null)
   const activeFilterCount = activeCategories.length
 
   useEffect(() => {
@@ -132,6 +133,7 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
       const nextState = readGalleryUrlState()
       setActiveCategories(nextState.activeCategories)
       setSort(nextState.sort)
+      setCurrentPage(1)
     }
 
     window.addEventListener('popstate', syncFromUrl)
@@ -192,8 +194,16 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
       return firstProduct.name.localeCompare(secondProduct.name, 'uk')
     })
   }, [activeCategories, sort])
+  const totalPages = Math.ceil(visibleProducts.length / galleryProductsPerPage)
+  const activePage = totalPages > 0 ? Math.min(currentPage, totalPages) : 1
+  const paginatedProducts = visibleProducts.slice(
+    (activePage - 1) * galleryProductsPerPage,
+    activePage * galleryProductsPerPage,
+  )
 
   function toggleCategory(category: string) {
+    setCurrentPage(1)
+
     if (category === 'Усі категорії') {
       setActiveCategories([])
       writeGalleryUrlState([], sort)
@@ -214,14 +224,21 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
   }
 
   function changeSort(nextSort: GallerySort) {
+    setCurrentPage(1)
     setSort(nextSort)
     writeGalleryUrlState(activeCategories, nextSort)
   }
 
   function resetFilters() {
+    setCurrentPage(1)
     setActiveCategories([])
     setSort('az')
     writeGalleryUrlState([], 'az')
+  }
+
+  function changePage(nextPage: number) {
+    setCurrentPage(nextPage)
+    productsRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
   }
 
   return (
@@ -240,29 +257,52 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
           sort={sort}
         />
 
-        <div className="gallery-products">
+        <div className="gallery-products" ref={productsRef}>
           <div className="gallery-products__header">
             <h1 id="gallery-title">Вироби</h1>
-            <button
-              className="gallery-filter-trigger"
-              type="button"
-              aria-label={`Відкрити фільтри, застосовано ${activeFilterCount}`}
-              onClick={() => setIsFilterOpen(true)}
-            >
-              <span className="gallery-filter-trigger__label">Фільтри</span>
-              <span className="gallery-filter-trigger__count">({activeFilterCount})</span>
-              <img src={filterButtonIcon} alt="" aria-hidden="true" />
-            </button>
+            <GalleryFilterTrigger
+              activeFilterCount={activeFilterCount}
+              onOpen={() => setIsFilterOpen(true)}
+            />
           </div>
 
-          {visibleProducts.length === 0 ? (
-            <p className="gallery-products__empty">Немає виробів за вибраними фільтрами</p>
-          ) : (
-            <div className="gallery-products__grid" aria-label="Вироби галереї">
-              {visibleProducts.map((product) => (
-                <GalleryProductCard key={product.id} product={product} siteVariant={siteVariant} />
+          {!siteVariantFeatures[siteVariant].showCartActions && (
+            <div className="gallery-products__notice">
+              <OrderUnavailableNotice />
+            </div>
+          )}
+
+          {isProductsLoading ? (
+            <div
+              className="gallery-products__grid"
+              aria-label="Вироби завантажуються"
+              aria-busy="true"
+            >
+              {Array.from({ length: gallerySkeletonCardCount }, (_, index) => (
+                <GalleryProductSkeletonCard key={index} />
               ))}
             </div>
+          ) : visibleProducts.length === 0 ? (
+            <p className="gallery-products__empty">Немає виробів за вибраними фільтрами</p>
+          ) : (
+            <>
+              <div className="gallery-products__grid" aria-label="Вироби галереї">
+                {paginatedProducts.map((product) => (
+                  <GalleryProductCard
+                    key={product.id}
+                    product={product}
+                    siteVariant={siteVariant}
+                  />
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <GalleryPagination
+                  currentPage={activePage}
+                  totalPages={totalPages}
+                  onPageChange={changePage}
+                />
+              )}
+            </>
           )}
         </div>
       </section>
@@ -270,256 +310,5 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
       <ContactsSection />
       <Footer />
     </main>
-  )
-}
-
-type GalleryProductCardProps = {
-  product: GalleryProduct
-  siteVariant: SiteVariant
-}
-
-function GalleryProductCard({ product, siteVariant }: GalleryProductCardProps) {
-  const { isFavorite, toggleFavorite } = useShop()
-  const features = siteVariantFeatures[siteVariant]
-  const productIsFavorite = isFavorite(product.id)
-  const productUrl = getProductUrl(product.id, siteVariant)
-
-  function handleFavoriteClick(event: MouseEvent<HTMLButtonElement>) {
-    event.preventDefault()
-    event.stopPropagation()
-
-    if (event.detail > 0) {
-      event.currentTarget.blur()
-    }
-
-    toggleFavorite(product.id)
-  }
-
-  return (
-    <article className="gallery-card">
-      <a className="gallery-card__image-link" href={productUrl} tabIndex={-1} aria-hidden="true">
-        <img src={product.image} alt={product.name} />
-      </a>
-      <p>{product.category}</p>
-      <a className="gallery-card__title-link" href={productUrl}>
-        <h2 title={product.name}>{product.name}</h2>
-      </a>
-      {features.showPrices && (
-        <span className="gallery-card__price">{formatPrice(product.price)}</span>
-      )}
-      {features.showFavorites && (
-        <button
-          className="gallery-card__favorite"
-          data-active={productIsFavorite}
-          type="button"
-          aria-pressed={productIsFavorite}
-          aria-label={
-            productIsFavorite ? 'Прибрати з обраного' : `Додати ${product.name} до обраного`
-          }
-          onClick={handleFavoriteClick}
-        >
-          <HeartIcon />
-        </button>
-      )}
-    </article>
-  )
-}
-
-type GalleryFiltersProps = {
-  activeFilterCount: number
-  isOpen: boolean
-  onClose: () => void
-  onReset: () => void
-  onSortChange: (sort: GallerySort) => void
-  onToggleCategory: (category: string) => void
-  activeCategories: string[]
-  siteVariant: SiteVariant
-  sort: GallerySort
-}
-
-function GalleryFilters({
-  activeFilterCount,
-  isOpen,
-  onClose,
-  onReset,
-  onSortChange,
-  onToggleCategory,
-  activeCategories,
-  siteVariant,
-  sort,
-}: GalleryFiltersProps) {
-  const categoryListRef = useRef<HTMLDivElement>(null)
-  const [categoryScrollState, setCategoryScrollState] = useState({
-    canScrollBackward: false,
-    canScrollForward: false,
-  })
-
-  const updateCategoryScrollState = useCallback(() => {
-    const categoryList = categoryListRef.current
-
-    if (!categoryList) {
-      return
-    }
-
-    const maxScrollTop = categoryList.scrollHeight - categoryList.clientHeight
-
-    setCategoryScrollState({
-      canScrollBackward: categoryList.scrollTop > 0,
-      canScrollForward: categoryList.scrollTop < maxScrollTop - 1,
-    })
-  }, [])
-
-  useEffect(() => {
-    updateCategoryScrollState()
-    window.addEventListener('resize', updateCategoryScrollState)
-
-    return () => window.removeEventListener('resize', updateCategoryScrollState)
-  }, [updateCategoryScrollState])
-
-  function scrollCategoryList(direction: -1 | 1) {
-    categoryListRef.current?.scrollBy({
-      top: direction * 168,
-      behavior: 'smooth',
-    })
-  }
-
-  return (
-    <>
-      <button
-        className="gallery-filter-backdrop"
-        data-open={isOpen}
-        type="button"
-        aria-label="Закрити фільтри"
-        onClick={onClose}
-      />
-      <aside className="gallery-filters" data-open={isOpen} aria-label="Фільтри галереї">
-        <div className="gallery-filters__top">
-          <h2>Фільтри</h2>
-          <button type="button" aria-label="Закрити фільтри" onClick={onClose}>
-            <CloseIcon />
-          </button>
-        </div>
-
-        <FilterGroup title="Категорії">
-          <div className="gallery-filters__category-list">
-            <button
-              className="gallery-filters__category-nav"
-              type="button"
-              aria-label="Прокрутити категорії вгору"
-              disabled={!categoryScrollState.canScrollBackward}
-              onClick={() => scrollCategoryList(-1)}
-            >
-              <ArrowIcon />
-            </button>
-            <div
-              className="gallery-filters__scroll"
-              ref={categoryListRef}
-              aria-label="Категорії виробів"
-              onScroll={updateCategoryScrollState}
-            >
-              {galleryCategories.map((category) => (
-                <CategoryTag
-                  isActive={
-                    category === 'Усі категорії'
-                      ? activeCategories.length === 0
-                      : activeCategories.includes(category)
-                  }
-                  key={category}
-                  label={category}
-                  onClick={() => onToggleCategory(category)}
-                />
-              ))}
-            </div>
-            <button
-              className="gallery-filters__category-nav"
-              type="button"
-              aria-label="Прокрутити категорії вниз"
-              disabled={!categoryScrollState.canScrollForward}
-              onClick={() => scrollCategoryList(1)}
-            >
-              <ArrowIcon />
-            </button>
-          </div>
-        </FilterGroup>
-
-        <FilterGroup title="Сортування">
-          <label className="gallery-radio">
-            <input checked={sort === 'az'} type="radio" onChange={() => onSortChange('az')} />
-            <span aria-hidden="true" />
-            За алфавітом: від А до Я
-          </label>
-          <label className="gallery-radio">
-            <input checked={sort === 'za'} type="radio" onChange={() => onSortChange('za')} />
-            <span aria-hidden="true" />
-            За алфавітом: від Я до А
-          </label>
-          {siteVariant === 'order' && (
-            <>
-              <label className="gallery-radio">
-                <input
-                  checked={sort === 'priceHigh'}
-                  type="radio"
-                  onChange={() => onSortChange('priceHigh')}
-                />
-                <span aria-hidden="true" />
-                За ціною: від найбільшої
-              </label>
-              <label className="gallery-radio">
-                <input
-                  checked={sort === 'priceLow'}
-                  type="radio"
-                  onChange={() => onSortChange('priceLow')}
-                />
-                <span aria-hidden="true" />
-                За ціною: від найменшої
-              </label>
-            </>
-          )}
-        </FilterGroup>
-
-        <button className="gallery-filters__reset" type="button" onClick={onReset}>
-          <span>Очистити фільтри</span>
-          <TrashIcon />
-        </button>
-        <span className="gallery-filters__count" aria-live="polite">
-          {activeFilterCount}
-        </span>
-      </aside>
-    </>
-  )
-}
-
-type CategoryTagProps = {
-  isActive: boolean
-  label: string
-  onClick: () => void
-}
-
-function CategoryTag({ isActive, label, onClick }: CategoryTagProps) {
-  return (
-    <button
-      className="category-tag"
-      data-active={isActive}
-      type="button"
-      aria-pressed={isActive}
-      onClick={onClick}
-    >
-      <span aria-hidden="true" />
-      {label}
-    </button>
-  )
-}
-
-type FilterGroupProps = {
-  children: ReactNode
-  title: string
-}
-
-function FilterGroup({ children, title }: FilterGroupProps) {
-  return (
-    <section className="gallery-filters__group">
-      <h3>{title}</h3>
-      {children}
-    </section>
   )
 }
