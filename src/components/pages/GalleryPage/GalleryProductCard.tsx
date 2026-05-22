@@ -1,0 +1,60 @@
+import type { MouseEvent } from 'react'
+import type { GalleryProduct } from '../../../data/galleryProducts'
+import { useShop } from '../../../hooks/useShop'
+import { formatPrice } from '../../../utils/formatPrice'
+import { getProductUrl } from '../../../utils/productUrl'
+import { siteVariantFeatures } from '../../../utils/siteVariant'
+import type { SiteVariant } from '../../../utils/siteVariant'
+import { HeartIcon } from '../../icons/UiIcons'
+
+type GalleryProductCardProps = {
+  product: GalleryProduct
+  siteVariant: SiteVariant
+}
+
+export function GalleryProductCard({ product, siteVariant }: GalleryProductCardProps) {
+  const { isFavorite, toggleFavorite } = useShop()
+  const features = siteVariantFeatures[siteVariant]
+  const productIsFavorite = isFavorite(product.id)
+  const productUrl = getProductUrl(product.id, siteVariant)
+
+  function handleFavoriteClick(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    if (event.detail > 0) {
+      event.currentTarget.blur()
+    }
+
+    toggleFavorite(product.id)
+  }
+
+  return (
+    <article className="gallery-card" data-has-price={features.showPrices}>
+      <a className="gallery-card__image-link" href={productUrl} tabIndex={-1} aria-hidden="true">
+        <img src={product.image} alt={product.name} />
+      </a>
+      <p>{product.category}</p>
+      <a className="gallery-card__title-link" href={productUrl}>
+        <h2 title={product.name}>{product.name}</h2>
+      </a>
+      {features.showPrices && (
+        <span className="gallery-card__price">{formatPrice(product.price)}</span>
+      )}
+      {features.showFavorites && (
+        <button
+          className="gallery-card__favorite"
+          data-active={productIsFavorite}
+          type="button"
+          aria-pressed={productIsFavorite}
+          aria-label={
+            productIsFavorite ? 'Прибрати з обраного' : `Додати ${product.name} до обраного`
+          }
+          onClick={handleFavoriteClick}
+        >
+          <HeartIcon />
+        </button>
+      )}
+    </article>
+  )
+}
