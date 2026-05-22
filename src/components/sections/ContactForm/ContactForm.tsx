@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useAuth } from "../../../hooks/useAuth";
+import { IMaskInput } from "react-imask";
 import contactImage from "../../../icons/contact-form-image.png";
 import "../../../styles/sections/_contact-form.scss";
+import { ContactInput } from "./ContactInput";
 
 const ContactForm = () => {
-  const { user } = useAuth();
-
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [name, setName] = useState("");
@@ -54,10 +53,10 @@ const ContactForm = () => {
     if (nameTouched) setNameError(validateName(value));
   };
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, "");
-    setPhone(value);
-    if (phoneTouched) setPhoneError(validatePhone(value));
+  const handlePhoneAccept = (value: string) => {
+    const nextPhone = value.replace(/\D/g, "").slice(0, 10);
+    setPhone(nextPhone);
+    if (phoneTouched) setPhoneError(validatePhone(nextPhone));
   };
 
   const handleDescriptionChange = (
@@ -126,28 +125,20 @@ const ContactForm = () => {
           ) : (
             <form className="contact-form" onSubmit={handleSubmit}>
               <div className="contact-form__row">
-                {/* Ім'я */}
-                <div className="contact-form__field">
-                  <label className="contact-form__label" htmlFor="name">
-                    Ім'я
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    autoComplete="name"
-                    value={name}
-                    placeholder="Ваше ім'я"
-                    onChange={handleNameChange}
-                    onBlur={() => {
-                      setNameTouched(true);
-                      setNameError(validateName(name));
-                    }}
-                    className={`contact-form__input ${nameTouched && nameError ? "contact-form__input--error" : ""}`}
-                  />
-                  {nameTouched && nameError && (
-                    <span className="contact-form__error">{nameError}</span>
-                  )}
-                </div>
+                <ContactInput
+                  id="name"
+                  type="text"
+                  autoComplete="name"
+                  error={nameTouched ? nameError : ""}
+                  label="Ім'я"
+                  value={name}
+                  placeholder="Ваше ім'я"
+                  onChange={handleNameChange}
+                  onBlur={() => {
+                    setNameTouched(true);
+                    setNameError(validateName(name));
+                  }}
+                />
                 {/* Телефон */}
                 <div className="contact-form__field">
                   <label className="contact-form__label" htmlFor="phone">
@@ -155,23 +146,27 @@ const ContactForm = () => {
                   </label>
                   <div className="contact-form__phone-wrapper">
                     <span className="contact-form__prefix">+38</span>
-                    <input
+                    <IMaskInput
                       id="phone"
-                      type="text"
                       autoComplete="tel-national"
+                      className={`contact-form__input ${phoneTouched && phoneError ? "contact-form__input--error" : ""}`}
+                      mask="000 000 00 00"
+                      unmask={true}
                       value={phone}
-                      placeholder="0XXXXXXXXX"
-                      onChange={handlePhoneChange}
+                      placeholder="0XX XXX XX XX"
+                      onAccept={(value) => handlePhoneAccept(String(value))}
                       onBlur={() => {
                         setPhoneTouched(true);
                         setPhoneError(validatePhone(phone));
                       }}
-                      maxLength={10}
-                      className={`contact-form__input ${phoneTouched && phoneError ? "contact-form__input--error" : ""}`}
+                      aria-describedby={phoneTouched && phoneError ? "phone-error" : undefined}
+                      aria-invalid={Boolean(phoneTouched && phoneError)}
                     />
                   </div>
                   {phoneTouched && phoneError && (
-                    <span className="contact-form__error">{phoneError}</span>
+                    <span className="contact-form__error" id="phone-error">
+                      {phoneError}
+                    </span>
                   )}
                 </div>
               </div>
@@ -204,12 +199,6 @@ const ContactForm = () => {
               <button
                 type="submit"
                 disabled={!isFormValid}
-                onClick={(e) => {
-                  if (!user) {
-                    e.preventDefault();
-                    window.location.href = "/login";
-                  }
-                }}
                 className="contact-form__button"
               >
                 Відправити заявку
