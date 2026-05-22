@@ -24,7 +24,7 @@ const ContactForm = () => {
     if (!value) return "";
     if (value.length < 2) return "Мінімум 2 символи";
     if (value.length > 50) return "Максимум 50 символів";
-    if (!/^[a-zA-Zа-яА-ЯіІїЇєЄ' -]+$/.test(value))
+    if (!/^[a-zA-Zа-яА-ЯіїєґІЇЄҐ\s\-']+$/.test(value))
       return "Лише літери, дефіс та апостроф";
     return "";
   };
@@ -194,7 +194,7 @@ const ContactForm = () => {
                     className={`contact-form__textarea ${descriptionTouched && descriptionError ? "contact-form__input--error" : ""}`}
                   />
                   <span className="contact-form__counter">
-                    {description.length}/300
+                    символів: {description.length}/300
                   </span>
                 </div>
                 {descriptionTouched && descriptionError && (
