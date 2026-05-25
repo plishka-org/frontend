@@ -2,12 +2,12 @@ import { useState } from 'react'
 import cartIcon from '../../../assets/header/icons-header/cart-shopping-2.svg'
 import { BrandMark } from '../Footer/BrandMark'
 import { CloseIcon, HeartIcon, MenuIcon, UserIcon } from '../../icons/UiIcons'
-import { getGalleryUrl, getHomeUrl, getReviewsUrl } from '../../../utils/productUrl'
+import { getAboutUrl, getGalleryUrl, getHomeUrl, getReviewsUrl } from '../../../utils/productUrl'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { useShop } from '../../../hooks/useShop'
 
 type HeaderProps = {
-  activePage?: 'home' | 'gallery' | 'reviews'
+  activePage?: 'home' | 'gallery' | 'about' | 'reviews'
   siteVariant: SiteVariant
 }
 
@@ -19,7 +19,7 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
   const navItems = [
     { href: homeHref, label: 'Головна', page: 'home' },
     { href: getGalleryUrl(siteVariant), label: 'Галерея', page: 'gallery' },
-    { href: `${homeHref}#about`, label: 'Про майстерню' },
+    { href: getAboutUrl(siteVariant), label: 'Про майстерню', page: 'about' },
     { href: getReviewsUrl(siteVariant), label: 'Відгуки', page: 'reviews' },
     { href: '#favorites', label: 'Обрані' },
     { href: '#profile', label: 'Особистий кабінет' },
