@@ -86,7 +86,7 @@ function HomePage({ siteVariant }: { siteVariant: ReturnType<typeof getSiteVaria
       <InformBlock siteVariant={siteVariant} />
       <Advantages />
       <BestProductsSection siteVariant={siteVariant} />
-      <ReviewsSection />
+      <ReviewsSection siteVariant={siteVariant} />
       <ContactForm />
       <ContactsSection />
       <Footer />
