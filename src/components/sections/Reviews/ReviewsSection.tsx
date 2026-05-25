@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import { reviews } from '../../../data/reviews'
+import { getReviewsUrl } from '../../../utils/productUrl'
+import type { SiteVariant } from '../../../utils/siteVariant'
 import { ArrowIcon } from '../../icons/UiIcons'
 
-export function ReviewsSection() {
+type ReviewsSectionProps = {
+  siteVariant: SiteVariant
+}
+
+export function ReviewsSection({ siteVariant }: ReviewsSectionProps) {
   const [activeReviewIndex, setActiveReviewIndex] = useState(0)
   const [activeImageIndex, setActiveImageIndex] = useState(1)
   const activeReview = reviews[activeReviewIndex]
@@ -29,7 +35,7 @@ export function ReviewsSection() {
       <div className="reviews-section__inner">
         <div className="reviews-section__top">
           <h1 id="reviews-title">Відгуки</h1>
-          <a className="reviews-section__link" href="#reviews">
+          <a className="reviews-section__link" href={getReviewsUrl(siteVariant)}>
             <span>Усі відгуки</span>
             <ArrowIcon />
           </a>
