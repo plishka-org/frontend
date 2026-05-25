@@ -5,7 +5,7 @@ import { formatPrice } from '../../../utils/formatPrice'
 import { getProductUrl } from '../../../utils/productUrl'
 import { siteVariantFeatures } from '../../../utils/siteVariant'
 import type { SiteVariant } from '../../../utils/siteVariant'
-import { HeartIcon } from '../../icons/UiIcons'
+import { CheckIcon, HeartIcon } from '../../icons/UiIcons'
 
 type GalleryProductCardProps = {
   product: GalleryProduct
@@ -13,10 +13,19 @@ type GalleryProductCardProps = {
 }
 
 export function GalleryProductCard({ product, siteVariant }: GalleryProductCardProps) {
-  const { isFavorite, toggleFavorite } = useShop()
+  const { addToCart, isFavorite, isInCart, toggleFavorite } = useShop()
   const features = siteVariantFeatures[siteVariant]
   const productIsFavorite = isFavorite(product.id)
+  const productIsInCart = isInCart(product.id)
   const productUrl = getProductUrl(product.id, siteVariant)
+
+  function handleCartClick(event: MouseEvent<HTMLButtonElement>) {
+    if (event.detail > 0) {
+      event.currentTarget.blur()
+    }
+
+    addToCart(product.id)
+  }
 
   function handleFavoriteClick(event: MouseEvent<HTMLButtonElement>) {
     event.preventDefault()
@@ -30,7 +39,11 @@ export function GalleryProductCard({ product, siteVariant }: GalleryProductCardP
   }
 
   return (
-    <article className="gallery-card" data-has-price={features.showPrices}>
+    <article
+      className="gallery-card"
+      data-cart-actions={features.showCartActions}
+      data-has-price={features.showPrices}
+    >
       <a className="gallery-card__image-link" href={productUrl} tabIndex={-1} aria-hidden="true">
         <img src={product.image} alt={product.name} />
       </a>
@@ -41,19 +54,35 @@ export function GalleryProductCard({ product, siteVariant }: GalleryProductCardP
       {features.showPrices && (
         <span className="gallery-card__price">{formatPrice(product.price)}</span>
       )}
-      {features.showFavorites && (
-        <button
-          className="gallery-card__favorite"
-          data-active={productIsFavorite}
-          type="button"
-          aria-pressed={productIsFavorite}
-          aria-label={
-            productIsFavorite ? 'Прибрати з обраного' : `Додати ${product.name} до обраного`
-          }
-          onClick={handleFavoriteClick}
-        >
-          <HeartIcon />
-        </button>
+      {(features.showCartActions || features.showFavorites) && (
+        <div className="gallery-card__actions">
+          {features.showCartActions && (
+            <button
+              className="gallery-card__cart"
+              type="button"
+              aria-pressed={productIsInCart}
+              onClick={handleCartClick}
+            >
+              <span>{productIsInCart ? 'Додано' : 'Додати'}</span>
+              {productIsInCart && <CheckIcon />}
+            </button>
+          )}
+
+          {features.showFavorites && (
+            <button
+              className="gallery-card__favorite"
+              data-active={productIsFavorite}
+              type="button"
+              aria-pressed={productIsFavorite}
+              aria-label={
+                productIsFavorite ? 'Прибрати з обраного' : `Додати ${product.name} до обраного`
+              }
+              onClick={handleFavoriteClick}
+            >
+              <HeartIcon />
+            </button>
+          )}
+        </div>
       )}
     </article>
   )
