@@ -20,10 +20,12 @@ const ContactForm = () => {
   const [descriptionTouched, setDescriptionTouched] = useState(false);
 
   const validateName = (value: string): string => {
-    if (!value) return "";
-    if (value.length < 2) return "Мінімум 2 символи";
-    if (value.length > 50) return "Максимум 50 символів";
-    if (!/^[a-zA-Zа-яА-ЯіїєґІЇЄҐ\s\-']+$/.test(value))
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) return "Поле обов'язкове";
+    if (trimmedValue.length < 2) return "Мінімум 2 символи";
+    if (trimmedValue.length > 50) return "Максимум 50 символів";
+    if (!/^[a-zA-Zа-яА-ЯіїєґІЇЄҐ\s\-']+$/.test(trimmedValue))
       return "Лише літери, дефіс та апостроф";
     return "";
   };
@@ -70,10 +72,24 @@ const ContactForm = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const trimmedName = name.trim();
+    const nextNameError = validateName(trimmedName);
+    const nextPhoneError = validatePhone(phone);
+    const nextDescriptionError = validateDescription(description);
+
+    setNameTouched(true);
+    setPhoneTouched(true);
+    setDescriptionTouched(true);
+    setNameError(nextNameError);
+    setPhoneError(nextPhoneError);
+    setDescriptionError(nextDescriptionError);
+
+    if (nextNameError || nextPhoneError || nextDescriptionError) return;
+
     // TODO: замінити на реальний API запит після підключення бекенду
     const newRequest = {
       id: Date.now(),
-      name,
+      name: trimmedName,
       phone: `+38${phone}`,
       description,
       date: new Date().toLocaleDateString("uk-UA"),
