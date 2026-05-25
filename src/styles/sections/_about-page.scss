@@ -1,0 +1,277 @@
+.about-page {
+  background: var(--color-surface);
+}
+
+.about-story {
+  background: var(--color-surface);
+  padding: 96px 80px 80px;
+
+  &__inner {
+    display: grid;
+    gap: 96px;
+    width: 100%;
+    max-width: 1280px;
+    min-width: 0;
+    margin: 0 auto;
+  }
+}
+
+.about-story-block {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 620px);
+  gap: 40px;
+  align-items: start;
+  min-width: 0;
+
+  &--intro {
+    min-height: 465px;
+  }
+
+  &--today {
+    grid-template-columns: minmax(0, 620px) minmax(0, 1fr);
+  }
+
+  &__text {
+    min-width: 0;
+    padding-top: 8px;
+  }
+
+  h1,
+  h2 {
+    max-width: 620px;
+    margin: 0 0 28px;
+    color: var(--color-heading);
+    font-family: var(--font-heading);
+    font-size: 56px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.12;
+    overflow-wrap: break-word;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin-top: 0;
+  }
+
+  p {
+    max-width: 610px;
+    margin: 0;
+    color: var(--color-text);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.35;
+
+    + p {
+      margin-top: 24px;
+    }
+  }
+
+  &__image {
+    width: 100%;
+    min-width: 0;
+    border-radius: 24px;
+    object-fit: cover;
+  }
+}
+
+.about-gallery {
+  display: grid;
+  gap: 40px;
+
+  &__top,
+  &__bottom {
+    display: grid;
+    gap: 40px;
+    min-width: 0;
+  }
+
+  &__top {
+    grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  &__bottom {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  &__stack {
+    display: grid;
+    gap: 40px;
+    min-width: 0;
+  }
+
+  &__item {
+    width: 100%;
+    min-width: 0;
+    border-radius: 24px;
+    object-fit: cover;
+  }
+
+  &__item--small {
+    aspect-ratio: 400 / 290;
+  }
+
+  &__item--main {
+    height: 100%;
+    aspect-ratio: 840 / 620;
+  }
+
+  &__item--large {
+    aspect-ratio: 620 / 465;
+  }
+}
+
+.about-reveal {
+  animation: aboutFadeIn 700ms ease both;
+}
+
+.about-reveal:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.about-reveal:nth-child(3) {
+  animation-delay: 140ms;
+}
+
+@keyframes aboutFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-reveal {
+    animation: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .about-story {
+    padding: 72px 24px 72px;
+
+    &__inner {
+      max-width: 720px;
+      gap: 64px;
+    }
+  }
+
+  .about-story-block,
+  .about-story-block--today {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    min-height: 0;
+
+    &__text {
+      padding-top: 0;
+    }
+
+    h1,
+    h2 {
+      max-width: 100%;
+      margin-bottom: 20px;
+      font-size: 56px;
+      line-height: 1.12;
+    }
+
+    p {
+      max-width: 100%;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+  }
+
+  .about-story-block--today {
+    .about-story-block__image {
+      order: 2;
+    }
+
+    .about-story-block__text {
+      order: 1;
+    }
+  }
+
+  .about-gallery {
+    display: grid;
+    gap: 28px;
+
+    &__top {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    &__stack,
+    &__bottom {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px;
+    }
+
+    &__item {
+      height: auto;
+    }
+
+    &__item--main {
+      aspect-ratio: 840 / 630;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .about-story {
+    padding: 48px 16px 64px;
+
+    &__inner {
+      gap: 48px;
+    }
+  }
+
+  .about-story-block,
+  .about-story-block--today {
+    gap: 22px;
+
+    h1,
+    h2 {
+      margin-bottom: 16px;
+      font-size: 32px;
+      line-height: 1.12;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.35;
+
+      + p {
+        margin-top: 18px;
+      }
+    }
+
+    &__image {
+      border-radius: 16px;
+    }
+  }
+
+  .about-gallery {
+    gap: 20px;
+
+    &__top,
+    &__bottom,
+    &__stack {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    &__item {
+      border-radius: 16px;
+    }
+  }
+}

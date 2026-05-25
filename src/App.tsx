@@ -4,6 +4,7 @@ import { ContactsSection } from "./components/sections/Contacts/ContactsSection"
 import { ReviewsSection } from "./components/sections/Reviews/ReviewsSection";
 import { Footer } from "./components/layout/Footer/Footer";
 import { Header } from "./components/layout/Header/Header";
+import { AboutPage } from "./components/pages/AboutPage/AboutPage";
 import { GalleryPage } from "./components/pages/GalleryPage/GalleryPage";
 import { NotFoundPage } from "./components/pages/NotFoundPage/NotFoundPage";
 import { ProductPage } from "./components/pages/ProductPage/ProductPage";
@@ -53,6 +54,8 @@ function App() {
 
   if (appPath.match(/^\/gallery\/?$/)) {
     pageContent = <GalleryPage siteVariant={siteVariant} />;
+  } else if (appPath.match(/^\/about\/?$/)) {
+    pageContent = <AboutPage siteVariant={siteVariant} />;
   } else if (appPath.match(/^\/reviews\/?$/)) {
     pageContent = <ReviewsPage siteVariant={siteVariant} />;
   } else if (productMatch) {
