@@ -1,26 +1,47 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { getProductById } from '../data/bestProducts'
 
 type CartItem = {
   productId: string
   quantity: number
 }
 
+type CartLine = CartItem & {
+  lineTotal: number
+  product: NonNullable<ReturnType<typeof getProductById>>
+}
+
 type ShopContextType = {
-  addToCart: (productId: string) => void
+  addToCart: (productId: string, quantity?: number) => void
+  cartLines: CartLine[]
   cartCount: number
   cartItems: CartItem[]
+  cartTotal: number
+  clearCart: () => void
   favoriteProductIds: string[]
   isFavorite: (productId: string) => boolean
   isInCart: (productId: string) => boolean
+  removeFromCart: (productId: string) => void
   toggleFavorite: (productId: string) => void
+  updateCartQuantity: (productId: string, quantity: number) => void
 }
 
 const ShopContext = createContext<ShopContextType | null>(null)
 
 const cartStorageKey = 'plishkaCart'
 const favoritesStorageKey = 'plishkaFavorites'
+const minCartQuantity = 1
+const maxCartQuantity = 99
+
+function normalizeCartQuantity(quantity: number) {
+  if (!Number.isFinite(quantity)) {
+    return minCartQuantity
+  }
+
+  return Math.min(maxCartQuantity, Math.max(minCartQuantity, Math.floor(quantity)))
+}
 
 function readStoredValue<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') {
@@ -60,16 +81,70 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   }, [cartItems])
 
   const value = useMemo<ShopContextType>(() => {
-    function addToCart(productId: string) {
-      setCartItems((currentItems) => {
-        const existingItem = currentItems.find((item) => item.productId === productId)
+    const cartLines = cartItems.flatMap((item) => {
+      const product = getProductById(item.productId)
 
-        if (existingItem) {
+      if (!product) {
+        return []
+      }
+
+      return [
+        {
+          ...item,
+          lineTotal: product.price * item.quantity,
+          product,
+        },
+      ]
+    })
+
+    function addToCart(productId: string, quantity = 1) {
+      const quantityToAdd = normalizeCartQuantity(quantity)
+
+      setCartItems((currentItems) => {
+        if (!getProductById(productId)) {
           return currentItems
         }
 
-        return [...currentItems, { productId, quantity: 1 }]
+        const existingItem = currentItems.find((item) => item.productId === productId)
+
+        if (existingItem) {
+          return currentItems.map((item) =>
+            item.productId === productId
+              ? {
+                  ...item,
+                  quantity: normalizeCartQuantity(item.quantity + quantityToAdd),
+                }
+              : item,
+          )
+        }
+
+        return [...currentItems, { productId, quantity: quantityToAdd }]
       })
+    }
+
+    function removeFromCart(productId: string) {
+      setCartItems((currentItems) => currentItems.filter((item) => item.productId !== productId))
+    }
+
+    function updateCartQuantity(productId: string, quantity: number) {
+      setCartItems((currentItems) => {
+        if (quantity <= 0) {
+          return currentItems.filter((item) => item.productId !== productId)
+        }
+
+        return currentItems.map((item) =>
+          item.productId === productId
+            ? {
+                ...item,
+                quantity: normalizeCartQuantity(quantity),
+              }
+            : item,
+        )
+      })
+    }
+
+    function clearCart() {
+      setCartItems([])
     }
 
     function toggleFavorite(productId: string) {
@@ -82,12 +157,17 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
     return {
       addToCart,
+      cartLines,
       cartCount: cartItems.reduce((total, item) => total + item.quantity, 0),
       cartItems,
+      cartTotal: cartLines.reduce((total, item) => total + item.lineTotal, 0),
+      clearCart,
       favoriteProductIds,
       isFavorite: (productId) => favoriteProductIds.includes(productId),
       isInCart: (productId) => cartItems.some((item) => item.productId === productId),
+      removeFromCart,
       toggleFavorite,
+      updateCartQuantity,
     }
   }, [cartItems, favoriteProductIds])
 
