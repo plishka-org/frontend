@@ -17,7 +17,24 @@ import { InformBlock } from "./components/sections/InformBlock/InformBlock";
 import Advantages from "./components/sections/Advantages/Advantages";
 import ContactForm from "./components/sections/ContactForm/ContactForm";
 import { AuthProvider } from "./hooks/useAuth";
-import { ShopProvider } from "./hooks/useShop";
+import { ShopProvider, useShop } from "./hooks/useShop";
+import { AuthPromptModal } from "./ui/AuthPromptModal";
+
+// PLIS-67: глобальна модалка авторизації — спрацьовує для будь-якої кнопки обраного
+function GlobalAuthModal() {
+  const { isAuthRequired, clearAuthRequired } = useShop()
+  return (
+    <AuthPromptModal
+      isOpen={isAuthRequired}
+      onClose={clearAuthRequired}
+      onLogin={() => {
+        clearAuthRequired()
+        // TODO: редірект на сторінку логіну коли буде готова
+        window.location.hash = '#login'
+      }}
+    />
+  )
+}
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -77,7 +94,10 @@ function App() {
 
   return (
     <AuthProvider>
-      <ShopProvider>{pageContent}</ShopProvider>
+      <ShopProvider>
+        {pageContent}
+        <GlobalAuthModal />
+      </ShopProvider>
     </AuthProvider>
   );
 }

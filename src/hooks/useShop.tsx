@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { bestProducts } from '../data/bestProducts'
 import { addToFavoritesApi, removeFromFavoritesApi } from '../services/api/authApi'
+import { useAuth } from './useAuth'
 
 type CartItem = {
   productId: string
@@ -31,6 +32,8 @@ type ShopContextType = {
   isFavorite: (productId: string) => boolean
   isInCart: (productId: string) => boolean
   toggleFavorite: (productId: string) => void
+  isAuthRequired: boolean
+  clearAuthRequired: () => void
 }
 
 const ShopContext = createContext<ShopContextType | null>(null)
@@ -54,12 +57,14 @@ function writeStoredValue<T>(key: string, value: T) {
 }
 
 export function ShopProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth()
   const [favoriteProductIds, setFavoriteProductIds] = useState<string[]>(() =>
     readStoredValue(favoritesStorageKey, []),
   )
   const [cartItems, setCartItems] = useState<CartItem[]>(() =>
     readStoredValue(cartStorageKey, []),
   )
+  const [isAuthRequired, setIsAuthRequired] = useState(false)
 
   useEffect(() => {
     writeStoredValue(favoritesStorageKey, favoriteProductIds)
@@ -99,8 +104,11 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     function clearCart() {
       setCartItems([])
     }
-
     function toggleFavorite(productId: string) {
+      if (!user) {
+        setIsAuthRequired(true)
+        return
+      }
       setFavoriteProductIds((currentIds) => {
         const isFav = currentIds.includes(productId)
         if (isFav) {
@@ -144,8 +152,10 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       isFavorite: (productId) => favoriteProductIds.includes(productId),
       isInCart: (productId) => cartItems.some((item) => item.productId === productId),
       toggleFavorite,
+      isAuthRequired,
+      clearAuthRequired: () => setIsAuthRequired(false),
     }
-  }, [cartItems, favoriteProductIds])
+  }, [cartItems, favoriteProductIds, user, isAuthRequired])
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>
 }

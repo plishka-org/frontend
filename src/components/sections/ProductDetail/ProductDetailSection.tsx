@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import type { BestProduct } from '../../../data/bestProducts'
-import { useAuth } from '../../../hooks/useAuth'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { ArrowIcon, CheckIcon, HeartIcon } from '../../icons/UiIcons'
-import { AuthPromptModal } from '../../../ui/AuthPromptModal'
 
 type ProductDetailSectionProps = {
   product: BestProduct
@@ -15,9 +13,7 @@ type ProductDetailSectionProps = {
 export function ProductDetailSection({ product, siteVariant }: ProductDetailSectionProps) {
   const [selectedIndex, setSelectedIndex] = useState(Math.min(1, product.gallery.length - 1))
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
-  const [showAuthModal, setShowAuthModal] = useState(false)
 
-  const { user } = useAuth()
   const { addToCart, isFavorite, isInCart, toggleFavorite } = useShop()
 
   const productIsFavorite = isFavorite(product.id)
@@ -38,14 +34,6 @@ export function ProductDetailSection({ product, siteVariant }: ProductDetailSect
   function openGalleryImage(image: string, index: number) {
     setSelectedIndex(index)
     setLightboxImage(image)
-  }
-
-  function handleFavoriteClick() {
-    if (!user) {
-      setShowAuthModal(true)
-      return
-    }
-    toggleFavorite(product.id)
   }
 
   return (
@@ -90,7 +78,7 @@ export function ProductDetailSection({ product, siteVariant }: ProductDetailSect
           className="product-detail__favorite"
           data-active={productIsFavorite}
           type="button"
-          onClick={handleFavoriteClick}
+          onClick={() => toggleFavorite(product.id)}
           aria-pressed={productIsFavorite}
           aria-label={productIsFavorite ? 'Прибрати з обраного' : 'Додати до обраного'}
         >
@@ -136,11 +124,6 @@ export function ProductDetailSection({ product, siteVariant }: ProductDetailSect
           </button>
         </div>
       )}
-
-      <AuthPromptModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-      />
     </section>
   )
 }
