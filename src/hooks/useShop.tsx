@@ -33,7 +33,7 @@ const ShopContext = createContext<ShopContextType | null>(null)
 const cartStorageKey = 'plishkaCart'
 const favoritesStorageKey = 'plishkaFavorites'
 const minCartQuantity = 1
-const maxCartQuantity = 99
+export const maxCartQuantity = 10
 
 function normalizeCartQuantity(quantity: number) {
   if (!Number.isFinite(quantity)) {

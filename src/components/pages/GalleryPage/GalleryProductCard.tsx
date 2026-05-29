@@ -24,6 +24,10 @@ export function GalleryProductCard({ product, siteVariant }: GalleryProductCardP
       event.currentTarget.blur()
     }
 
+    if (productIsInCart) {
+      return
+    }
+
     addToCart(product.id)
   }
 
@@ -61,6 +65,7 @@ export function GalleryProductCard({ product, siteVariant }: GalleryProductCardP
               className="gallery-card__cart"
               type="button"
               aria-pressed={productIsInCart}
+              disabled={productIsInCart}
               onClick={handleCartClick}
             >
               <span>{productIsInCart ? 'Додано' : 'Додати'}</span>

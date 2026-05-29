@@ -57,6 +57,11 @@
       outline: 2px solid var(--color-heading);
       outline-offset: 4px;
     }
+
+    &:disabled {
+      cursor: default;
+      transform: none;
+    }
   }
 }
 

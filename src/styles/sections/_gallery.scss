@@ -182,6 +182,11 @@
       transform: scale(1.04);
     }
 
+    &:disabled {
+      cursor: default;
+      transform: none;
+    }
+
     &:focus-visible {
       outline: 2px solid var(--color-heading);
       outline-offset: 4px;

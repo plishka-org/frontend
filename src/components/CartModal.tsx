@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import emptyCartIcon from '../assets/cart-modal/icon-cart.svg'
 import { CloseIcon, EyeIcon, TrashIcon } from './icons/UiIcons'
 import { useAuth } from '../hooks/useAuth'
-import { useShop } from '../hooks/useShop'
+import { maxCartQuantity, useShop } from '../hooks/useShop'
 import { formatPrice } from '../utils/formatPrice'
 import { getGalleryUrl, getHomeUrl } from '../utils/productUrl'
 
@@ -14,7 +14,6 @@ type CartModalProps = {
 type CheckoutStep = 'cart' | 'login' | 'register' | 'order' | 'success'
 type OrderBackStep = Extract<CheckoutStep, 'cart' | 'login' | 'register'>
 
-const maxQuantity = 10
 const mockUserId = 1
 
 export function CartModal({ isOpen, onClose }: CartModalProps) {
@@ -170,7 +169,7 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
   }
 
   function setQuantity(productId: string, quantity: number) {
-    updateCartQuantity(productId, Math.min(maxQuantity, Math.max(1, quantity)))
+    updateCartQuantity(productId, Math.min(maxCartQuantity, Math.max(1, quantity)))
   }
 
   return (
@@ -465,14 +464,14 @@ function OrderSummary({
                 <input
                   aria-label={`Кількість ${product.name}`}
                   inputMode="numeric"
-                  max={maxQuantity}
+                  max={maxCartQuantity}
                   min={1}
                   value={quantity}
                   onChange={(event) => onSetQuantity?.(productId, Number(event.target.value) || 1)}
                 />
                 <button
                   type="button"
-                  disabled={quantity >= maxQuantity}
+                  disabled={quantity >= maxCartQuantity}
                   aria-label={`Збільшити кількість ${product.name}`}
                   onClick={() => onIncrease?.(productId, quantity)}
                 >

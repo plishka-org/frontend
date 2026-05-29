@@ -21,9 +21,9 @@
   position: relative;
   z-index: 1;
   width: min(100%, 840px);
-  max-height: calc(100vh - 224px);
+  max-height: calc(100vh - 248px);
   overflow: auto;
-  padding: 24px 40px 40px;
+  padding: 40px;
   border-radius: 16px;
   background: var(--color-surface);
   box-shadow: 0 18px 48px rgba(17, 25, 24, 0.24);
@@ -521,9 +521,9 @@
   }
 
   .cart-modal {
-    width: min(calc(100vw - 64px), 680px);
-    max-height: calc(100vh - 166px);
-    padding: 16px 24px 32px;
+    width: min(100%, 680px);
+    max-height: calc(100vh - 182px);
+    padding: 24px;
   }
 
   .cart-modal__top {
@@ -738,13 +738,13 @@
 
 @media (max-width: 680px) {
   .cart-modal-shell {
-    padding: 100px 16px 24px;
+    padding: 100px 8px 24px;
   }
 
   .cart-modal {
     width: 100%;
-    max-height: calc(100vh - 116px);
-    padding: 8px 16px 16px;
+    max-height: calc(100vh - 124px);
+    padding: 16px;
     border-radius: 14px;
   }
 
