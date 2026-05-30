@@ -1,4 +1,3 @@
-// PLIS-67: модальне вікно для неавторизованих користувачів
 import './AuthPromptModal.scss'
 
 type AuthPromptModalProps = {
@@ -30,13 +29,24 @@ export function AuthPromptModal({ isOpen, onClose, onLogin }: AuthPromptModalPro
           Будь ласка, увійдіть або зареєструйтесь, щоб додавати товари до обраного.
         </p>
         <div className="auth-modal__actions">
-          <button
-            className="auth-modal__btn auth-modal__btn--primary"
-            type="button"
-            onClick={onLogin ?? onClose}
-          >
-            Увійти
-          </button>
+          {onLogin ? (
+            <button
+              className="auth-modal__btn auth-modal__btn--primary"
+              type="button"
+              onClick={onLogin}
+            >
+              Увійти
+            </button>
+          ) : (
+            // замінити на реальний перехід до сторінки логіну коли буде готова
+            <button
+              className="auth-modal__btn auth-modal__btn--primary"
+              type="button"
+              onClick={onClose}
+            >
+              Увійти
+            </button>
+          )}
           <button
             className="auth-modal__btn auth-modal__btn--secondary"
             type="button"

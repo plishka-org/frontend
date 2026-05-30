@@ -19,12 +19,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  //коли буде бек замінити
-  const [user, setUser] = useState<User | null>({
-    id: 1,
-    name: "Тест",
-    email: "test@test.com",
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
   useEffect(() => {
