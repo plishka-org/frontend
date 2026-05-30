@@ -5,6 +5,7 @@ import { CloseIcon, HeartIcon, MenuIcon, UserIcon } from '../../icons/UiIcons'
 import { getAboutUrl, getGalleryUrl, getHomeUrl, getReviewsUrl } from '../../../utils/productUrl'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { useShop } from '../../../hooks/useShop'
+import { CartModal } from '../../CartModal'
 
 type HeaderProps = {
   activePage?: 'home' | 'gallery' | 'about' | 'reviews'
@@ -13,6 +14,7 @@ type HeaderProps = {
 
 export function Header({ activePage, siteVariant }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
   const { cartCount } = useShop()
   const homeHref = getHomeUrl(siteVariant)
   const switchHref = getVariantSwitchUrl(siteVariant === 'order' ? 'usual' : 'order')
@@ -53,31 +55,28 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
           <HeartIcon />
         </button>
         {siteVariant === 'order' && (
-          <button
-            className="icon-button icon-button--cart"
-            data-has-items={cartCount > 0}
-            type="button"
-            aria-label={`Кошик, ${cartCount} товарів`}
-          >
-            <img src={cartIcon} alt="" aria-hidden="true" />
-            <span>({cartCount})</span>
-          </button>
+          <CartButton cartCount={cartCount} onClick={() => setIsCartOpen(true)} />
         )}
         <button className="icon-button" type="button" aria-label="Профіль">
           <UserIcon />
         </button>
       </div>
 
-      <button
-        className="site-header__menu"
-        type="button"
-        aria-label="Відкрити меню"
-        aria-expanded={isMenuOpen}
-        aria-controls="mobile-menu"
-        onClick={() => setIsMenuOpen(true)}
-      >
-        <MenuIcon />
-      </button>
+      <div className="site-header__mobile-actions">
+        {siteVariant === 'order' && (
+          <CartButton cartCount={cartCount} onClick={() => setIsCartOpen(true)} />
+        )}
+        <button
+          className="site-header__menu"
+          type="button"
+          aria-label="Відкрити меню"
+          aria-expanded={isMenuOpen}
+          aria-controls="mobile-menu"
+          onClick={() => setIsMenuOpen(true)}
+        >
+          <MenuIcon />
+        </button>
+      </div>
 
       <div
         className="site-header__drawer"
@@ -108,7 +107,30 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
           ))}
         </nav>
       </div>
+      {siteVariant === 'order' && (
+        <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      )}
     </header>
+  )
+}
+
+type CartButtonProps = {
+  cartCount: number
+  onClick: () => void
+}
+
+function CartButton({ cartCount, onClick }: CartButtonProps) {
+  return (
+    <button
+      className="icon-button icon-button--cart"
+      data-has-items={cartCount > 0}
+      type="button"
+      aria-label={`Кошик, ${cartCount} товарів`}
+      onClick={onClick}
+    >
+      <img src={cartIcon} alt="" aria-hidden="true" />
+      <span>({cartCount})</span>
+    </button>
   )
 }
 
