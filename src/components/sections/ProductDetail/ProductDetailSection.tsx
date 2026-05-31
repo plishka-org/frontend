@@ -3,8 +3,8 @@ import type { BestProduct } from '../../../data/bestProducts'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
 import type { SiteVariant } from '../../../utils/siteVariant'
-import { OrderUnavailableNotice } from '../../OrderUnavailableNotice'
 import { ArrowIcon, CheckIcon, HeartIcon } from '../../icons/UiIcons'
+import { OrderUnavailableNotice } from '../../OrderUnavailableNotice'
 
 type ProductDetailSectionProps = {
   product: BestProduct
@@ -14,7 +14,9 @@ type ProductDetailSectionProps = {
 export function ProductDetailSection({ product, siteVariant }: ProductDetailSectionProps) {
   const [selectedIndex, setSelectedIndex] = useState(Math.min(1, product.gallery.length - 1))
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+
   const { addToCart, isFavorite, isInCart, toggleFavorite } = useShop()
+
   const productIsFavorite = isFavorite(product.id)
   const productIsInCart = isInCart(product.id)
   const selectedImage = product.gallery[selectedIndex]
@@ -24,12 +26,8 @@ export function ProductDetailSection({ product, siteVariant }: ProductDetailSect
   function moveSelection(direction: 1 | -1) {
     setSelectedIndex((currentIndex) => {
       const nextIndex = currentIndex + direction
-      if (nextIndex < 0) {
-        return product.gallery.length - 1
-      }
-      if (nextIndex >= product.gallery.length) {
-        return 0
-      }
+      if (nextIndex < 0) return product.gallery.length - 1
+      if (nextIndex >= product.gallery.length) return 0
       return nextIndex
     })
   }

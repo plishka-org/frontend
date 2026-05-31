@@ -2,6 +2,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getProductById } from '../data/bestProducts'
+import { addToFavoritesApi, removeFromFavoritesApi } from '../services/api/authApi'
+import { useAuth } from './useAuth'
 
 type CartItem = {
   productId: string
@@ -19,8 +21,12 @@ type ShopContextType = {
   cartCount: number
   cartItems: CartItem[]
   cartTotal: number
+  cancelAuthRequired: () => void
   clearCart: () => void
+  clearAuthRequired: () => void
+  completeAuthRequired: () => void
   favoriteProductIds: string[]
+  isAuthRequired: boolean
   isFavorite: (productId: string) => boolean
   isInCart: (productId: string) => boolean
   removeFromCart: (productId: string) => void
@@ -65,12 +71,15 @@ function writeStoredValue<T>(key: string, value: T) {
 }
 
 export function ShopProvider({ children }: { children: ReactNode }) {
+  const { user, isAuthChecked } = useAuth()
   const [favoriteProductIds, setFavoriteProductIds] = useState<string[]>(() =>
     readStoredValue(favoritesStorageKey, []),
   )
   const [cartItems, setCartItems] = useState<CartItem[]>(() =>
     readStoredValue(cartStorageKey, []),
   )
+  const [isAuthRequired, setIsAuthRequired] = useState(false)
+  const [pendingFavoriteProductId, setPendingFavoriteProductId] = useState<string | null>(null)
 
   useEffect(() => {
     writeStoredValue(favoritesStorageKey, favoriteProductIds)
@@ -147,12 +156,39 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       setCartItems([])
     }
 
+    function addFavorite(productId: string) {
+      setFavoriteProductIds((currentIds) => {
+        if (currentIds.includes(productId)) {
+          return currentIds
+        }
+
+        addToFavoritesApi(productId).catch(console.error)
+        return [...currentIds, productId]
+      })
+    }
+
     function toggleFavorite(productId: string) {
-      setFavoriteProductIds((currentIds) =>
-        currentIds.includes(productId)
-          ? currentIds.filter((item) => item !== productId)
-          : [...currentIds, productId],
-      )
+      if (!isAuthChecked) {
+        return
+      }
+
+      if (!user) {
+        setPendingFavoriteProductId(productId)
+        setIsAuthRequired(true)
+        return
+      }
+
+      setFavoriteProductIds((currentIds) => {
+        const isFavoriteProduct = currentIds.includes(productId)
+
+        if (isFavoriteProduct) {
+          removeFromFavoritesApi(productId).catch(console.error)
+          return currentIds.filter((item) => item !== productId)
+        }
+
+        addToFavoritesApi(productId).catch(console.error)
+        return [...currentIds, productId]
+      })
     }
 
     return {
@@ -161,15 +197,37 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       cartCount: cartItems.reduce((total, item) => total + item.quantity, 0),
       cartItems,
       cartTotal: cartLines.reduce((total, item) => total + item.lineTotal, 0),
+      cancelAuthRequired: () => {
+        setIsAuthRequired(false)
+        setPendingFavoriteProductId(null)
+      },
       clearCart,
+      clearAuthRequired: () => setIsAuthRequired(false),
+      completeAuthRequired: () => {
+        const productId = pendingFavoriteProductId
+        setIsAuthRequired(false)
+        setPendingFavoriteProductId(null)
+
+        if (productId) {
+          addFavorite(productId)
+        }
+      },
       favoriteProductIds,
+      isAuthRequired,
       isFavorite: (productId) => favoriteProductIds.includes(productId),
       isInCart: (productId) => cartItems.some((item) => item.productId === productId),
       removeFromCart,
       toggleFavorite,
       updateCartQuantity,
     }
-  }, [cartItems, favoriteProductIds])
+  }, [
+    cartItems,
+    favoriteProductIds,
+    isAuthChecked,
+    isAuthRequired,
+    pendingFavoriteProductId,
+    user,
+  ])
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>
 }
