@@ -99,7 +99,12 @@ export function ProductDetailSection({ product, siteVariant }: ProductDetailSect
               className="product-purchase__button"
               data-added={productIsInCart}
               type="button"
-              onClick={() => addToCart(product.id)}
+              disabled={productIsInCart}
+              onClick={() => {
+                if (!productIsInCart) {
+                  addToCart(product.id)
+                }
+              }}
               aria-pressed={productIsInCart}
             >
               <span>{productIsInCart ? 'Додано до кошика' : 'Додати до кошика'}</span>

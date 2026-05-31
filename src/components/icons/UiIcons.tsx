@@ -147,3 +147,24 @@ export function TrashIcon({ className }: IconProps) {
     </svg>
   )
 }
+
+export function EyeIcon({ className }: IconProps) {
+  return (
+    <svg className={className} aria-hidden="true" fill="none" viewBox="0 0 24 24">
+      <path
+        d="M3.7 12s3-5.5 8.3-5.5S20.3 12 20.3 12s-3 5.5-8.3 5.5S3.7 12 3.7 12Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.6"
+      />
+      <path
+        d="M12 14.4a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.6"
+      />
+    </svg>
+  )
+}

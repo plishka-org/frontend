@@ -66,6 +66,18 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
     toggleFavorite(product.id)
   }
 
+  function handleCartClick(event: MouseEvent<HTMLButtonElement>) {
+    if (event.detail > 0) {
+      event.currentTarget.blur()
+    }
+
+    if (productIsInCart) {
+      return
+    }
+
+    addToCart(product.id)
+  }
+
   return (
     <article className="best-product-card" data-cart-actions={features.showCartActions}>
       <a className="best-product-card__link" href={getProductUrl(product.id, siteVariant)}>
@@ -84,7 +96,8 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
             className="best-product-card__cart"
             type="button"
             aria-pressed={productIsInCart}
-            onClick={() => addToCart(product.id)}
+            disabled={productIsInCart}
+            onClick={handleCartClick}
           >
             <span>{productIsInCart ? 'Додано' : 'Додати'}</span>
             {productIsInCart && <CheckIcon />}

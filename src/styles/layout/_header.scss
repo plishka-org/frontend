@@ -76,6 +76,13 @@
     margin-left: 36px;
   }
 
+  &__mobile-actions {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+
   &__menu {
     display: none;
     align-items: center;
@@ -277,6 +284,28 @@
 
 @media (max-width: 1100px) {
   .site-header {
+    &__mobile-actions {
+      display: flex;
+
+      .icon-button {
+        width: 64px;
+        height: 64px;
+        color: var(--color-primary);
+
+        img,
+        svg {
+          width: 28px;
+          height: 28px;
+        }
+
+        span {
+          right: 2px;
+          bottom: 7px;
+          font-size: 12px;
+        }
+      }
+    }
+
     &__drawer {
       position: absolute;
       z-index: 12;
@@ -307,6 +336,15 @@
 
 @media (max-width: 760px) {
   .site-header {
+    &__mobile-actions {
+      gap: 10px;
+
+      .icon-button {
+        width: 64px;
+        height: 64px;
+      }
+    }
+
     &__drawer {
       min-height: 585px;
       padding: 16px 16px 42px;
