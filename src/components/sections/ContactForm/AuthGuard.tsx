@@ -6,15 +6,19 @@ interface AuthGuardProps {
 }
 
 export const AuthGuard = ({ children }: AuthGuardProps) => {
-  const { user } = useAuth();
+  const { login, user } = useAuth();
 
   if (!user) {
     return (
       <div className="auth-guard">
         <p>Ця форма доступна лише для авторизованих користувачів.</p>
-        <a href="/login">
-          <button className="auth-guard__btn">Увійти</button>
-        </a>
+        <button
+          className="auth-guard__btn"
+          type="button"
+          onClick={() => login({ id: 1, name: 'Користувач', email: 'user@example.com' })}
+        >
+          Увійти
+        </button>
       </div>
     );
   }
