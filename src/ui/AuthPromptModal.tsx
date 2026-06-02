@@ -4,32 +4,45 @@ import './AuthPromptModal.scss'
 type AuthPromptModalProps = {
   isOpen: boolean
   onClose: () => void
-  onLogin: (credentials: { email: string; password: string }) => void
+  onLogin: (credentials: { email: string; password: string }) => Promise<void>
 }
 
 export function AuthPromptModal({ isOpen, onClose, onLogin }: AuthPromptModalProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   if (!isOpen) return null
 
   const canLogin = Boolean(email.trim() && password.trim())
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!canLogin) {
-      return
-    }
+    if (!canLogin) return
 
-    onLogin({ email: email.trim(), password })
-    setEmail('')
-    setPassword('')
+    setError(null)
+    setIsLoading(true)
+
+    try {
+      await onLogin({ email: email.trim(), password })
+      setEmail('')
+      setPassword('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Невірний email або пароль')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   function handleClose() {
+    if (isLoading) return
     setEmail('')
     setPassword('')
+    setError(null)
+    setShowPassword(false)
     onClose()
   }
 
@@ -48,6 +61,7 @@ export function AuthPromptModal({ isOpen, onClose, onLogin }: AuthPromptModalPro
           type="button"
           onClick={handleClose}
           aria-label="Закрити"
+          disabled={isLoading}
         >
           ✕
         </button>
@@ -58,6 +72,13 @@ export function AuthPromptModal({ isOpen, onClose, onLogin }: AuthPromptModalPro
         <p className="auth-modal__text">
           Будь ласка, увійдіть, щоб додавати товари до обраного.
         </p>
+
+        {error && (
+          <div className="auth-modal__error" role="alert">
+            {error}
+          </div>
+        )}
+
         <div className="auth-modal__fields">
           <label className="auth-modal__field">
             <span>Email</span>
@@ -67,32 +88,52 @@ export function AuthPromptModal({ isOpen, onClose, onLogin }: AuthPromptModalPro
               placeholder="petro@example.com"
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              disabled={isLoading}
+              onChange={(event) => {
+                setError(null)
+                setEmail(event.target.value)
+              }}
             />
           </label>
           <label className="auth-modal__field">
             <span>Пароль</span>
-            <input
-              autoComplete="current-password"
-              name="password"
-              placeholder="********"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <div className="auth-modal__password-wrapper">
+              <input
+                autoComplete="current-password"
+                name="password"
+                placeholder="********"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                disabled={isLoading}
+                onChange={(event) => {
+                  setError(null)
+                  setPassword(event.target.value)
+                }}
+              />
+              <button
+                className="auth-modal__password-toggle"
+                type="button"
+                aria-label={showPassword ? 'Приховати пароль' : 'Показати пароль'}
+                onClick={() => setShowPassword((prev) => !prev)}
+              >
+                {showPassword ? '🙈' : '👁'}
+              </button>
+            </div>
           </label>
         </div>
+
         <div className="auth-modal__actions">
           <button
             className="auth-modal__btn auth-modal__btn--primary"
             type="submit"
-            disabled={!canLogin}
+            disabled={!canLogin || isLoading}
           >
-            Увійти
+            {isLoading ? 'Завантаження...' : 'Увійти'}
           </button>
           <button
             className="auth-modal__btn auth-modal__btn--secondary"
             type="button"
+            disabled={isLoading}
             onClick={handleClose}
           >
             Пізніше
