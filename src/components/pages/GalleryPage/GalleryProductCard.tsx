@@ -10,9 +10,10 @@ import { CheckIcon, HeartIcon } from '../../icons/UiIcons'
 type GalleryProductCardProps = {
   product: GalleryProduct
   siteVariant: SiteVariant
+  onImageClick: () => void
 }
 
-export function GalleryProductCard({ product, siteVariant }: GalleryProductCardProps) {
+export function GalleryProductCard({ product, siteVariant, onImageClick }: GalleryProductCardProps) {
   const { addToCart, isFavorite, isInCart, toggleFavorite } = useShop()
   const features = siteVariantFeatures[siteVariant]
   const productIsFavorite = isFavorite(product.id)
@@ -48,9 +49,14 @@ export function GalleryProductCard({ product, siteVariant }: GalleryProductCardP
       data-cart-actions={features.showCartActions}
       data-has-price={features.showPrices}
     >
-      <a className="gallery-card__image-link" href={productUrl} tabIndex={-1} aria-hidden="true">
+      <button
+        className="gallery-card__image-link"
+        type="button"
+        aria-label={`Переглянути ${product.name}`}
+        onClick={onImageClick}
+      >
         <img src={product.image} alt={product.name} />
-      </a>
+      </button>
       <p>{product.category}</p>
       <a className="gallery-card__title-link" href={productUrl}>
         <h2 title={product.name}>{product.name}</h2>
