@@ -7,14 +7,17 @@ import { ContactsSection } from '../../sections/Contacts/ContactsSection'
 import { AccountLayout } from './AccountLayout'
 import { AccountSettingsSection } from './AccountSettingsSection'
 import { OrderList } from './OrderList'
+import { RequestList } from './RequestList'
 import type { Order } from '../../../types/order'
-
-//  замінити на реальні дані з API
-const MOCK_ORDERS: Order[] = []
+import type { Request } from '../../../types/request'
 
 type AccountPageProps = {
   siteVariant: SiteVariant
 }
+//замінити коли буде бек
+const MOCK_ORDERS: Order[] = []
+//замінити коли буде бек
+const MOCK_REQUESTS: Request[] = []
 
 export function AccountPage({ siteVariant }: AccountPageProps) {
   const currentPath = getAppPath(window.location.pathname, window.location.hash)
@@ -24,12 +27,7 @@ export function AccountPage({ siteVariant }: AccountPageProps) {
   if (currentPath.startsWith('/account/orders')) {
     section = <OrderList orders={MOCK_ORDERS} siteVariant={siteVariant} />
   } else if (currentPath.startsWith('/account/requests')) {
-    section = (
-      <div className="account-placeholder">
-        <h2 className="account-placeholder__title">Історія заявок</h2>
-        <p className="account-placeholder__text">Тут з'являться ваші заявки після підключення бекенду.</p>
-      </div>
-    )
+    section = <RequestList requests={MOCK_REQUESTS} />
   } else {
     section = <AccountSettingsSection />
   }
