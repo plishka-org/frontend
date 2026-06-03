@@ -9,6 +9,7 @@ import { GalleryPage } from "./components/pages/GalleryPage/GalleryPage";
 import { NotFoundPage } from "./components/pages/NotFoundPage/NotFoundPage";
 import { ProductPage } from "./components/pages/ProductPage/ProductPage";
 import { ReviewsPage } from "./components/pages/ReviewsPage/ReviewsPage";
+import { AccountPage } from "./components/pages/AccountPage/AccountPage";
 import { getProductById } from "./data/bestProducts";
 import { getAppPath } from "./utils/productUrl";
 import { getSiteVariant } from "./utils/siteVariant";
@@ -77,6 +78,8 @@ function App() {
     pageContent = <AboutPage siteVariant={siteVariant} />;
   } else if (appPath.match(/^\/reviews\/?$/)) {
     pageContent = <ReviewsPage siteVariant={siteVariant} />;
+  } else if (appPath.match(/^\/account(\/.*)?$/)) {
+    pageContent = <AccountPage siteVariant={siteVariant} />;
   } else if (productMatch) {
     const product = getProductById(productMatch[1]);
     pageContent = product ? (
