@@ -4,7 +4,7 @@ import './AuthPromptModal.scss'
 type AuthPromptModalProps = {
   isOpen: boolean
   onClose: () => void
-  onLogin: (credentials: { email: string; password: string }) => Promise<void>
+  onLogin: (credentials: { email: string; password: string }) => void | Promise<void>
 }
 
 function EyeIcon() {
