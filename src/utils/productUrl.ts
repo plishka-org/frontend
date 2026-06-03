@@ -46,3 +46,7 @@ export function getReviewsUrl(siteVariant: SiteVariant = 'usual') {
 export function getProductUrl(productId: string, siteVariant: SiteVariant = 'usual') {
   return withSiteVariant(`/products/${productId}`, siteVariant, true)
 }
+
+export function getAccountUrl(subpath: 'orders' | 'requests' | 'settings' = 'settings') {
+  return `#/account/${subpath}`
+}

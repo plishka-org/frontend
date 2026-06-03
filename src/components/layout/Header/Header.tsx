@@ -1,39 +1,50 @@
-import { useState } from 'react'
-import cartIcon from '../../../assets/header/icons-header/cart-shopping-2.svg'
-import { BrandMark } from '../Footer/BrandMark'
-import { CloseIcon, HeartIcon, MenuIcon, UserIcon } from '../../icons/UiIcons'
-import { getAboutUrl, getGalleryUrl, getHomeUrl, getReviewsUrl } from '../../../utils/productUrl'
-import type { SiteVariant } from '../../../utils/siteVariant'
-import { useShop } from '../../../hooks/useShop'
-import { CartModal } from '../../CartModal'
+import { useState } from "react";
+import cartIcon from "../../../assets/header/icons-header/cart-shopping-2.svg";
+import { BrandMark } from "../Footer/BrandMark";
+import { CloseIcon, HeartIcon, MenuIcon, UserIcon } from "../../icons/UiIcons";
+import {
+  getAboutUrl,
+  getGalleryUrl,
+  getHomeUrl,
+  getReviewsUrl,
+} from "../../../utils/productUrl";
+import type { SiteVariant } from "../../../utils/siteVariant";
+import { useShop } from "../../../hooks/useShop";
+import { CartModal } from "../../CartModal";
 
 type HeaderProps = {
-  activePage?: 'home' | 'gallery' | 'about' | 'reviews'
-  siteVariant: SiteVariant
-}
+  activePage?: "home" | "gallery" | "about" | "reviews";
+  siteVariant: SiteVariant;
+};
 
 export function Header({ activePage, siteVariant }: HeaderProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isCartOpen, setIsCartOpen] = useState(false)
-  const { cartCount } = useShop()
-  const homeHref = getHomeUrl(siteVariant)
-  const switchHref = getVariantSwitchUrl(siteVariant === 'order' ? 'usual' : 'order')
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { cartCount } = useShop();
+  const homeHref = getHomeUrl(siteVariant);
+  const switchHref = getVariantSwitchUrl(
+    siteVariant === "order" ? "usual" : "order",
+  );
   const navItems = [
-    { href: homeHref, label: 'Головна', page: 'home' },
-    { href: getGalleryUrl(siteVariant), label: 'Галерея', page: 'gallery' },
-    { href: getAboutUrl(siteVariant), label: 'Про майстерню', page: 'about' },
-    { href: getReviewsUrl(siteVariant), label: 'Відгуки', page: 'reviews' },
-    { href: '#favorites', label: 'Обрані' },
-    { href: '#profile', label: 'Особистий кабінет' },
-  ]
+    { href: homeHref, label: "Головна", page: "home" },
+    { href: getGalleryUrl(siteVariant), label: "Галерея", page: "gallery" },
+    { href: getAboutUrl(siteVariant), label: "Про майстерню", page: "about" },
+    { href: getReviewsUrl(siteVariant), label: "Відгуки", page: "reviews" },
+    { href: "#favorites", label: "Обрані" },
+    { href: "#profile", label: "Особистий кабінет" },
+  ];
 
   function getNavItemClassName(item: (typeof navItems)[number]) {
-    return item.page && item.page === activePage ? 'is-active' : undefined
+    return item.page && item.page === activePage ? "is-active" : undefined;
   }
 
   return (
     <header className="site-header">
-      <a className="site-header__brand" href={homeHref} aria-label="На головну Plishka">
+      <a
+        className="site-header__brand"
+        href={homeHref}
+        aria-label="На головну Plishka"
+      >
         <BrandMark />
       </a>
 
@@ -51,20 +62,34 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
 
       <div className="site-header__actions">
         <VariantSwitch siteVariant={siteVariant} href={switchHref} />
-        <button className="icon-button" type="button" aria-label="Обрані вироби">
+        <button
+          className="icon-button"
+          type="button"
+          aria-label="Обрані вироби"
+        >
           <HeartIcon />
         </button>
-        {siteVariant === 'order' && (
-          <CartButton cartCount={cartCount} onClick={() => setIsCartOpen(true)} />
+        {siteVariant === "order" && (
+          <CartButton
+            cartCount={cartCount}
+            onClick={() => setIsCartOpen(true)}
+          />
         )}
-        <button className="icon-button" type="button" aria-label="Профіль">
+        <a
+          className="icon-button"
+          href="#/account/settings"
+          aria-label="Особистий кабінет"
+        >
           <UserIcon />
-        </button>
+        </a>
       </div>
 
       <div className="site-header__mobile-actions">
-        {siteVariant === 'order' && (
-          <CartButton cartCount={cartCount} onClick={() => setIsCartOpen(true)} />
+        {siteVariant === "order" && (
+          <CartButton
+            cartCount={cartCount}
+            onClick={() => setIsCartOpen(true)}
+          />
         )}
         <button
           className="site-header__menu"
@@ -85,15 +110,26 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
         aria-hidden={!isMenuOpen}
       >
         <div className="site-header__drawer-top">
-          <a href={homeHref} aria-label="На головну Plishka" onClick={() => setIsMenuOpen(false)}>
+          <a
+            href={homeHref}
+            aria-label="На головну Plishka"
+            onClick={() => setIsMenuOpen(false)}
+          >
             <BrandMark />
           </a>
-          <button type="button" onClick={() => setIsMenuOpen(false)} aria-label="Закрити меню">
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen(false)}
+            aria-label="Закрити меню"
+          >
             <CloseIcon />
           </button>
         </div>
 
-        <nav className="site-header__drawer-nav" aria-label="Мобільна навігація">
+        <nav
+          className="site-header__drawer-nav"
+          aria-label="Мобільна навігація"
+        >
           <VariantSwitch siteVariant={siteVariant} href={switchHref} />
           {navItems.map((item) => (
             <a
@@ -107,17 +143,17 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
           ))}
         </nav>
       </div>
-      {siteVariant === 'order' && (
+      {siteVariant === "order" && (
         <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       )}
     </header>
-  )
+  );
 }
 
 type CartButtonProps = {
-  cartCount: number
-  onClick: () => void
-}
+  cartCount: number;
+  onClick: () => void;
+};
 
 function CartButton({ cartCount, onClick }: CartButtonProps) {
   return (
@@ -131,29 +167,29 @@ function CartButton({ cartCount, onClick }: CartButtonProps) {
       <img src={cartIcon} alt="" aria-hidden="true" />
       <span>({cartCount})</span>
     </button>
-  )
+  );
 }
 
 function getVariantSwitchUrl(siteVariant: SiteVariant) {
-  if (typeof window === 'undefined') {
-    return siteVariant === 'order' ? '?site=order' : '/'
+  if (typeof window === "undefined") {
+    return siteVariant === "order" ? "?site=order" : "/";
   }
 
-  const nextUrl = new URL(window.location.href)
+  const nextUrl = new URL(window.location.href);
 
-  if (siteVariant === 'order') {
-    nextUrl.searchParams.set('site', 'order')
+  if (siteVariant === "order") {
+    nextUrl.searchParams.set("site", "order");
   } else {
-    nextUrl.searchParams.delete('site')
+    nextUrl.searchParams.delete("site");
   }
 
-  return `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`
+  return `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
 }
 
 type VariantSwitchProps = {
-  href: string
-  siteVariant: SiteVariant
-}
+  href: string;
+  siteVariant: SiteVariant;
+};
 
 function VariantSwitch({ href, siteVariant }: VariantSwitchProps) {
   return (
@@ -161,11 +197,11 @@ function VariantSwitch({ href, siteVariant }: VariantSwitchProps) {
       className="site-variant-switch"
       data-variant={siteVariant}
       href={href}
-      aria-label={`Перемкнути на ${siteVariant === 'order' ? 'звичайний сайт' : 'сайт замовлення'}`}
+      aria-label={`Перемкнути на ${siteVariant === "order" ? "звичайний сайт" : "сайт замовлення"}`}
       title="Тимчасовий перемикач режиму сайту"
     >
       <span>Сайт</span>
       <strong>Замовлення</strong>
     </a>
-  )
+  );
 }
