@@ -20,9 +20,11 @@
 .cart-modal {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   width: min(100%, 840px);
   max-height: calc(100vh - 248px);
-  overflow: auto;
+  overflow: hidden;
   padding: 40px;
   border-radius: 16px;
   background: var(--color-surface);
@@ -31,6 +33,7 @@
 }
 
 .cart-modal__top {
+  flex: 0 0 auto;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -71,6 +74,17 @@
 .cart-modal__empty {
   display: flex;
   flex-direction: column;
+  min-height: 0;
+}
+
+.cart-modal__content,
+.cart-modal__form {
+  flex: 1 1 auto;
+}
+
+.cart-modal__form {
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .cart-modal__muted,
@@ -120,9 +134,11 @@
 }
 
 .cart-modal__summary {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 18px;
+  min-height: 0;
 
   h3 {
     margin: 0 0 -2px;
@@ -138,9 +154,16 @@
 }
 
 .cart-modal__items {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 10px;
+  margin-right: -10px;
+  scrollbar-gutter: stable;
 }
 
 .cart-modal__item {
@@ -263,6 +286,7 @@
 }
 
 .cart-modal__total {
+  flex: 0 0 auto;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -286,6 +310,7 @@
 }
 
 .cart-modal__actions {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
