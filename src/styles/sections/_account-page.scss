@@ -3,7 +3,6 @@
   padding: 48px 80px 80px;
 }
 
-
 .account-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -13,7 +12,6 @@
   max-width: 1280px;
   margin: 0 auto;
 }
-
 
 .account-sidebar {
   &__panel {
@@ -55,7 +53,10 @@
     letter-spacing: 0.05em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s,
+      border-color 0.15s;
     text-align: left;
 
     svg {
@@ -67,13 +68,17 @@
     &:hover {
       background: var(--color-border);
       color: var(--color-heading);
-      svg { color: var(--color-heading); }
+      svg {
+        color: var(--color-heading);
+      }
     }
 
     &--delete {
       color: var(--color-error);
       border-color: rgba(168, 5, 5, 0.25);
-      svg { color: var(--color-error); }
+      svg {
+        color: var(--color-error);
+      }
 
       &:hover {
         background: rgba(168, 5, 5, 0.06);
@@ -82,7 +87,6 @@
     }
   }
 }
-
 
 .account-nav {
   display: flex;
@@ -99,7 +103,9 @@
     font-size: 14px;
     font-weight: 500;
     text-decoration: none;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s;
 
     svg {
       flex-shrink: 0;
@@ -110,24 +116,28 @@
     &:hover {
       background: var(--color-border);
       color: var(--color-heading);
-      svg { color: var(--color-heading); }
+      svg {
+        color: var(--color-heading);
+      }
     }
 
     &.is-active {
       background: var(--color-primary);
       color: #fff;
-      svg { color: #fff; }
+      svg {
+        color: #fff;
+      }
     }
   }
 }
-
 
 .account-content {
   display: flex;
   flex-direction: column;
   gap: 48px;
+  min-width: 0;
+  overflow: hidden;
 }
-
 
 .account-settings {
   display: flex;
@@ -178,7 +188,9 @@
       font-size: 14px;
       font-weight: 500;
 
-      &.has-error { color: var(--color-error); }
+      &.has-error {
+        color: var(--color-error);
+      }
     }
 
     input {
@@ -195,7 +207,9 @@
       outline: none;
       transition: border-color 0.2s;
 
-      &::placeholder { color: var(--color-muted); }
+      &::placeholder {
+        color: var(--color-muted);
+      }
 
       &:-webkit-autofill,
       &:-webkit-autofill:hover,
@@ -205,8 +219,12 @@
         transition: background-color 5000s ease-in-out 0s;
       }
 
-      &:focus { border-color: var(--color-primary); }
-      &.is-error { border-color: var(--color-error) !important; }
+      &:focus {
+        border-color: var(--color-primary);
+      }
+      &.is-error {
+        border-color: var(--color-error) !important;
+      }
     }
   }
 
@@ -224,7 +242,9 @@
     overflow: hidden;
     transition: border-color 0.2s;
 
-    &:focus-within { border-color: var(--color-primary); }
+    &:focus-within {
+      border-color: var(--color-primary);
+    }
 
     &.has-error {
       border-color: var(--color-error);
@@ -256,13 +276,17 @@
     border-radius: 0;
     background: transparent;
 
-    &:focus { border-color: transparent; }
+    &:focus {
+      border-color: transparent;
+    }
   }
 
   &__password-wrapper {
     position: relative;
 
-    input { padding-right: 46px; }
+    input {
+      padding-right: 46px;
+    }
   }
 
   &__password-toggle {
@@ -279,7 +303,9 @@
     color: var(--color-muted);
     transition: color 0.15s;
 
-    &:hover { color: var(--color-heading); }
+    &:hover {
+      color: var(--color-heading);
+    }
   }
 
   &__submit {
@@ -297,7 +323,9 @@
     min-width: 260px;
     height: 48px;
 
-    &:hover:not(:disabled) { background: var(--color-primary-hover); }
+    &:hover:not(:disabled) {
+      background: var(--color-primary-hover);
+    }
 
     &:disabled {
       background: var(--color-muted);
@@ -327,7 +355,6 @@
   }
 }
 
-
 @media (max-width: 1024px) {
   .account-page {
     padding: 32px 24px 64px;
@@ -336,16 +363,30 @@
   .account-layout {
     grid-template-columns: 1fr;
     gap: 24px;
+
+    & > * {
+      min-width: 0;
+    }
   }
 
   .account-sidebar {
     &__panel {
       display: flex;
       flex-direction: row;
-      flex-wrap: wrap;
       align-items: center;
       gap: 8px;
       padding: 12px 16px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      & > * {
+        flex-shrink: 0;
+      }
     }
 
     &__panel-label {
@@ -355,6 +396,7 @@
     &__actions {
       flex-direction: row;
       gap: 8px;
+      flex-shrink: 0;
     }
 
     &__action-btn {
@@ -364,9 +406,13 @@
 
   .account-nav {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 4px;
-    flex: 1;
+    flex-shrink: 0;
+
+    &__link span {
+      white-space: nowrap;
+    }
   }
 
   .account-settings {
@@ -375,7 +421,9 @@
       gap: 0;
       margin-bottom: 0;
 
-      h2:last-child { margin-top: 32px; }
+      h2:last-child {
+        margin-top: 32px;
+      }
     }
 
     &__fields-grid {
@@ -394,15 +442,12 @@
     padding: 20px 16px 48px;
   }
 
-  .account-sidebar {
-    &__action-btn span {
-      display: none; 
-    }
-  }
-
   .account-settings__footer {
     justify-content: stretch;
 
-    button { width: 100%; min-width: 0; }
+    button {
+      width: 100%;
+      min-width: 0;
+    }
   }
 }

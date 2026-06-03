@@ -6,6 +6,11 @@ import ContactForm from '../../sections/ContactForm/ContactForm'
 import { ContactsSection } from '../../sections/Contacts/ContactsSection'
 import { AccountLayout } from './AccountLayout'
 import { AccountSettingsSection } from './AccountSettingsSection'
+import { OrderList } from './OrderList'
+import type { Order } from '../../../types/order'
+
+//  замінити на реальні дані з API
+const MOCK_ORDERS: Order[] = []
 
 type AccountPageProps = {
   siteVariant: SiteVariant
@@ -17,12 +22,7 @@ export function AccountPage({ siteVariant }: AccountPageProps) {
   let section: React.ReactNode
 
   if (currentPath.startsWith('/account/orders')) {
-    section = (
-      <div className="account-placeholder">
-        <h2 className="account-placeholder__title">Історія замовлень</h2>
-        <p className="account-placeholder__text">Тут з'являться ваші замовлення після підключення бекенду.</p>
-      </div>
-    )
+    section = <OrderList orders={MOCK_ORDERS} siteVariant={siteVariant} />
   } else if (currentPath.startsWith('/account/requests')) {
     section = (
       <div className="account-placeholder">
@@ -31,7 +31,6 @@ export function AccountPage({ siteVariant }: AccountPageProps) {
       </div>
     )
   } else {
-
     section = <AccountSettingsSection />
   }
 
