@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { IMaskInput } from "react-imask";
 import contactImage from "../../../icons/contact-form-image.png";
+import { createContactRequest } from "../../../services/api/contactRequestsApi";
 import "../../../styles/sections/_contact-form.scss";
 import { ContactInput } from "./ContactInput";
 
 const ContactForm = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
@@ -69,8 +72,21 @@ const ContactForm = () => {
     if (descriptionTouched) setDescriptionError(validateDescription(value));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const resetForm = () => {
+    setName("");
+    setPhone("");
+    setDescription("");
+    setNameTouched(false);
+    setPhoneTouched(false);
+    setDescriptionTouched(false);
+    setNameError("");
+    setPhoneError("");
+    setDescriptionError("");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError("");
 
     const trimmedName = name.trim();
     const nextNameError = validateName(trimmedName);
@@ -86,40 +102,27 @@ const ContactForm = () => {
 
     if (nextNameError || nextPhoneError || nextDescriptionError) return;
 
-    // TODO: замінити на реальний API запит після підключення бекенду
-    const newRequest = {
-      id: Date.now(),
-      name: trimmedName,
-      phone: `+38${phone}`,
-      description,
-      date: new Date().toLocaleDateString("uk-UA"),
-    };
+    setIsSubmitting(true);
 
-    // TODO: ТИМЧАСОВО — зберігаємо в localStorage
-    // Після підключення бекенду і сторінки Профілю — видалити цей блок.
-    // Історія заявок буде братись з API і відображатись в особистому кабінеті.
-    const existing = JSON.parse(
-      localStorage.getItem("contactRequests") || "[]",
-    );
-    localStorage.setItem(
-      "contactRequests",
-      JSON.stringify([...existing, newRequest]),
-    );
-
-    setIsSubmitted(true);
+    try {
+      await createContactRequest({
+        name: trimmedName,
+        phone: `+38${phone}`,
+        description,
+      });
+      resetForm();
+      setIsSubmitted(true);
+    } catch {
+      setSubmitError("Не вдалося відправити заявку. Спробуйте ще раз.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReset = () => {
     setIsSubmitted(false);
-    setName("");
-    setPhone("");
-    setDescription("");
-    setNameTouched(false);
-    setPhoneTouched(false);
-    setDescriptionTouched(false);
-    setNameError("");
-    setPhoneError("");
-    setDescriptionError("");
+    setSubmitError("");
+    resetForm();
   };
 
   return (
@@ -214,11 +217,14 @@ const ContactForm = () => {
               </div>
               <button
                 type="submit"
-                disabled={!isFormValid}
+                disabled={!isFormValid || isSubmitting}
                 className="contact-form__button"
               >
-                Відправити заявку
+                {isSubmitting ? "Відправляємо..." : "Відправити заявку"}
               </button>
+              {submitError && (
+                <span className="contact-form__error">{submitError}</span>
+              )}
             </form>
           )}
         </div>

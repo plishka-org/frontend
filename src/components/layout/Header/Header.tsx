@@ -200,8 +200,7 @@ function VariantSwitch({ href, siteVariant }: VariantSwitchProps) {
       aria-label={`Перемкнути на ${siteVariant === "order" ? "звичайний сайт" : "сайт замовлення"}`}
       title="Тимчасовий перемикач режиму сайту"
     >
-      <span>Сайт</span>
-      <strong>Замовлення</strong>
+      <span aria-hidden="true" />
     </a>
   );
 }
