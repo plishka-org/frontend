@@ -36,7 +36,6 @@
     border: none;
     border-radius: 50%;
     color: var(--color-muted);
-    font-size: 16px;
     cursor: pointer;
     transition: color 0.2s, background 0.2s;
 
@@ -69,17 +68,22 @@
     line-height: 1.5;
   }
 
-  &__actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  // Глобальна помилка (від сервера)
+  &__global-error {
     width: 100%;
-    margin-top: 8px;
+    padding: 10px 14px;
+    background: #fff0f0;
+    border: 1px solid #f5c2c2;
+    border-radius: 8px;
+    color: #c0392b;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: left;
   }
 
   &__fields {
     display: grid;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
     margin-top: 4px;
     text-align: left;
@@ -87,7 +91,7 @@
 
   &__field {
     display: grid;
-    gap: 6px;
+    gap: 5px;
     color: var(--color-heading);
     font-size: 13px;
     font-weight: 600;
@@ -102,12 +106,71 @@
       color: var(--color-heading);
       font: inherit;
       font-weight: 500;
+      transition: border-color 0.15s;
 
       &:focus {
         border-color: var(--color-primary);
         outline: none;
       }
+
+      &.is-error {
+        border-color: #e24b4a;
+
+        &:focus {
+          border-color: #e24b4a;
+        }
+      }
     }
+  }
+
+  // Помилка під полем — як у ContactForm
+  &__field-error {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #c0392b;
+    line-height: 1.4;
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__password-wrapper {
+    position: relative;
+
+    input {
+      padding-right: 42px;
+    }
+  }
+
+  &__password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    color: var(--color-muted);
+    transition: color 0.15s;
+
+    &:hover {
+      color: var(--color-heading);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    margin-top: 8px;
   }
 
   &__btn {
@@ -129,7 +192,7 @@
       background: var(--color-primary);
       color: #fff;
 
-      &:hover {
+      &:hover:not(:disabled) {
         opacity: 0.88;
       }
     }
@@ -138,7 +201,7 @@
       background: var(--color-surface-alt);
       color: var(--color-heading);
 
-      &:hover {
+      &:hover:not(:disabled) {
         background: var(--color-border);
       }
     }
