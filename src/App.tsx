@@ -9,7 +9,6 @@ import { GalleryPage } from "./components/pages/GalleryPage/GalleryPage";
 import { NotFoundPage } from "./components/pages/NotFoundPage/NotFoundPage";
 import { ProductPage } from "./components/pages/ProductPage/ProductPage";
 import { ReviewsPage } from "./components/pages/ReviewsPage/ReviewsPage";
-import { AccountPage } from "./components/pages/AccountPage/AccountPage";
 import { getProductById } from "./data/bestProducts";
 import { getAppPath } from "./utils/productUrl";
 import { getSiteVariant } from "./utils/siteVariant";
@@ -19,24 +18,26 @@ import Advantages from "./components/sections/Advantages/Advantages";
 import ContactForm from "./components/sections/ContactForm/ContactForm";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import { ShopProvider, useShop } from "./hooks/useShop";
+import { RecentlyViewedProvider } from "./hooks/useRecentlyViewed";
 import { AuthPromptModal } from "./ui/AuthPromptModal";
 
 // PLIS-67: глобальна модалка авторизації — спрацьовує для будь-якої кнопки обраного
 function GlobalAuthModal() {
-  const { isAuthRequired, cancelAuthRequired, completeAuthRequired } = useShop()
-  const { login } = useAuth()
+  const { isAuthRequired, cancelAuthRequired, completeAuthRequired } =
+    useShop();
+  const { login } = useAuth();
 
   return (
     <AuthPromptModal
       isOpen={isAuthRequired}
       onClose={cancelAuthRequired}
       onLogin={({ email }) => {
-        const name = email.split('@')[0] || 'Користувач'
-        login({ id: 1, name, email })
-        completeAuthRequired()
+        const name = email.split("@")[0] || "Користувач";
+        login({ id: 1, name, email });
+        completeAuthRequired();
       }}
     />
-  )
+  );
 }
 
 function App() {
@@ -78,8 +79,6 @@ function App() {
     pageContent = <AboutPage siteVariant={siteVariant} />;
   } else if (appPath.match(/^\/reviews\/?$/)) {
     pageContent = <ReviewsPage siteVariant={siteVariant} />;
-  } else if (appPath.match(/^\/account(\/.*)?$/)) {
-    pageContent = <AccountPage siteVariant={siteVariant} />;
   } else if (productMatch) {
     const product = getProductById(productMatch[1]);
     pageContent = product ? (
@@ -100,14 +99,20 @@ function App() {
   return (
     <AuthProvider>
       <ShopProvider>
-        {pageContent}
-        <GlobalAuthModal />
+        <RecentlyViewedProvider>
+          {pageContent}
+          <GlobalAuthModal />
+        </RecentlyViewedProvider>
       </ShopProvider>
     </AuthProvider>
   );
 }
 
-function HomePage({ siteVariant }: { siteVariant: ReturnType<typeof getSiteVariant> }) {
+function HomePage({
+  siteVariant,
+}: {
+  siteVariant: ReturnType<typeof getSiteVariant>;
+}) {
   return (
     <main className="page-shell">
       <Header activePage="home" siteVariant={siteVariant} />

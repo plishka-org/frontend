@@ -2,6 +2,7 @@ import type { BestProduct } from '../../../data/bestProducts'
 import { getRelatedProducts } from '../../../data/bestProducts'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { ProductCard } from './ProductCard'
+import { RecentlyViewedRail } from './RecentlyViewedRail'
 
 type ProductRailsProps = {
   product: BestProduct
@@ -18,7 +19,6 @@ function repeatProducts(products: BestProduct[], count: number) {
 export function ProductRails({ product, siteVariant }: ProductRailsProps) {
   const relatedProducts = getRelatedProducts(product)
   const relatedRailProducts = repeatProducts(relatedProducts, 10)
-  const recentlyViewed = repeatProducts(relatedProducts, 10)
 
   return (
     <div className="product-rails">
@@ -31,14 +31,7 @@ export function ProductRails({ product, siteVariant }: ProductRailsProps) {
         </div>
       </section>
 
-      <section className="product-rail" aria-labelledby="recent-products-title">
-        <h2 id="recent-products-title">Останні переглянуті вироби</h2>
-        <div className="product-rail__scroller">
-          {recentlyViewed.map(({ product: item, renderKey }) => (
-            <ProductCard key={renderKey} product={item} siteVariant={siteVariant} />
-          ))}
-        </div>
-      </section>
+      <RecentlyViewedRail currentProduct={product} siteVariant={siteVariant} />
     </div>
   )
 }
