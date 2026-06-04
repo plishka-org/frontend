@@ -11,16 +11,16 @@ type RecentlyViewedRailProps = {
 
 export function RecentlyViewedRail({ currentProduct, siteVariant }: RecentlyViewedRailProps) {
   const { recentlyViewedProducts, trackView } = useRecentlyViewed()
+  const currentProductId = currentProduct?.id
 
   useEffect(() => {
-    if (currentProduct) {
-      trackView(currentProduct.id)
+    if (currentProductId) {
+      trackView(currentProductId)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentProduct?.id])
+  }, [currentProductId, trackView])
 
-  const displayProducts = currentProduct
-    ? recentlyViewedProducts.filter((p) => p.id !== currentProduct.id)
+  const displayProducts = currentProductId
+    ? recentlyViewedProducts.filter((p) => p.id !== currentProductId)
     : recentlyViewedProducts
 
   if (displayProducts.length === 0) return null
