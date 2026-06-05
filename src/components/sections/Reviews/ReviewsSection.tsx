@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { reviews } from '../../../data/reviews'
+import { useReviews } from '../../../hooks/useReviews'
 import { getReviewsUrl } from '../../../utils/productUrl'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { ArrowIcon } from '../../icons/UiIcons'
@@ -9,6 +9,7 @@ type ReviewsSectionProps = {
 }
 
 export function ReviewsSection({ siteVariant }: ReviewsSectionProps) {
+  const { reviews } = useReviews({ topOnly: true })
   const [activeReviewIndex, setActiveReviewIndex] = useState(0)
   const [activeImageIndex, setActiveImageIndex] = useState(1)
   const activeReview = reviews[activeReviewIndex]
@@ -19,12 +20,16 @@ export function ReviewsSection({ siteVariant }: ReviewsSectionProps) {
   }
 
   function showPreviousImage() {
+    if (!activeReview) return
+
     setActiveImageIndex((currentIndex) =>
       currentIndex === 0 ? activeReview.images.length - 1 : currentIndex - 1,
     )
   }
 
   function showNextImage() {
+    if (!activeReview) return
+
     setActiveImageIndex((currentIndex) =>
       currentIndex === activeReview.images.length - 1 ? 0 : currentIndex + 1,
     )
@@ -86,7 +91,7 @@ export function ReviewsSection({ siteVariant }: ReviewsSectionProps) {
                     aria-current={reviewIndex === activeReviewIndex ? 'true' : undefined}
                     onClick={() => showReview(reviewIndex)}
                   >
-                    {review.id}
+                    {reviewIndex + 1}
                   </button>
                 ))}
               </div>

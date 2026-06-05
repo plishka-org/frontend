@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { testimonials } from '../../../data/testimonials'
 import type { Testimonial } from '../../../data/testimonials'
+import { useAuth } from '../../../hooks/useAuth'
+import { useReviews } from '../../../hooks/useReviews'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { ArrowIcon } from '../../icons/UiIcons'
 import { Footer } from '../../layout/Footer/Footer'
@@ -13,9 +14,18 @@ type ReviewsPageProps = {
 }
 
 export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
+  const { user, login } = useAuth()
+  const { reviews, addReview, editReview, removeReview } = useReviews()
   const [activeReviewIndex, setActiveReviewIndex] = useState(0)
   const [activeImageIndex, setActiveImageIndex] = useState(1)
-  const activeReview = testimonials[activeReviewIndex]
+  const [reviewText, setReviewText] = useState('')
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewTouched, setReviewTouched] = useState(false)
+  const [editingReviewId, setEditingReviewId] = useState<number | null>(null)
+  const activeReview = reviews[Math.min(activeReviewIndex, reviews.length - 1)]
+  const reviewTextError =
+    reviewTouched && reviewText.trim().length < 10 ? 'Напишіть щонайменше 10 символів' : ''
+  const isEditing = editingReviewId !== null
 
   function selectReview(reviewIndex: number) {
     setActiveReviewIndex(reviewIndex)
@@ -23,15 +33,84 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
   }
 
   function showPreviousImage() {
+    if (!activeReview) return
+
     setActiveImageIndex((currentIndex) =>
       currentIndex === 0 ? activeReview.images.length - 1 : currentIndex - 1,
     )
   }
 
   function showNextImage() {
+    if (!activeReview) return
+
     setActiveImageIndex((currentIndex) =>
       currentIndex === activeReview.images.length - 1 ? 0 : currentIndex + 1,
     )
+  }
+
+  function handleLoginClick() {
+    login({ id: 1, name: 'Олексій Ковальов', email: 'oleksii@example.com' })
+  }
+
+  function resetReviewForm() {
+    setReviewText('')
+    setReviewRating(5)
+    setReviewTouched(false)
+    setEditingReviewId(null)
+  }
+
+  function handleReviewSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setReviewTouched(true)
+
+    const trimmedText = reviewText.trim()
+
+    if (!user || trimmedText.length < 10) {
+      return
+    }
+
+    if (isEditing) {
+      editReview(editingReviewId, user.id, {
+        rating: reviewRating,
+        text: trimmedText,
+      })
+    } else {
+      addReview({
+        author: user.name,
+        authorId: user.id,
+        rating: reviewRating,
+        text: trimmedText,
+      })
+      setActiveReviewIndex(0)
+      setActiveImageIndex(1)
+    }
+
+    resetReviewForm()
+  }
+
+  function startEditingReview(review: Testimonial) {
+    setEditingReviewId(review.id)
+    setReviewText(review.text)
+    setReviewRating(review.rating)
+    setReviewTouched(false)
+  }
+
+  function handleDeleteReview(review: Testimonial) {
+    if (!user || user.id !== review.authorId) {
+      return
+    }
+
+    if (!window.confirm('Ви впевнені?')) {
+      return
+    }
+
+    removeReview(review.id, user.id)
+    setActiveReviewIndex((currentIndex) => Math.max(0, Math.min(currentIndex, reviews.length - 2)))
+    setActiveImageIndex(1)
+
+    if (editingReviewId === review.id) {
+      resetReviewForm()
+    }
   }
 
   return (
@@ -97,9 +176,63 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
 
           <ReviewsGrid
             activeReviewId={activeReview.id}
+            currentUserId={user?.id ?? null}
+            onDeleteReview={handleDeleteReview}
+            onEditReview={startEditingReview}
             onReviewSelect={selectReview}
-            reviews={testimonials}
+            reviews={reviews}
           />
+
+          <section className="reviews-manager" aria-labelledby="reviews-manager-title">
+            <div className="reviews-manager__intro">
+              <h2 id="reviews-manager-title">
+                {isEditing ? 'Редагувати відгук' : 'Залишити відгук'}
+              </h2>
+              <p>
+                Оцініть роботу майстерні та напишіть короткий відгук. Редагувати або видалити можна лише власні відгуки.
+              </p>
+            </div>
+
+            {!user ? (
+              <div className="reviews-manager__auth">
+                <p>Увійдіть, щоб залишити відгук.</p>
+                <button type="button" onClick={handleLoginClick}>
+                  Увійти
+                </button>
+              </div>
+            ) : (
+              <form className="reviews-manager__form" onSubmit={handleReviewSubmit} noValidate>
+                <StarRating
+                  label="Оцінка"
+                  rating={reviewRating}
+                  onChange={setReviewRating}
+                />
+                <label className="reviews-manager__field">
+                  <span>Текст відгуку</span>
+                  <textarea
+                    value={reviewText}
+                    maxLength={500}
+                    placeholder="Поділіться враженнями від замовлення..."
+                    aria-invalid={Boolean(reviewTextError)}
+                    onBlur={() => setReviewTouched(true)}
+                    onChange={(event) => setReviewText(event.target.value)}
+                  />
+                  <small>{reviewText.length}/500</small>
+                  {reviewTextError && <em role="alert">{reviewTextError}</em>}
+                </label>
+                <div className="reviews-manager__actions">
+                  {isEditing && (
+                    <button type="button" onClick={resetReviewForm}>
+                      Скасувати
+                    </button>
+                  )}
+                  <button type="submit">
+                    {isEditing ? 'Зберегти зміни' : 'Опублікувати відгук'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </section>
         </div>
       </section>
       <ContactForm />
@@ -111,12 +244,18 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
 
 type ReviewsGridProps = {
   activeReviewId: number
+  currentUserId: number | null
+  onDeleteReview: (review: Testimonial) => void
+  onEditReview: (review: Testimonial) => void
   onReviewSelect: (reviewIndex: number) => void
   reviews: Testimonial[]
 }
 
 function ReviewsGrid({
   activeReviewId,
+  currentUserId,
+  onDeleteReview,
+  onEditReview,
   onReviewSelect,
   reviews,
 }: ReviewsGridProps) {
@@ -126,7 +265,10 @@ function ReviewsGrid({
         {reviews.map((review, reviewIndex) => (
           <ReviewCard
             isActive={review.id === activeReviewId}
+            isOwnReview={currentUserId === review.authorId}
             key={review.id}
+            onDelete={() => onDeleteReview(review)}
+            onEdit={() => onEditReview(review)}
             onSelect={() => onReviewSelect(reviewIndex)}
             review={review}
           />
@@ -138,11 +280,14 @@ function ReviewsGrid({
 
 type ReviewCardProps = {
   isActive: boolean
+  isOwnReview: boolean
+  onDelete: () => void
+  onEdit: () => void
   onSelect: () => void
   review: Testimonial
 }
 
-function ReviewCard({ isActive, onSelect, review }: ReviewCardProps) {
+function ReviewCard({ isActive, isOwnReview, onDelete, onEdit, onSelect, review }: ReviewCardProps) {
   return (
     <article className="review-card" data-active={isActive}>
       <button
@@ -152,9 +297,50 @@ function ReviewCard({ isActive, onSelect, review }: ReviewCardProps) {
         onClick={onSelect}
       >
         <img src={review.cardImage} alt="" />
+        <span className="review-card__rating" aria-label={`Оцінка ${review.rating} з 5`}>
+          {'★'.repeat(review.rating)}
+        </span>
         <span className="review-card__text">{review.text}</span>
         <span className="review-card__author">{review.author}</span>
       </button>
+      {isOwnReview && (
+        <div className="review-card__actions" aria-label="Керування відгуком">
+          <button type="button" onClick={onEdit}>
+            Редагувати
+          </button>
+          <button type="button" onClick={onDelete}>
+            Видалити
+          </button>
+        </div>
+      )}
     </article>
+  )
+}
+
+type StarRatingProps = {
+  label: string
+  rating: number
+  onChange: (rating: number) => void
+}
+
+function StarRating({ label, rating, onChange }: StarRatingProps) {
+  return (
+    <fieldset className="reviews-manager__rating">
+      <legend>{label}</legend>
+      <div>
+        {[1, 2, 3, 4, 5].map((value) => (
+          <button
+            key={value}
+            type="button"
+            aria-label={`Оцінка ${value} з 5`}
+            aria-pressed={value === rating}
+            data-active={value <= rating}
+            onClick={() => onChange(value)}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+    </fieldset>
   )
 }
