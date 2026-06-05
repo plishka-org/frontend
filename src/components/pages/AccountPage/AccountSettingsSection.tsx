@@ -1,7 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { useAuth } from '../../../hooks/useAuth'
-import type { AuthUser } from '../../../services/api/authApi'
+import {
+  changePasswordApi,
+  requestEmailChangeApi,
+  type AuthUser,
+} from '../../../services/api/authApi'
 
 type AccountSettingsValues = {
   name: string
@@ -14,6 +18,10 @@ type AccountSettingsValues = {
 type AccountSettingsField = keyof AccountSettingsValues
 type AccountSettingsTouched = Record<AccountSettingsField, boolean>
 type AccountSettingsErrors = Record<AccountSettingsField, string>
+type AccountSettingsToast = {
+  type: 'success' | 'error'
+  message: string
+}
 
 const NAME_PATTERN = /^[a-zA-Zа-яА-ЯіїєґІЇЄҐ\s\-']+$/
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -35,6 +43,20 @@ function createInitialValues(user: AuthUser | null): AccountSettingsValues {
     newPassword: '',
     confirmPassword: '',
   }
+}
+
+function getEmailChangeStatus() {
+  if (typeof window === 'undefined') return null
+
+  const hashQuery = window.location.hash.split('?')[1] ?? ''
+  return new URLSearchParams(hashQuery).get('emailChange')
+}
+
+function cleanEmailChangeStatusFromUrl() {
+  if (typeof window === 'undefined') return
+
+  const nextUrl = `${window.location.pathname}${window.location.search}#/account/settings`
+  window.history.replaceState(null, '', nextUrl)
 }
 
 function EyeIcon() {
@@ -142,6 +164,23 @@ function ErrorMessage({ id, message }: ErrorMessageProps) {
   )
 }
 
+type ToastMessageProps = {
+  toast: AccountSettingsToast | null
+}
+
+function ToastMessage({ toast }: ToastMessageProps) {
+  if (!toast) return null
+
+  return (
+    <div
+      className={`account-settings__toast account-settings__toast--${toast.type}`}
+      role={toast.type === 'error' ? 'alert' : 'status'}
+    >
+      {toast.message}
+    </div>
+  )
+}
+
 type FieldProps = {
   id: string
   label: string
@@ -169,21 +208,37 @@ export function AccountSettingsSection() {
   const [touched, setTouched] = useState<AccountSettingsTouched>(emptyTouched)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isSaved, setIsSaved] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [toast, setToast] = useState<AccountSettingsToast | null>(null)
 
   const errors = validateForm(values)
   const isDirty = (Object.keys(values) as AccountSettingsField[]).some(
     (field) => values[field] !== savedValues[field],
   )
   const isFormValid = !Object.values(errors).some(Boolean)
-  const isSubmitDisabled = !isDirty || !isFormValid
+  const isSubmitDisabled = !isDirty || !isFormValid || isSubmitting
+
+  useEffect(() => {
+    if (getEmailChangeStatus() !== 'success') return
+
+    setToast({ type: 'success', message: 'Email успішно підтверджено.' })
+    cleanEmailChangeStatusFromUrl()
+  }, [])
+
+  useEffect(() => {
+    const nextValues = createInitialValues(user)
+
+    setValues(nextValues)
+    setSavedValues(nextValues)
+    setTouched(emptyTouched)
+  }, [user])
 
   function handleFieldChange(field: AccountSettingsField, value: string) {
     setValues((currentValues) => ({
       ...currentValues,
       [field]: field === 'phone' ? sanitizePhone(value) : value,
     }))
-    setIsSaved(false)
+    setToast(null)
   }
 
   function handleFieldBlur(field: AccountSettingsField) {
@@ -193,7 +248,7 @@ export function AccountSettingsSection() {
     }))
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     setTouched({
@@ -204,12 +259,52 @@ export function AccountSettingsSection() {
       confirmPassword: true,
     })
 
-    if (!isDirty || !isFormValid) return
+    if (!isDirty || !isFormValid || isSubmitting) return
 
-    // TODO PLIS-280: підключити API зміни профілю, email та пароля.
-    setSavedValues(values)
-    setIsSaved(true)
-    setTimeout(() => setIsSaved(false), 3000)
+    const isEmailChanged = values.email.trim() !== savedValues.email.trim()
+    const isPasswordChanged = Boolean(values.newPassword)
+
+    setIsSubmitting(true)
+    setToast(null)
+
+    try {
+      await Promise.all([
+        isEmailChanged ? requestEmailChangeApi({ email: values.email.trim() }) : Promise.resolve(),
+        isPasswordChanged ? changePasswordApi({ newPassword: values.newPassword }) : Promise.resolve(),
+      ])
+
+      const nextSavedValues: AccountSettingsValues = {
+        ...values,
+        email: isEmailChanged ? savedValues.email : values.email,
+        newPassword: '',
+        confirmPassword: '',
+      }
+      const nextValues: AccountSettingsValues = {
+        ...values,
+        email: isEmailChanged ? savedValues.email : values.email,
+        newPassword: '',
+        confirmPassword: '',
+      }
+      const successMessages = [
+        isEmailChanged ? 'Ми надіслали посилання для підтвердження нового email.' : '',
+        isPasswordChanged ? 'Пароль успішно змінено.' : '',
+      ].filter(Boolean)
+
+      setSavedValues(nextSavedValues)
+      setValues(nextValues)
+      setTouched(emptyTouched)
+      setToast({
+        type: 'success',
+        message: successMessages.join(' ') || 'Зміни збережено.',
+      })
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Не вдалося зберегти зміни.',
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const nameError = touched.name ? errors.name : ''
@@ -220,6 +315,8 @@ export function AccountSettingsSection() {
 
   return (
     <form className="account-settings" onSubmit={handleSubmit} noValidate>
+      <ToastMessage toast={toast} />
+
       <div className="account-settings__fields-grid">
         <div className="account-settings__col">
           <h2 className="account-settings__title">Особисті дані</h2>
@@ -330,7 +427,7 @@ export function AccountSettingsSection() {
 
       <div className="account-settings__footer">
         <button type="submit" className="account-settings__submit" disabled={isSubmitDisabled}>
-          {isSaved ? 'Збережено' : 'Підтвердити зміни'}
+          {isSubmitting ? 'Збереження...' : 'Підтвердити зміни'}
         </button>
       </div>
     </form>
