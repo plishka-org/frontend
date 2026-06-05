@@ -96,6 +96,22 @@ export async function logoutApi(): Promise<void> {
   }
 }
 
+export async function deleteAccountApi(): Promise<void> {
+  if (!BASE_URL) {
+    return
+  }
+
+  const response = await fetch(`${BASE_URL}/api/auth/account`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+  })
+
+  if (!response.ok) {
+    throw new Error(await getApiErrorMessage(response, 'Не вдалося видалити акаунт. Спробуйте ще раз.'))
+  }
+}
+
 export async function requestEmailChangeApi(payload: EmailChangePayload): Promise<void> {
   if (!BASE_URL) {
     throw new Error('API зміни email ще не підключено. Вкажіть VITE_API_URL.')

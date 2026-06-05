@@ -1,23 +1,46 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useAuth } from '../../../hooks/useAuth'
 import { AccountNav } from './AccountNav'
+import { DeleteAccountModal } from './DeleteAccountModal'
 
 type AccountLayoutProps = {
   children: ReactNode
 }
 
 export function AccountLayout({ children }: AccountLayoutProps) {
-  const { logout } = useAuth()
+  const { deleteAccount, logout } = useAuth()
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   async function handleLogout() {
     await logout()
     window.location.href = '/'
   }
 
+  function openDeleteModal() {
+    setDeleteError(null)
+    setIsDeleteModalOpen(true)
+  }
+
+  function closeDeleteModal() {
+    if (isDeleting) return
+
+    setDeleteError(null)
+    setIsDeleteModalOpen(false)
+  }
+
   async function handleDeleteAccount() {
-    if (window.confirm('Ви впевнені, що хочете видалити акаунт? Цю дію неможливо скасувати.')) {
-      await logout()
+    setDeleteError(null)
+    setIsDeleting(true)
+
+    try {
+      await deleteAccount()
       window.location.href = '/'
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Не вдалося видалити акаунт. Спробуйте ще раз.')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -45,7 +68,7 @@ export function AccountLayout({ children }: AccountLayoutProps) {
             <button
               className="account-sidebar__action-btn account-sidebar__action-btn--delete"
               type="button"
-              onClick={handleDeleteAccount}
+              onClick={openDeleteModal}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <polyline points="3 6 5 6 21 6" />
@@ -62,6 +85,14 @@ export function AccountLayout({ children }: AccountLayoutProps) {
       <main className="account-content" id="account-main">
         {children}
       </main>
+
+      <DeleteAccountModal
+        error={deleteError}
+        isDeleting={isDeleting}
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDeleteAccount}
+      />
     </div>
   )
 }
