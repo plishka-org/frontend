@@ -6,7 +6,7 @@ interface AuthGuardProps {
 }
 
 export const AuthGuard = ({ children }: AuthGuardProps) => {
-  const { login, user } = useAuth();
+  const { requestLogin, user } = useAuth();
 
   if (!user) {
     return (
@@ -15,7 +15,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
         <button
           className="auth-guard__btn"
           type="button"
-          onClick={() => login({ id: 1, name: 'Користувач', email: 'user@example.com' })}
+          onClick={() => requestLogin()}
         >
           Увійти
         </button>

@@ -3,6 +3,7 @@ import { IMaskInput } from "react-imask";
 import contactImage from "../../../icons/contact-form-image.png";
 import { createContactRequest } from "../../../services/api/contactRequestsApi";
 import "../../../styles/sections/_contact-form.scss";
+import { AuthGuard } from "./AuthGuard";
 import { ContactInput } from "./ContactInput";
 
 const ContactForm = () => {
@@ -142,90 +143,92 @@ const ContactForm = () => {
               </button>
             </div>
           ) : (
-            <form className="contact-form" onSubmit={handleSubmit}>
-              <div className="contact-form__row">
-                <ContactInput
-                  id="name"
-                  type="text"
-                  autoComplete="name"
-                  error={nameTouched ? nameError : ""}
-                  label="Ім'я"
-                  value={name}
-                  placeholder="Ваше ім'я"
-                  onChange={handleNameChange}
-                  onBlur={() => {
-                    setNameTouched(true);
-                    setNameError(validateName(name));
-                  }}
-                />
-                {/* Телефон */}
-                <div className="contact-form__field">
-                  <label className="contact-form__label" htmlFor="phone">
-                    Телефон *
-                  </label>
-                  <div className="contact-form__phone-wrapper">
-                    <span className="contact-form__prefix">+38</span>
-                    <IMaskInput
-                      id="phone"
-                      autoComplete="tel-national"
-                      className={`contact-form__input ${phoneTouched && phoneError ? "contact-form__input--error" : ""}`}
-                      mask="000 000 00 00"
-                      unmask={true}
-                      value={phone}
-                      placeholder="0XX XXX XX XX"
-                      onAccept={(value) => handlePhoneAccept(String(value))}
-                      onBlur={() => {
-                        setPhoneTouched(true);
-                        setPhoneError(validatePhone(phone));
-                      }}
-                      aria-describedby={phoneTouched && phoneError ? "phone-error" : undefined}
-                      aria-invalid={Boolean(phoneTouched && phoneError)}
-                    />
+            <AuthGuard>
+              <form className="contact-form" onSubmit={handleSubmit}>
+                <div className="contact-form__row">
+                  <ContactInput
+                    id="name"
+                    type="text"
+                    autoComplete="name"
+                    error={nameTouched ? nameError : ""}
+                    label="Ім'я"
+                    value={name}
+                    placeholder="Ваше ім'я"
+                    onChange={handleNameChange}
+                    onBlur={() => {
+                      setNameTouched(true);
+                      setNameError(validateName(name));
+                    }}
+                  />
+                  {/* Телефон */}
+                  <div className="contact-form__field">
+                    <label className="contact-form__label" htmlFor="phone">
+                      Телефон *
+                    </label>
+                    <div className="contact-form__phone-wrapper">
+                      <span className="contact-form__prefix">+38</span>
+                      <IMaskInput
+                        id="phone"
+                        autoComplete="tel-national"
+                        className={`contact-form__input ${phoneTouched && phoneError ? "contact-form__input--error" : ""}`}
+                        mask="000 000 00 00"
+                        unmask={true}
+                        value={phone}
+                        placeholder="0XX XXX XX XX"
+                        onAccept={(value) => handlePhoneAccept(String(value))}
+                        onBlur={() => {
+                          setPhoneTouched(true);
+                          setPhoneError(validatePhone(phone));
+                        }}
+                        aria-describedby={phoneTouched && phoneError ? "phone-error" : undefined}
+                        aria-invalid={Boolean(phoneTouched && phoneError)}
+                      />
+                    </div>
+                    {phoneTouched && phoneError && (
+                      <span className="contact-form__error" id="phone-error">
+                        {phoneError}
+                      </span>
+                    )}
                   </div>
-                  {phoneTouched && phoneError && (
-                    <span className="contact-form__error" id="phone-error">
-                      {phoneError}
+                </div>
+                {/* Причина дзвінка */}
+                <div className="contact-form__field">
+                  <label className="contact-form__label" htmlFor="description">
+                    Причина дзвінка *
+                  </label>
+                  <div className="contact-form__textarea-wrapper">
+                    <textarea
+                      id="description"
+                      autoComplete="off"
+                      value={description}
+                      placeholder="Коротко опишіть ваше питання або що вас цікавить..."
+                      onChange={handleDescriptionChange}
+                      onBlur={() => {
+                        setDescriptionTouched(true);
+                        setDescriptionError(validateDescription(description));
+                      }}
+                      className={`contact-form__textarea ${descriptionTouched && descriptionError ? "contact-form__input--error" : ""}`}
+                    />
+                    <span className="contact-form__counter">
+                      символів: {description.length}/300
                     </span>
+                  </div>
+                  {descriptionTouched && descriptionError && (
+                    <span className="contact-form__error">{descriptionError}</span>
                   )}
                 </div>
-              </div>
-              {/* Причина дзвінка */}
-              <div className="contact-form__field">
-                <label className="contact-form__label" htmlFor="description">
-                  Причина дзвінка *
-                </label>
-                <div className="contact-form__textarea-wrapper">
-                  <textarea
-                    id="description"
-                    autoComplete="off"
-                    value={description}
-                    placeholder="Коротко опишіть ваше питання або що вас цікавить..."
-                    onChange={handleDescriptionChange}
-                    onBlur={() => {
-                      setDescriptionTouched(true);
-                      setDescriptionError(validateDescription(description));
-                    }}
-                    className={`contact-form__textarea ${descriptionTouched && descriptionError ? "contact-form__input--error" : ""}`}
-                  />
-                  <span className="contact-form__counter">
-                    символів: {description.length}/300
-                  </span>
-                </div>
-                {descriptionTouched && descriptionError && (
-                  <span className="contact-form__error">{descriptionError}</span>
+                <button
+                  type="submit"
+                  disabled={!isFormValid || isSubmitting}
+                  className="contact-form__button"
+                >
+                  {isSubmitting ? "Відправляємо..." : "Відправити заявку"}
+                </button>
+                {submitError && (
+                  <span className="contact-form__error">{submitError}</span>
                 )}
-              </div>
-              <button
-                type="submit"
-                disabled={!isFormValid || isSubmitting}
-                className="contact-form__button"
-              >
-                {isSubmitting ? "Відправляємо..." : "Відправити заявку"}
-              </button>
-              {submitError && (
-                <span className="contact-form__error">{submitError}</span>
-              )}
-            </form>
+              </form>
+            </AuthGuard>
           )}
         </div>
         <div className="contact-form__image-wrapper">

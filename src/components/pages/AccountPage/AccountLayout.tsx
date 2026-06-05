@@ -9,14 +9,14 @@ type AccountLayoutProps = {
 export function AccountLayout({ children }: AccountLayoutProps) {
   const { logout } = useAuth()
 
-  function handleLogout() {
-    logout()
+  async function handleLogout() {
+    await logout()
     window.location.href = '/'
   }
 
-  function handleDeleteAccount() {
+  async function handleDeleteAccount() {
     if (window.confirm('Ви впевнені, що хочете видалити акаунт? Цю дію неможливо скасувати.')) {
-      logout()
+      await logout()
       window.location.href = '/'
     }
   }

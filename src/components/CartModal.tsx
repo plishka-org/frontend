@@ -14,8 +14,6 @@ type CartModalProps = {
 type CheckoutStep = 'cart' | 'login' | 'register' | 'order' | 'success'
 type OrderBackStep = Extract<CheckoutStep, 'cart' | 'login' | 'register'>
 
-const mockUserId = 1
-
 export function CartModal({ isOpen, onClose }: CartModalProps) {
   const { user, login } = useAuth()
   const {
@@ -28,6 +26,8 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
   const [step, setStep] = useState<CheckoutStep>('cart')
   const [orderBackStep, setOrderBackStep] = useState<OrderBackStep>('cart')
   const [loginForm, setLoginForm] = useState({ email: '', password: '' })
+  const [authError, setAuthError] = useState('')
+  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false)
   const [registerForm, setRegisterForm] = useState({
     name: '',
     email: '',
@@ -64,6 +64,8 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
 
   const handleClose = useCallback(() => {
     setStep('cart')
+    setAuthError('')
+    setIsAuthSubmitting(false)
     setOrderTouched(false)
     onClose()
   }, [onClose])
@@ -122,37 +124,43 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
     setStep('login')
   }
 
-  function handleLoginSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleLoginSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!canLogin) {
+    if (!canLogin || isAuthSubmitting) {
       return
     }
 
-    const name = loginForm.email.split('@')[0] || 'Користувач'
-    login({ id: mockUserId, name, email: loginForm.email })
-    setOrderForm((currentForm) => ({
-      ...currentForm,
-      recipientName: currentForm.recipientName || name,
-    }))
-    setOrderBackStep('login')
-    setStep('order')
+    setAuthError('')
+    setIsAuthSubmitting(true)
+
+    try {
+      const authenticatedUser = await login({
+        email: loginForm.email.trim(),
+        password: loginForm.password,
+      })
+
+      setOrderForm((currentForm) => ({
+        ...currentForm,
+        recipientName: currentForm.recipientName || authenticatedUser.name,
+      }))
+      setOrderBackStep('login')
+      setStep('order')
+    } catch (err) {
+      setAuthError(err instanceof Error ? err.message : 'Не вдалося увійти. Спробуйте ще раз.')
+    } finally {
+      setIsAuthSubmitting(false)
+    }
   }
 
   function handleRegisterSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!canRegister) {
+    if (!canRegister || isAuthSubmitting) {
       return
     }
 
-    login({ id: mockUserId, name: registerForm.name, email: registerForm.email })
-    setOrderForm((currentForm) => ({
-      ...currentForm,
-      recipientName: currentForm.recipientName || registerForm.name,
-    }))
-    setOrderBackStep('register')
-    setStep('order')
+    setAuthError('Реєстрація буде доступна після підключення endpoint бекенду.')
   }
 
   function handleOrderSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -236,15 +244,29 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
             </p>
             <p className="cart-modal__link-row">
               <span>Ще не маєте профілю?</span>
-              <button type="button" onClick={() => setStep('register')}>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthError('')
+                  setStep('register')
+                }}
+              >
                 Зареєструватися
               </button>
             </p>
+            {authError && (
+              <p className="cart-modal__form-error" role="alert">
+                {authError}
+              </p>
+            )}
             <ModalActions
-              primaryLabel="Продовжити"
+              primaryLabel={isAuthSubmitting ? 'Входимо...' : 'Продовжити'}
               secondaryLabel="Повернутися назад"
-              primaryDisabled={!canLogin}
-              onSecondary={() => setStep('cart')}
+              primaryDisabled={!canLogin || isAuthSubmitting}
+              onSecondary={() => {
+                setAuthError('')
+                setStep('cart')
+              }}
             />
           </form>
         )}
@@ -290,15 +312,29 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
             />
             <p className="cart-modal__link-row">
               <span>Вже маєте профіль?</span>
-              <button type="button" onClick={() => setStep('login')}>
+              <button
+                type="button"
+                onClick={() => {
+                  setAuthError('')
+                  setStep('login')
+                }}
+              >
                 Увійти
               </button>
             </p>
+            {authError && (
+              <p className="cart-modal__form-error" role="alert">
+                {authError}
+              </p>
+            )}
             <ModalActions
               primaryLabel="Продовжити"
               secondaryLabel="Повернутися назад"
-              primaryDisabled={!canRegister}
-              onSecondary={() => setStep('cart')}
+              primaryDisabled={!canRegister || isAuthSubmitting}
+              onSecondary={() => {
+                setAuthError('')
+                setStep('cart')
+              }}
             />
           </form>
         )}
