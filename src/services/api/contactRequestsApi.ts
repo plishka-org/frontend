@@ -41,6 +41,22 @@ function createLocalContactRequest(
   return request
 }
 
+function getLocalContactRequests(): ContactRequestResponse[] {
+  if (typeof window === 'undefined') {
+    return []
+  }
+
+  try {
+    const requests = JSON.parse(
+      window.localStorage.getItem(contactRequestsStorageKey) || '[]',
+    ) as ContactRequestResponse[]
+
+    return Array.isArray(requests) ? requests : []
+  } catch {
+    return []
+  }
+}
+
 export async function createContactRequest(
   payload: ContactRequestPayload,
 ): Promise<ContactRequestResponse> {
@@ -60,4 +76,22 @@ export async function createContactRequest(
   }
 
   return response.json() as Promise<ContactRequestResponse>
+}
+
+export async function getContactRequests(): Promise<ContactRequestResponse[]> {
+  if (!BASE_URL) {
+    return getLocalContactRequests()
+  }
+
+  const response = await fetch(`${BASE_URL}/api/contact-requests`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to get contact requests')
+  }
+
+  return response.json() as Promise<ContactRequestResponse[]>
 }

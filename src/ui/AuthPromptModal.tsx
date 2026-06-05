@@ -2,9 +2,11 @@ import { useState } from 'react'
 import './AuthPromptModal.scss'
 
 type AuthPromptModalProps = {
+  description?: string
   isOpen: boolean
   onClose: () => void
   onLogin: (credentials: { email: string; password: string }) => void | Promise<void>
+  title?: string
 }
 
 function EyeIcon() {
@@ -47,7 +49,13 @@ function validatePassword(value: string): string {
   return ''
 }
 
-export function AuthPromptModal({ isOpen, onClose, onLogin }: AuthPromptModalProps) {
+export function AuthPromptModal({
+  description = 'Будь ласка, увійдіть, щоб продовжити.',
+  isOpen,
+  onClose,
+  onLogin,
+  title = 'Увійдіть у профіль',
+}: AuthPromptModalProps) {
   const [email, setEmail] = useState('')
   const [emailTouched, setEmailTouched] = useState(false)
   const [emailError, setEmailError] = useState('')
@@ -128,10 +136,10 @@ export function AuthPromptModal({ isOpen, onClose, onLogin }: AuthPromptModalPro
 
         <div className="auth-modal__icon" aria-hidden="true">♡</div>
         <h2 id="auth-modal-title" className="auth-modal__title">
-          Увійдіть, щоб зберегти товар
+          {title}
         </h2>
         <p className="auth-modal__text">
-          Будь ласка, увійдіть, щоб додавати товари до обраного.
+          {description}
         </p>
 
         {globalError && (

@@ -17,27 +17,9 @@ import "./App.scss";
 import { InformBlock } from "./components/sections/InformBlock/InformBlock";
 import Advantages from "./components/sections/Advantages/Advantages";
 import ContactForm from "./components/sections/ContactForm/ContactForm";
-import { AuthProvider, useAuth } from "./hooks/useAuth";
-import { ShopProvider, useShop } from "./hooks/useShop";
+import { AuthProvider } from "./hooks/useAuth";
+import { ShopProvider } from "./hooks/useShop";
 import { RecentlyViewedProvider } from "./hooks/useRecentlyViewed";
-import { AuthPromptModal } from "./ui/AuthPromptModal";
-
-function GlobalAuthModal() {
-  const { isAuthRequired, cancelAuthRequired, completeAuthRequired } = useShop();
-  const { login } = useAuth();
-
-  return (
-    <AuthPromptModal
-      isOpen={isAuthRequired}
-      onClose={cancelAuthRequired}
-      onLogin={({ email }) => {
-        const name = email.split("@")[0] || "Користувач";
-        login({ id: 1, name, email });
-        completeAuthRequired();
-      }}
-    />
-  );
-}
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -102,7 +84,6 @@ function App() {
       <ShopProvider>
         <RecentlyViewedProvider>
           {pageContent}
-          <GlobalAuthModal />
         </RecentlyViewedProvider>
       </ShopProvider>
     </AuthProvider>

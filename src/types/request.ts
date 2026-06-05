@@ -1,6 +1,6 @@
 export type Request = {
-  id: number
+  id: number | string
   title: string
   description: string
-  date: string 
+  date: string
 }
