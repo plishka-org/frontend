@@ -14,7 +14,7 @@ type ReviewsPageProps = {
 }
 
 export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
-  const { user, login } = useAuth()
+  const { user, requestLogin } = useAuth()
   const { reviews, addReview, editReview, removeReview } = useReviews()
   const [activeReviewIndex, setActiveReviewIndex] = useState(0)
   const [activeImageIndex, setActiveImageIndex] = useState(1)
@@ -49,7 +49,7 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
   }
 
   function handleLoginClick() {
-    login({ id: 1, name: 'Олексій Ковальов', email: 'oleksii@example.com' })
+    requestLogin()
   }
 
   function resetReviewForm() {
