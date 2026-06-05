@@ -11,6 +11,14 @@ export interface LoginCredentials {
   password: string
 }
 
+export interface EmailChangePayload {
+  email: string
+}
+
+export interface PasswordChangePayload {
+  newPassword: string
+}
+
 export interface AuthStatusResponse {
   isAuthenticated: boolean
   user: AuthUser | null
@@ -18,6 +26,15 @@ export interface AuthStatusResponse {
 
 interface LoginResponse {
   user: AuthUser
+}
+
+async function getApiErrorMessage(response: Response, fallbackMessage: string) {
+  try {
+    const data = (await response.json()) as Partial<{ message: string; error: string }>
+    return data.message || data.error || fallbackMessage
+  } catch {
+    return fallbackMessage
+  }
 }
 
 export async function checkAuthStatus(): Promise<AuthStatusResponse> {
@@ -76,6 +93,40 @@ export async function logoutApi(): Promise<void> {
 
   if (!response.ok) {
     throw new Error('Failed to logout')
+  }
+}
+
+export async function requestEmailChangeApi(payload: EmailChangePayload): Promise<void> {
+  if (!BASE_URL) {
+    throw new Error('API зміни email ще не підключено. Вкажіть VITE_API_URL.')
+  }
+
+  const response = await fetch(`${BASE_URL}/api/auth/change-email`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error(await getApiErrorMessage(response, 'Не вдалося надіслати запит на зміну email.'))
+  }
+}
+
+export async function changePasswordApi(payload: PasswordChangePayload): Promise<void> {
+  if (!BASE_URL) {
+    throw new Error('API зміни пароля ще не підключено. Вкажіть VITE_API_URL.')
+  }
+
+  const response = await fetch(`${BASE_URL}/api/auth/change-password`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error(await getApiErrorMessage(response, 'Не вдалося змінити пароль.'))
   }
 }
 
