@@ -5,9 +5,7 @@ import reviewImage4 from '../assets/block-reviews/reviews-4.svg'
 
 export type Testimonial = {
   id: number
-  authorId: number
   author: string
-  rating: number
   text: string
   images: string[]
   cardImage: string
@@ -17,9 +15,7 @@ export type Testimonial = {
 export const testimonials: Testimonial[] = [
   {
     id: 1,
-    authorId: 1,
     author: 'Олексій Ковальов',
-    rating: 5,
     text: 'Чудова якість, дуже задоволена замовленням! Все підійшло до дворика дуже добре. Рекомендую.',
     images: [reviewImage, reviewImage2, reviewImage3],
     cardImage: reviewImage2,
@@ -27,9 +23,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 2,
-    authorId: 2,
     author: 'Олексій Ковальов',
-    rating: 5,
     text: 'Дуже вдячний майстерні за такий гарний виріб',
     images: [reviewImage2, reviewImage4, reviewImage3],
     cardImage: reviewImage4,
@@ -37,9 +31,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 3,
-    authorId: 3,
     author: 'Олексій Ковальов',
-    rating: 4,
     text: 'Дуже вдячний майстерні за такий гарний виріб',
     images: [reviewImage4, reviewImage3, reviewImage],
     cardImage: reviewImage4,
@@ -47,9 +39,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 4,
-    authorId: 4,
     author: 'Олексій Ковальов',
-    rating: 5,
     text: 'Дуже вдячний майстерні за такий гарний виріб',
     images: [reviewImage3, reviewImage4, reviewImage2],
     cardImage: reviewImage4,
@@ -57,9 +47,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 5,
-    authorId: 5,
     author: 'Марія Гнатюк',
-    rating: 5,
     text: 'Дуже акуратна ручна робота. Альтанка стала улюбленим місцем для відпочинку всієї родини.',
     images: [reviewImage2, reviewImage, reviewImage3],
     cardImage: reviewImage,
@@ -67,9 +55,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 6,
-    authorId: 6,
     author: 'Андрій Савчук',
-    rating: 4,
     text: 'Все сподобалось: від консультації до встановлення. Виріб виглядає саме так, як хотіли.',
     images: [reviewImage3, reviewImage2, reviewImage4],
     cardImage: reviewImage3,
@@ -77,9 +63,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 7,
-    authorId: 7,
     author: 'Наталія Коваль',
-    rating: 5,
     text: 'Замовлення виконали вчасно, дерево гарно оброблене, конструкція виглядає надійно і затишно.',
     images: [reviewImage4, reviewImage, reviewImage2],
     cardImage: reviewImage4,
@@ -87,9 +71,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 8,
-    authorId: 8,
     author: 'Іван Мельник',
-    rating: 5,
     text: 'Майстри уважно врахували побажання, виріб вийшов міцний і дуже охайний. Дякую за роботу.',
     images: [reviewImage, reviewImage3, reviewImage4],
     cardImage: reviewImage3,
@@ -97,9 +79,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 9,
-    authorId: 9,
     author: 'Оксана Мороз',
-    rating: 4,
     text: 'Виріб вийшов дуже гарний, усе зроблено акуратно та з любовʼю до деталей.',
     images: [reviewImage2, reviewImage4, reviewImage],
     cardImage: reviewImage2,
@@ -107,9 +87,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 10,
-    authorId: 10,
     author: 'Сергій Ткаченко',
-    rating: 5,
     text: 'Якість дерева і збірки приємно здивувала. Дякую за відповідальний підхід.',
     images: [reviewImage4, reviewImage3, reviewImage2],
     cardImage: reviewImage4,
@@ -117,9 +95,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 11,
-    authorId: 11,
     author: 'Людмила Шевченко',
-    rating: 4,
     text: 'Замовлення виконали уважно до побажань, результат виглядає дуже затишно.',
     images: [reviewImage, reviewImage2, reviewImage4],
     cardImage: reviewImage,
@@ -127,9 +103,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 12,
-    authorId: 12,
     author: 'Юрій Бондар',
-    rating: 5,
     text: 'Комунікація була легкою, а готовий виріб повністю відповідає очікуванням.',
     images: [reviewImage3, reviewImage, reviewImage4],
     cardImage: reviewImage3,
@@ -137,9 +111,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 13,
-    authorId: 13,
     author: 'Катерина Лисенко',
-    rating: 5,
     text: 'Дуже сподобалась якість обробки. Виріб став справжньою прикрасою подвірʼя.',
     images: [reviewImage2, reviewImage3, reviewImage],
     cardImage: reviewImage2,
@@ -147,9 +119,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 14,
-    authorId: 14,
     author: 'Павло Кравець',
-    rating: 4,
     text: 'Все зроблено міцно, охайно і в домовлені строки. Рекомендую майстерню.',
     images: [reviewImage4, reviewImage2, reviewImage3],
     cardImage: reviewImage4,
@@ -157,9 +127,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 15,
-    authorId: 15,
     author: 'Ірина Романюк',
-    rating: 5,
     text: 'Отримали саме те, що хотіли. Видно, що майстри вкладають душу в роботу.',
     images: [reviewImage, reviewImage4, reviewImage2],
     cardImage: reviewImage,
@@ -167,9 +135,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 16,
-    authorId: 16,
     author: 'Віктор Дорошенко',
-    rating: 4,
     text: 'Конструкція надійна, вигляд чудовий, усе підійшло до нашого саду.',
     images: [reviewImage3, reviewImage2, reviewImage],
     cardImage: reviewImage3,
@@ -177,9 +143,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 17,
-    authorId: 17,
     author: 'Богдан Остапенко',
-    rating: 5,
     text: 'Дуже сподобалась робота майстрів. Все виглядає охайно і надійно.',
     images: [reviewImage2, reviewImage4, reviewImage],
     cardImage: reviewImage2,
@@ -187,9 +151,7 @@ export const testimonials: Testimonial[] = [
   },
   {
     id: 18,
-    authorId: 18,
     author: 'Анна Кириленко',
-    rating: 5,
     text: 'Замовлення виконали уважно, результат повністю відповідає нашим очікуванням.',
     images: [reviewImage4, reviewImage3, reviewImage2],
     cardImage: reviewImage4,
