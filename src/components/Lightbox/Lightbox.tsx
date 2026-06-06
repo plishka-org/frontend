@@ -10,11 +10,28 @@ type LightboxProps = {
 }
 
 export function Lightbox({ product, onClose, onNext, onPrev }: LightboxProps) {
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    closeButtonRef.current?.focus()
+    dialogRef.current?.focus()
   }, [])
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+      if (event.key === 'ArrowRight') onNext()
+      if (event.key === 'ArrowLeft') onPrev()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose, onNext, onPrev])
+
+  function handleBackdropClick(event: React.MouseEvent<HTMLDivElement>) {
+    if (event.target === event.currentTarget) {
+      onClose()
+    }
+  }
 
   return (
     <div
@@ -22,6 +39,9 @@ export function Lightbox({ product, onClose, onNext, onPrev }: LightboxProps) {
       role="dialog"
       aria-modal="true"
       aria-label={product.name}
+      tabIndex={-1}
+      ref={dialogRef}
+      onClick={handleBackdropClick}
     >
       <button
         className="lightbox__backdrop"
@@ -30,12 +50,14 @@ export function Lightbox({ product, onClose, onNext, onPrev }: LightboxProps) {
         onClick={onClose}
       />
 
-      <div className="lightbox__content">
+      <div
+        className="lightbox__content"
+        onClick={handleBackdropClick}
+      >
         <button
           className="lightbox__close"
           type="button"
           aria-label="Закрити (Esc)"
-          ref={closeButtonRef}
           onClick={onClose}
         >
           <CloseIcon />
@@ -45,12 +67,15 @@ export function Lightbox({ product, onClose, onNext, onPrev }: LightboxProps) {
           className="lightbox__nav lightbox__nav--prev"
           type="button"
           aria-label="Попереднє фото"
-          onClick={onPrev}
+          onClick={(e) => { e.stopPropagation(); onPrev() }}
         >
           <ArrowIcon />
         </button>
 
-        <figure className="lightbox__figure">
+        <figure
+          className="lightbox__figure"
+          onClick={(e) => e.stopPropagation()}
+        >
           <img
             className="lightbox__image"
             src={product.image}
@@ -65,7 +90,7 @@ export function Lightbox({ product, onClose, onNext, onPrev }: LightboxProps) {
           className="lightbox__nav lightbox__nav--next"
           type="button"
           aria-label="Наступне фото"
-          onClick={onNext}
+          onClick={(e) => { e.stopPropagation(); onNext() }}
         >
           <ArrowIcon />
         </button>

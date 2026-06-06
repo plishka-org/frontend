@@ -304,24 +304,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px;
+  background: rgba(17, 25, 24, 0.78);
+  cursor: zoom-out;
 
-  &__backdrop {
-    position: absolute;
-    inset: 0;
-    border: 0;
-    background: rgba(17, 25, 24, 0.78);
-    cursor: zoom-out;
-  }
-
-  img {
+  &__inner {
     position: relative;
     z-index: 1;
-    width: min(1032px, 92vw);
-    max-width: min(1120px, 92vw);
-    max-height: 82vh;
-    border-radius: 24px;
-    object-fit: contain;
+    cursor: default;
+    line-height: 0;
+
+    img {
+      display: block;
+      max-width: 92vw;
+      max-height: 92vh;
+      border-radius: 24px;
+      object-fit: contain;
+    }
   }
 
   &__close {
