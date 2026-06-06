@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { IMaskInput } from "react-imask";
 import contactImage from "../../../icons/contact-form-image.png";
+import { useAuth } from "../../../hooks/useAuth";
 import { createContactRequest } from "../../../services/api/contactRequestsApi";
 import "../../../styles/sections/_contact-form.scss";
-import { AuthGuard } from "./AuthGuard";
 import { ContactInput } from "./ContactInput";
 
 const ContactForm = () => {
+  const { isAuthChecked, user } = useAuth();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -22,6 +23,7 @@ const ContactForm = () => {
   const [description, setDescription] = useState("");
   const [descriptionError, setDescriptionError] = useState("");
   const [descriptionTouched, setDescriptionTouched] = useState(false);
+  const isFormDisabled = !isAuthChecked || !user;
 
   const validateName = (value: string): string => {
     const trimmedValue = value.trim();
@@ -54,12 +56,16 @@ const ContactForm = () => {
     !validateDescription(description);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isFormDisabled) return;
+
     const value = e.target.value;
     setName(value);
     if (nameTouched) setNameError(validateName(value));
   };
 
   const handlePhoneAccept = (value: string) => {
+    if (isFormDisabled) return;
+
     const nextPhone = value.replace(/\D/g, "").slice(0, 10);
     setPhone(nextPhone);
     if (phoneTouched) setPhoneError(validatePhone(nextPhone));
@@ -68,6 +74,8 @@ const ContactForm = () => {
   const handleDescriptionChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
+    if (isFormDisabled) return;
+
     const value = e.target.value;
     if (value.length <= 300) setDescription(value);
     if (descriptionTouched) setDescriptionError(validateDescription(value));
@@ -87,6 +95,8 @@ const ContactForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isFormDisabled) return;
+
     setSubmitError("");
 
     const trimmedName = name.trim();
@@ -132,7 +142,7 @@ const ContactForm = () => {
         <div className="contact-form__wrapper">
           <h2 className="contact-form__title">Контактна форма</h2>
           <p className="contact-form__subtitle">Лише для авторизованих</p>
-          {isSubmitted ? (
+          {isSubmitted && !isFormDisabled ? (
             <div className="contact-form__success">
               <h3 className="contact-form__success-title">Заявку надіслано!</h3>
               <p className="contact-form__success-text">
@@ -143,8 +153,14 @@ const ContactForm = () => {
               </button>
             </div>
           ) : (
-            <AuthGuard>
-              <form className="contact-form" onSubmit={handleSubmit}>
+            <form
+              className={
+                isFormDisabled
+                  ? "contact-form contact-form--disabled"
+                  : "contact-form"
+              }
+              onSubmit={handleSubmit}
+            >
                 <div className="contact-form__row">
                   <ContactInput
                     id="name"
@@ -154,8 +170,10 @@ const ContactForm = () => {
                     label="Ім'я"
                     value={name}
                     placeholder="Ваше ім'я"
+                    disabled={isFormDisabled}
                     onChange={handleNameChange}
                     onBlur={() => {
+                      if (isFormDisabled) return;
                       setNameTouched(true);
                       setNameError(validateName(name));
                     }}
@@ -175,8 +193,10 @@ const ContactForm = () => {
                         unmask={true}
                         value={phone}
                         placeholder="0XX XXX XX XX"
+                        disabled={isFormDisabled}
                         onAccept={(value) => handlePhoneAccept(String(value))}
                         onBlur={() => {
+                          if (isFormDisabled) return;
                           setPhoneTouched(true);
                           setPhoneError(validatePhone(phone));
                         }}
@@ -202,8 +222,10 @@ const ContactForm = () => {
                       autoComplete="off"
                       value={description}
                       placeholder="Коротко опишіть ваше питання або що вас цікавить..."
+                      disabled={isFormDisabled}
                       onChange={handleDescriptionChange}
                       onBlur={() => {
+                        if (isFormDisabled) return;
                         setDescriptionTouched(true);
                         setDescriptionError(validateDescription(description));
                       }}
@@ -219,7 +241,7 @@ const ContactForm = () => {
                 </div>
                 <button
                   type="submit"
-                  disabled={!isFormValid || isSubmitting}
+                  disabled={isFormDisabled || !isFormValid || isSubmitting}
                   className="contact-form__button"
                 >
                   {isSubmitting ? "Відправляємо..." : "Відправити заявку"}
@@ -227,8 +249,7 @@ const ContactForm = () => {
                 {submitError && (
                   <span className="contact-form__error">{submitError}</span>
                 )}
-              </form>
-            </AuthGuard>
+            </form>
           )}
         </div>
         <div className="contact-form__image-wrapper">
