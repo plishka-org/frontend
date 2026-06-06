@@ -31,7 +31,7 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
     { href: getAboutUrl(siteVariant), label: "Про майстерню", page: "about" },
     { href: getReviewsUrl(siteVariant), label: "Відгуки", page: "reviews" },
     { href: "#favorites", label: "Обрані" },
-    { href: "#profile", label: "Особистий кабінет" },
+    { href: "#/account/settings", label: "Особистий кабінет" },
   ];
 
   function getNavItemClassName(item: (typeof navItems)[number]) {
