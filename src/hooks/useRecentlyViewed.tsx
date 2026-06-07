@@ -5,7 +5,7 @@ import { getProductById } from '../data/bestProducts'
 import type { BestProduct } from '../data/bestProducts'
 
 const STORAGE_KEY = 'plishkaRecentlyViewed'
-const MAX_ITEMS = 10
+const MAX_ITEMS = 11
 
 function readStoredIds(): string[] {
   if (typeof window === 'undefined') return []
