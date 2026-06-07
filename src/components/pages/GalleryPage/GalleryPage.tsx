@@ -2,9 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { galleryCategories, galleryProducts } from '../../../data/galleryProducts'
 import { siteVariantFeatures } from '../../../utils/siteVariant'
 import type { SiteVariant } from '../../../utils/siteVariant'
-import { useLightbox } from '../../../hooks/useLightbox'
 import { OrderUnavailableNotice } from '../../OrderUnavailableNotice'
-import { Lightbox } from '../../Lightbox/Lightbox'
 import { Footer } from '../../layout/Footer/Footer'
 import { Header } from '../../layout/Header/Header'
 import { ContactsSection } from '../../sections/Contacts/ContactsSection'
@@ -150,8 +148,6 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
     })
   }, [activeCategories, sort])
 
-  const { activeProduct, open, close, goNext, goPrev } = useLightbox(visibleProducts)
-
   const totalPages = Math.ceil(visibleProducts.length / galleryProductsPerPage)
   const activePage = totalPages > 0 ? Math.min(currentPage, totalPages) : 1
   const paginatedProducts = visibleProducts.slice(
@@ -292,12 +288,11 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
           ) : (
             <>
               <div className="gallery-products__grid" aria-label="Вироби галереї">
-                {paginatedProducts.map((product, index) => (
+                {paginatedProducts.map((product) => (
                   <GalleryProductCard
                     key={product.id}
                     product={product}
                     siteVariant={siteVariant}
-                    onImageClick={() => open(product, (activePage - 1) * galleryProductsPerPage + index)}
                   />
                 ))}
               </div>
@@ -315,14 +310,6 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
       <ContactForm />
       <ContactsSection />
       <Footer />
-      {activeProduct && (
-        <Lightbox
-          product={activeProduct}
-          onClose={close}
-          onNext={goNext}
-          onPrev={goPrev}
-        />
-      )}
     </main>
   )
 }
