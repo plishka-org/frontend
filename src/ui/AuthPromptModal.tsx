@@ -5,6 +5,8 @@ type AuthPromptModalProps = {
   isOpen: boolean
   onClose: () => void
   onLogin: (credentials: { email: string; password: string }) => void | Promise<void>
+  title?: string
+  description?: string
 }
 
 function EyeIcon() {
@@ -50,7 +52,7 @@ function validatePassword(value: string): string {
   return ''
 }
 
-export function AuthPromptModal({ isOpen, onClose, onLogin }: AuthPromptModalProps) {
+export function AuthPromptModal({ isOpen, onClose, onLogin, title, description }: AuthPromptModalProps) {
   const [email, setEmail] = useState('')
   const [emailTouched, setEmailTouched] = useState(false)
   const [emailError, setEmailError] = useState('')
@@ -130,10 +132,10 @@ export function AuthPromptModal({ isOpen, onClose, onLogin }: AuthPromptModalPro
 
         <div className="auth-modal__icon" aria-hidden="true">♡</div>
         <h2 id="auth-modal-title" className="auth-modal__title">
-          Увійдіть, щоб зберегти товар
+          {title ?? 'Увійдіть, щоб зберегти товар'}
         </h2>
         <p className="auth-modal__text">
-          Будь ласка, увійдіть, щоб додавати товари до обраного.
+          {description ?? 'Будь ласка, увійдіть, щоб додавати товари до обраного.'}
         </p>
 
         {globalError && (
