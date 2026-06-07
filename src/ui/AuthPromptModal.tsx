@@ -2,11 +2,11 @@ import { useState } from 'react'
 import './AuthPromptModal.scss'
 
 type AuthPromptModalProps = {
-  description?: string
   isOpen: boolean
   onClose: () => void
   onLogin: (credentials: { email: string; password: string }) => void | Promise<void>
   title?: string
+  description?: string
 }
 
 function EyeIcon() {
@@ -40,22 +40,19 @@ function AlertIcon() {
 function validateEmail(value: string): string {
   if (!value.trim()) return "Поле обов'язкове"
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Невірний формат email'
+  if (value.trim().length < 6) return 'Мінімум 6 символів'
+  if (value.trim().length > 128) return 'Максимум 128 символів'
   return ''
 }
 
 function validatePassword(value: string): string {
   if (!value) return "Поле обов'язкове"
-  if (value.length < 6) return 'Мінімум 6 символів'
+  if (value.length < 8) return 'Мінімум 8 символів'
+  if (value.length > 64) return 'Максимум 64 символи'
   return ''
 }
 
-export function AuthPromptModal({
-  description = 'Будь ласка, увійдіть, щоб продовжити.',
-  isOpen,
-  onClose,
-  onLogin,
-  title = 'Увійдіть у профіль',
-}: AuthPromptModalProps) {
+export function AuthPromptModal({ isOpen, onClose, onLogin, title, description }: AuthPromptModalProps) {
   const [email, setEmail] = useState('')
   const [emailTouched, setEmailTouched] = useState(false)
   const [emailError, setEmailError] = useState('')
@@ -69,7 +66,6 @@ export function AuthPromptModal({
   const [isLoading, setIsLoading] = useState(false)
 
   if (!isOpen) return null
-
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -136,10 +132,10 @@ export function AuthPromptModal({
 
         <div className="auth-modal__icon" aria-hidden="true">♡</div>
         <h2 id="auth-modal-title" className="auth-modal__title">
-          {title}
+          {title ?? 'Увійдіть, щоб зберегти товар'}
         </h2>
         <p className="auth-modal__text">
-          {description}
+          {description ?? 'Будь ласка, увійдіть, щоб додавати товари до обраного.'}
         </p>
 
         {globalError && (
@@ -149,7 +145,6 @@ export function AuthPromptModal({
         )}
 
         <div className="auth-modal__fields">
-          {/* Email */}
           <div className="auth-modal__field">
             <label htmlFor="auth-email">Email</label>
             <input
@@ -180,7 +175,6 @@ export function AuthPromptModal({
             )}
           </div>
 
-          {/* Password */}
           <div className="auth-modal__field">
             <label htmlFor="auth-password">Пароль</label>
             <div className="auth-modal__password-wrapper">
@@ -188,7 +182,7 @@ export function AuthPromptModal({
                 id="auth-password"
                 autoComplete="current-password"
                 name="password"
-                placeholder="••••••••"
+                placeholder="********"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 disabled={isLoading}
