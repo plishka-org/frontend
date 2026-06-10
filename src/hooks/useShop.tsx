@@ -1,19 +1,27 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { getProductById } from '../data/bestProducts'
 import { addToFavoritesApi, removeFromFavoritesApi } from '../services/api/authApi'
 import { useAuth } from './useAuth'
+import {
+  initCartFromStorage,
+  initFavoritesFromStorage,
+  persistCart,
+  persistFavorites,
+  subscribeToCartStorageSync,
+} from '../store/cartStorage'
+import {
+  selectCartBadgeCount,
+  selectCartLines,
+  selectCartTotal,
+} from '../store/cartSelectors'
 
 type CartItem = {
   productId: string
   quantity: number
 }
 
-type CartLine = CartItem & {
-  lineTotal: number
-  product: NonNullable<ReturnType<typeof getProductById>>
-}
+type CartLine = ReturnType<typeof selectCartLines>[number]
 
 type ShopContextType = {
   addToCart: (productId: string, quantity?: number) => void
@@ -32,8 +40,6 @@ type ShopContextType = {
 
 const ShopContext = createContext<ShopContextType | null>(null)
 
-const cartStorageKey = 'plishkaCart'
-const favoritesStorageKey = 'plishkaFavorites'
 const minCartQuantity = 1
 export const maxCartQuantity = 10
 
@@ -41,86 +47,48 @@ function normalizeCartQuantity(quantity: number) {
   if (!Number.isFinite(quantity)) {
     return minCartQuantity
   }
-
   return Math.min(maxCartQuantity, Math.max(minCartQuantity, Math.floor(quantity)))
-}
-
-function readStoredValue<T>(key: string, fallback: T): T {
-  if (typeof window === 'undefined') {
-    return fallback
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(key)
-    return rawValue ? (JSON.parse(rawValue) as T) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-function writeStoredValue<T>(key: string, value: T) {
-  if (typeof window === 'undefined') {
-    return
-  }
-
-  window.localStorage.setItem(key, JSON.stringify(value))
 }
 
 export function ShopProvider({ children }: { children: ReactNode }) {
   const { user, isAuthChecked, requestLogin } = useAuth()
   const [favoriteProductIds, setFavoriteProductIds] = useState<string[]>(() =>
-    readStoredValue(favoritesStorageKey, []),
+    initFavoritesFromStorage(),
   )
   const [cartItems, setCartItems] = useState<CartItem[]>(() =>
-    readStoredValue(cartStorageKey, []),
+    initCartFromStorage(),
   )
 
   useEffect(() => {
-    writeStoredValue(favoritesStorageKey, favoriteProductIds)
+    persistFavorites(favoriteProductIds)
   }, [favoriteProductIds])
 
   useEffect(() => {
-    writeStoredValue(cartStorageKey, cartItems)
+    persistCart(cartItems)
   }, [cartItems])
 
-  const value = useMemo<ShopContextType>(() => {
-    const cartLines = cartItems.flatMap((item) => {
-      const product = getProductById(item.productId)
-
-      if (!product) {
-        return []
-      }
-
-      return [
-        {
-          ...item,
-          lineTotal: product.price * item.quantity,
-          product,
-        },
-      ]
+  useEffect(() => {
+    return subscribeToCartStorageSync((updatedItems) => {
+      setCartItems(updatedItems)
     })
+  }, [])
+
+  const value = useMemo<ShopContextType>(() => {
+    const cartLines = selectCartLines(cartItems)
+    const cartCount = selectCartBadgeCount(cartItems)
+    const cartTotal = selectCartTotal(cartItems)
 
     function addToCart(productId: string, quantity = 1) {
       const quantityToAdd = normalizeCartQuantity(quantity)
-
       setCartItems((currentItems) => {
-        if (!getProductById(productId)) {
-          return currentItems
-        }
-
         const existingItem = currentItems.find((item) => item.productId === productId)
-
         if (existingItem) {
           return currentItems.map((item) =>
             item.productId === productId
-              ? {
-                  ...item,
-                  quantity: normalizeCartQuantity(item.quantity + quantityToAdd),
-                }
+              ? { ...item, quantity: normalizeCartQuantity(item.quantity + quantityToAdd) }
               : item,
           )
         }
-
         return [...currentItems, { productId, quantity: quantityToAdd }]
       })
     }
@@ -134,13 +102,9 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         if (quantity <= 0) {
           return currentItems.filter((item) => item.productId !== productId)
         }
-
         return currentItems.map((item) =>
           item.productId === productId
-            ? {
-                ...item,
-                quantity: normalizeCartQuantity(quantity),
-              }
+            ? { ...item, quantity: normalizeCartQuantity(quantity) }
             : item,
         )
       })
@@ -152,19 +116,14 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
     function addFavorite(productId: string) {
       setFavoriteProductIds((currentIds) => {
-        if (currentIds.includes(productId)) {
-          return currentIds
-        }
-
+        if (currentIds.includes(productId)) return currentIds
         addToFavoritesApi(productId).catch(console.error)
         return [...currentIds, productId]
       })
     }
 
     function toggleFavorite(productId: string) {
-      if (!isAuthChecked) {
-        return
-      }
+      if (!isAuthChecked) return
 
       if (!user) {
         requestLogin(() => addFavorite(productId))
@@ -172,13 +131,10 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       }
 
       setFavoriteProductIds((currentIds) => {
-        const isFavoriteProduct = currentIds.includes(productId)
-
-        if (isFavoriteProduct) {
+        if (currentIds.includes(productId)) {
           removeFromFavoritesApi(productId).catch(console.error)
           return currentIds.filter((item) => item !== productId)
         }
-
         addToFavoritesApi(productId).catch(console.error)
         return [...currentIds, productId]
       })
@@ -187,9 +143,9 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     return {
       addToCart,
       cartLines,
-      cartCount: cartItems.reduce((total, item) => total + item.quantity, 0),
+      cartCount,
       cartItems,
-      cartTotal: cartLines.reduce((total, item) => total + item.lineTotal, 0),
+      cartTotal,
       clearCart,
       favoriteProductIds,
       isFavorite: (productId) => favoriteProductIds.includes(productId),
@@ -211,10 +167,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
 export function useShop(): ShopContextType {
   const context = useContext(ShopContext)
-
   if (!context) {
     throw new Error('useShop must be used within ShopProvider')
   }
-
   return context
 }
