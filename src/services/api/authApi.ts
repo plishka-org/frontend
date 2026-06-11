@@ -4,6 +4,7 @@ export interface AuthUser {
   id: number
   name: string
   email: string
+  role: string // Додано для виправлення помилки в LoginPage.tsx
 }
 
 export interface LoginCredentials {
@@ -169,4 +170,42 @@ export async function removeFromFavoritesApi(productId: string): Promise<void> {
   })
 
   if (!response.ok) throw new Error('Failed to remove from favorites')
+}
+
+/* ==========================================================================
+   ФУНКЦІЇ ВІДНОВЛЕННЯ ПАРОЛЯ (Додано для ForgotPasswordPage.tsx)
+   ========================================================================== */
+
+export async function forgotPasswordApi(email: string): Promise<void> {
+  if (!BASE_URL) {
+    throw new Error('API відновлення пароля ще не підключено. Вкажіть VITE_API_URL.')
+  }
+
+  const response = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+
+  if (!response.ok) {
+    throw new Error(await getApiErrorMessage(response, 'Не вдалося надіслати лист для відновлення.'))
+  }
+}
+
+export async function resetPasswordApi(token: string, password: string): Promise<void> {
+  if (!BASE_URL) {
+    throw new Error('API скидання пароля ще не підключено. Вкажіть VITE_API_URL.')
+  }
+
+  const response = await fetch(`${BASE_URL}/api/auth/reset-password`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, password }),
+  })
+
+  if (!response.ok) {
+    throw new Error(await getApiErrorMessage(response, 'Не вдалося оновити пароль. Можливо, посилання застаріло.'))
+  }
 }

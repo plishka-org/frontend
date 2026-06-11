@@ -10,6 +10,8 @@ import { NotFoundPage } from "./components/pages/NotFoundPage/NotFoundPage";
 import { ProductPage } from "./components/pages/ProductPage/ProductPage";
 import { ReviewsPage } from "./components/pages/ReviewsPage/ReviewsPage";
 import { AccountPage } from "./components/pages/AccountPage/AccountPage";
+import { LoginPage } from "./components/pages/LoginPage/LoginPage";
+import { ForgotPasswordPage } from "./components/pages/ForgotPasswordPage/ForgotPasswordPage";
 import { getProductById } from "./data/bestProducts";
 import { getAppPath } from "./utils/productUrl";
 import { getSiteVariant } from "./utils/siteVariant";
@@ -54,7 +56,11 @@ function App() {
 
   let pageContent;
 
-  if (appPath.match(/^\/gallery\/?$/)) {
+  if (appPath.match(/^\/login\/?$/)) {
+    pageContent = <LoginPage />;
+  } else if (appPath.match(/^\/(forgot-password|reset-password)\/?$/)) {
+    pageContent = <ForgotPasswordPage />;
+  } else if (appPath.match(/^\/gallery\/?$/)) {
     pageContent = <GalleryPage siteVariant={siteVariant} />;
   } else if (appPath.match(/^\/about\/?$/)) {
     pageContent = <AboutPage siteVariant={siteVariant} />;
