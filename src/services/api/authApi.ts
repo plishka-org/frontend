@@ -209,3 +209,44 @@ export async function resetPasswordApi(token: string, password: string): Promise
     throw new Error(await getApiErrorMessage(response, 'Не вдалося оновити пароль. Можливо, посилання застаріло.'))
   }
 }
+
+export interface RegisterPayload {
+  name: string
+  email: string
+  phone?: string
+  password: string
+}
+
+export async function registerApi(payload: RegisterPayload): Promise<void> {
+  if (!BASE_URL) {
+    throw new Error('API реєстрації ще не підключено. Вкажіть VITE_API_URL.')
+  }
+
+  const response = await fetch(`${BASE_URL}/api/auth/register`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error(await getApiErrorMessage(response, 'Не вдалося зареєструватися. Спробуйте ще раз.'))
+  }
+}
+
+export async function verifyEmailApi(token: string): Promise<void> {
+  if (!BASE_URL) {
+    throw new Error('API верифікації email ще не підключено. Вкажіть VITE_API_URL.')
+  }
+
+  const response = await fetch(`${BASE_URL}/api/auth/verify-email`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  })
+
+  if (!response.ok) {
+    throw new Error(await getApiErrorMessage(response, 'Не вдалося підтвердити email. Можливо, посилання застаріло.'))
+  }
+}
