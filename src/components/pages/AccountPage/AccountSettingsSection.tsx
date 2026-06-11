@@ -24,7 +24,7 @@ type AccountSettingsToast = {
 }
 
 const NAME_PATTERN = /^[a-zA-Zа-яА-ЯіїєґІЇЄҐ\s\-']+$/
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_PATTERN = /^[^\s@[\]]+@[^\s@[\].]+(?:\.[^\s@[\].]+)+$/
 const PASSWORD_ALLOWED_PATTERN = /^[A-Za-z\d!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]+$/
 
 const emptyTouched: AccountSettingsTouched = {
@@ -102,6 +102,7 @@ function validateEmail(value: string): string {
   const [localPart = ''] = trimmedValue.split('@')
 
   if (!trimmedValue) return "Поле обов'язкове"
+  if (trimmedValue.length < 6) return 'Мінімум 6 символів'
   if (trimmedValue.length > 128) return 'Email має бути не довший за 128 символів'
   if (localPart.length > 64) return 'Частина email до @ має бути не довша за 64 символи'
   if (!EMAIL_PATTERN.test(trimmedValue)) return 'Невірний формат email'
@@ -361,6 +362,7 @@ export function AccountSettingsSection() {
               autoComplete="email"
               value={values.email}
               placeholder="oleksii@olex.com"
+              minLength={6}
               className={hasVisibleError('email', touched, errors) ? 'is-error' : ''}
               aria-invalid={hasVisibleError('email', touched, errors)}
               aria-describedby={emailError ? 'settings-email-error' : undefined}
