@@ -10,7 +10,9 @@ import {
 } from "../../../utils/productUrl";
 import type { SiteVariant } from "../../../utils/siteVariant";
 import { useShop } from "../../../hooks/useShop";
+import { useAuth } from "../../../hooks/useAuth";
 import { CartModal } from "../../CartModal";
+import { LoginPage } from "../../pages/LoginPage/LoginPage";
 
 type HeaderProps = {
   activePage?: "home" | "gallery" | "about" | "reviews";
@@ -20,7 +22,9 @@ type HeaderProps = {
 export function Header({ activePage, siteVariant }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const { cartCount } = useShop();
+  const { user } = useAuth();
   const homeHref = getHomeUrl(siteVariant);
   const switchHref = getVariantSwitchUrl(
     siteVariant === "order" ? "usual" : "order",
@@ -31,11 +35,39 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
     { href: getAboutUrl(siteVariant), label: "Про майстерню", page: "about" },
     { href: getReviewsUrl(siteVariant), label: "Відгуки", page: "reviews" },
     { href: "#favorites", label: "Обрані" },
-    { href: "#/account/settings", label: "Особистий кабінет" },
+    {
+      href: "#/account/settings",
+      label: "Особистий кабінет",
+      requiresAuth: true,
+    },
   ];
 
   function getNavItemClassName(item: (typeof navItems)[number]) {
     return item.page && item.page === activePage ? "is-active" : undefined;
+  }
+
+  function goToAccount() {
+    if (user) {
+      window.location.assign("#/account/settings");
+      return;
+    }
+    setIsLoginOpen(true);
+  }
+
+
+  function handleAccountNavClick(
+    e: React.MouseEvent<HTMLAnchorElement>,
+    item: (typeof navItems)[number],
+  ) {
+    if (!item.requiresAuth) return;
+    e.preventDefault();
+    setIsMenuOpen(false);
+    goToAccount();
+  }
+
+  function handleLoginSuccess() {
+    setIsLoginOpen(false);
+    window.location.hash = "#/account/settings";
   }
 
   return (
@@ -75,13 +107,14 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
             onClick={() => setIsCartOpen(true)}
           />
         )}
-        <a
+        <button
           className="icon-button"
-          href="#/account/settings"
+          type="button"
           aria-label="Особистий кабінет"
+          onClick={goToAccount}
         >
           <UserIcon />
-        </a>
+        </button>
       </div>
 
       <div className="site-header__mobile-actions">
@@ -136,15 +169,29 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
               className={getNavItemClassName(item)}
               href={item.href}
               key={item.label}
-              onClick={() => setIsMenuOpen(false)}
+              onClick={(e) => {
+                if (item.requiresAuth) {
+                  handleAccountNavClick(e, item);
+                } else {
+                  setIsMenuOpen(false);
+                }
+              }}
             >
               {item.label}
             </a>
           ))}
         </nav>
       </div>
+
       {siteVariant === "order" && (
         <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      )}
+
+      {isLoginOpen && (
+        <LoginPage
+          onClose={() => setIsLoginOpen(false)}
+          onSuccess={handleLoginSuccess}
+        />
       )}
     </header>
   );
@@ -198,7 +245,6 @@ function VariantSwitch({ href, siteVariant }: VariantSwitchProps) {
       data-variant={siteVariant}
       href={href}
       aria-label={`Перемкнути на ${siteVariant === "order" ? "звичайний сайт" : "сайт замовлення"}`}
-      title="Тимчасовий перемикач режиму сайту"
     >
       <span aria-hidden="true" />
     </a>
