@@ -13,6 +13,7 @@ import { useShop } from "../../../hooks/useShop";
 import { useAuth } from "../../../hooks/useAuth";
 import { CartModal } from "../../CartModal";
 import { LoginPage } from "../../pages/LoginPage/LoginPage";
+import { RegisterPage } from "../../pages/RegisterPage/RegisterPage";
 
 type HeaderProps = {
   activePage?: "home" | "gallery" | "about" | "reviews";
@@ -23,6 +24,7 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const { cartCount } = useShop();
   const { user } = useAuth();
   const homeHref = getHomeUrl(siteVariant);
@@ -54,7 +56,6 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
     setIsLoginOpen(true);
   }
 
-
   function handleAccountNavClick(
     e: React.MouseEvent<HTMLAnchorElement>,
     item: (typeof navItems)[number],
@@ -68,6 +69,16 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
   function handleLoginSuccess() {
     setIsLoginOpen(false);
     window.location.hash = "#/account/settings";
+  }
+
+  function handleSwitchToRegister() {
+    setIsLoginOpen(false);
+    setIsRegisterOpen(true);
+  }
+
+  function handleSwitchToLogin() {
+    setIsRegisterOpen(false);
+    setIsLoginOpen(true);
   }
 
   return (
@@ -191,6 +202,14 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
         <LoginPage
           onClose={() => setIsLoginOpen(false)}
           onSuccess={handleLoginSuccess}
+          onRegister={handleSwitchToRegister}
+        />
+      )}
+
+      {isRegisterOpen && (
+        <RegisterPage
+          onClose={() => setIsRegisterOpen(false)}
+          onLogin={handleSwitchToLogin}
         />
       )}
     </header>
