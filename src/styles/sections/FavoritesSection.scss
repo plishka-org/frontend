@@ -1,0 +1,122 @@
+.favorites-section {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px 80px 112px;
+
+  h1 {
+    margin: 0 0 32px;
+    color: var(--color-heading);
+    font-family: var(--font-heading);
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  &__notice {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 24px;
+
+    .order-unavailable-notice {
+      max-width: 657px;
+      font-size: 18px;
+    }
+
+    .order-unavailable-notice svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &__empty {
+    margin: 24px 0 0;
+    color: var(--color-text);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  &__load-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 56px;
+    margin-top: 32px;
+    border: 1px solid var(--color-text);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-transform: uppercase;
+    transition:
+      border-color 160ms ease,
+      color 160ms ease;
+
+    &:hover {
+      border-color: var(--color-heading);
+      color: var(--color-heading);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-heading);
+      outline-offset: 4px;
+    }
+  }
+}
+
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+
+// Серце на сторінці "Обрані" завжди видиме, без потреби ховера
+.favorite-card__actions {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 1100px) {
+  .favorites-section {
+    padding: 48px 24px 96px;
+
+    h1 {
+      font-size: 34px;
+    }
+  }
+
+  .favorites-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  .favorites-section {
+    padding: 72px 16px 72px;
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 24px;
+    }
+
+    &__notice {
+      margin-bottom: 24px;
+
+      .order-unavailable-notice {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .favorites-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}

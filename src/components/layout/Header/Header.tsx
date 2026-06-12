@@ -16,7 +16,7 @@ import { LoginPage } from "../../pages/LoginPage/LoginPage";
 import { RegisterPage } from "../../pages/RegisterPage/RegisterPage";
 
 type HeaderProps = {
-  activePage?: "home" | "gallery" | "about" | "reviews";
+  activePage?: "home" | "gallery" | "about" | "reviews" | "favorites";
   siteVariant: SiteVariant;
 };
 
@@ -31,12 +31,13 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
   const switchHref = getVariantSwitchUrl(
     siteVariant === "order" ? "usual" : "order",
   );
+  const favoritesHref = getFavoritesUrl(siteVariant);
   const navItems = [
     { href: homeHref, label: "Головна", page: "home" },
     { href: getGalleryUrl(siteVariant), label: "Галерея", page: "gallery" },
     { href: getAboutUrl(siteVariant), label: "Про майстерню", page: "about" },
     { href: getReviewsUrl(siteVariant), label: "Відгуки", page: "reviews" },
-    { href: "#favorites", label: "Обрані" },
+    { href: favoritesHref, label: "Обрані", page: "favorites" },
     {
       href: "#/account/settings",
       label: "Особистий кабінет",
@@ -105,13 +106,14 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
 
       <div className="site-header__actions">
         <VariantSwitch siteVariant={siteVariant} href={switchHref} />
-        <button
+        <a
           className="icon-button"
-          type="button"
+          href={favoritesHref}
           aria-label="Обрані вироби"
+          data-active={activePage === "favorites"}
         >
           <HeartIcon />
-        </button>
+        </a>
         {siteVariant === "order" && (
           <CartButton
             cartCount={cartCount}
@@ -250,6 +252,11 @@ function getVariantSwitchUrl(siteVariant: SiteVariant) {
   }
 
   return `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
+}
+
+function getFavoritesUrl(siteVariant: SiteVariant) {
+  const search = siteVariant === "order" ? "?site=order" : "";
+  return `${search}#/favorites`;
 }
 
 type VariantSwitchProps = {
