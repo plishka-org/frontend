@@ -288,3 +288,30 @@ export async function createOrderApi(payload: OrderPayload): Promise<OrderRespon
 
   return response.json() as Promise<OrderResponse>
 }
+
+
+export async function getFavoritesApi(): Promise<string[]> {
+  if (!BASE_URL) {
+    return []
+  }
+
+  const response = await fetch(`${BASE_URL}/api/favorites`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      await getApiErrorMessage(response, 'Не вдалося завантажити список обраного.'),
+    )
+  }
+
+  const data = (await response.json()) as { favorites?: string[] } | string[]
+
+  if (Array.isArray(data)) {
+    return data
+  }
+
+  return data.favorites ?? []
+}

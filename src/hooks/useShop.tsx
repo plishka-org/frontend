@@ -1,7 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { addToFavoritesApi, removeFromFavoritesApi } from '../services/api/authApi'
+import {
+  addToFavoritesApi,
+  getFavoritesApi,
+  removeFromFavoritesApi,
+} from '../services/api/authApi'
 import { useAuth } from './useAuth'
 import {
   initCartFromStorage,
@@ -31,6 +35,9 @@ type ShopContextType = {
   cartTotal: number
   clearCart: () => void
   favoriteProductIds: string[]
+  favoritesLoading: boolean
+  favoritesError: string | null
+  refetchFavorites: () => void
   isFavorite: (productId: string) => boolean
   isInCart: (productId: string) => boolean
   removeFromCart: (productId: string) => void
@@ -55,6 +62,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [favoriteProductIds, setFavoriteProductIds] = useState<string[]>(() =>
     initFavoritesFromStorage(),
   )
+  const [favoritesLoading, setFavoritesLoading] = useState(false)
+  const [favoritesError, setFavoritesError] = useState<string | null>(null)
   const [cartItems, setCartItems] = useState<CartItem[]>(() =>
     initCartFromStorage(),
   )
@@ -72,6 +81,42 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       setCartItems(updatedItems)
     })
   }, [])
+
+  const loadFavorites = useCallback(() => {
+    if (!user) return
+
+    let isCancelled = false
+    setFavoritesLoading(true)
+    setFavoritesError(null)
+
+    getFavoritesApi()
+      .then((ids) => {
+        if (isCancelled) return
+        setFavoriteProductIds(ids)
+      })
+      .catch((error: unknown) => {
+        if (isCancelled) return
+        setFavoritesError(
+          error instanceof Error ? error.message : 'Не вдалося завантажити список обраного.',
+        )
+      })
+      .finally(() => {
+        if (!isCancelled) setFavoritesLoading(false)
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [user])
+
+useEffect(() => {
+    if (!isAuthChecked) return
+    if (!user) return
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    const cancel = loadFavorites()
+    return cancel
+  }, [isAuthChecked, user, loadFavorites])
 
   const value = useMemo<ShopContextType>(() => {
     const cartLines = selectCartLines(cartItems)
@@ -148,6 +193,9 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       cartTotal,
       clearCart,
       favoriteProductIds,
+      favoritesLoading,
+      favoritesError,
+      refetchFavorites: loadFavorites,
       isFavorite: (productId) => favoriteProductIds.includes(productId),
       isInCart: (productId) => cartItems.some((item) => item.productId === productId),
       removeFromCart,
@@ -157,6 +205,9 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   }, [
     cartItems,
     favoriteProductIds,
+    favoritesLoading,
+    favoritesError,
+    loadFavorites,
     isAuthChecked,
     requestLogin,
     user,

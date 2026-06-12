@@ -13,7 +13,7 @@ type FavoritesPageProps = {
 }
 
 export function FavoritesPage({ siteVariant }: FavoritesPageProps) {
-  const { favoriteProductIds } = useShop()
+  const { favoriteProductIds, favoritesLoading, favoritesError, refetchFavorites } = useShop()
 
   const favoriteProducts: BestProduct[] = favoriteProductIds
     .map((productId) => getProductById(productId))
@@ -22,7 +22,13 @@ export function FavoritesPage({ siteVariant }: FavoritesPageProps) {
   return (
     <main className="page-shell">
       <Header activePage="favorites" siteVariant={siteVariant} />
-      <FavoritesSection products={favoriteProducts} siteVariant={siteVariant} />
+      <FavoritesSection
+        products={favoriteProducts}
+        siteVariant={siteVariant}
+        isLoading={favoritesLoading}
+        error={favoritesError}
+        onRetry={refetchFavorites}
+      />
       <ContactForm/>
       <ContactsSection/>
       <Footer />
