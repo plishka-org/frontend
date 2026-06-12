@@ -23,6 +23,7 @@ import ContactForm from "./components/sections/ContactForm/ContactForm";
 import { AuthProvider } from "./hooks/useAuth";
 import { ShopProvider } from "./hooks/useShop";
 import { RecentlyViewedProvider } from "./hooks/useRecentlyViewed";
+import { ToastProvider } from "./hooks/useToast";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -92,7 +93,9 @@ function App() {
     <AuthProvider>
       <ShopProvider>
         <RecentlyViewedProvider>
-          {pageContent}
+          <ToastProvider>
+            {pageContent}
+          </ToastProvider>
         </RecentlyViewedProvider>
       </ShopProvider>
     </AuthProvider>
