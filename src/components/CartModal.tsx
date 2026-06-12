@@ -3,8 +3,10 @@ import emptyCartIcon from '../assets/cart-modal/icon-cart.svg'
 import { CloseIcon, EyeIcon, TrashIcon } from './icons/UiIcons'
 import { useAuth } from '../hooks/useAuth'
 import { maxCartQuantity, useShop } from '../hooks/useShop'
+import { useToast } from '../hooks/useToast'
 import { formatPrice } from '../utils/formatPrice'
 import { getGalleryUrl, getHomeUrl } from '../utils/productUrl'
+import { createOrderApi } from '../services/api/authApi'
 
 type CartModalProps = {
   isOpen: boolean
@@ -17,12 +19,15 @@ type OrderBackStep = Extract<CheckoutStep, 'cart' | 'login' | 'register'>
 export function CartModal({ isOpen, onClose }: CartModalProps) {
   const { user, login } = useAuth()
   const {
+    cartItems,
     cartLines,
     cartTotal,
     clearCart,
     removeFromCart,
     updateCartQuantity,
   } = useShop()
+  const { showToast } = useToast()
+
   const [step, setStep] = useState<CheckoutStep>('cart')
   const [orderBackStep, setOrderBackStep] = useState<OrderBackStep>('cart')
   const [loginForm, setLoginForm] = useState({ email: '', password: '' })
@@ -41,7 +46,9 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
     comment: '',
   })
   const [orderTouched, setOrderTouched] = useState(false)
-  const [orderNumber, setOrderNumber] = useState(345)
+  const [orderError, setOrderError] = useState('')
+  const [isOrderSubmitting, setIsOrderSubmitting] = useState(false)
+  const [orderNumber, setOrderNumber] = useState(0)
 
   const hasCartItems = cartLines.length > 0
   const activeStep = !hasCartItems && step !== 'success' ? 'cart' : step
@@ -65,7 +72,9 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
   const handleClose = useCallback(() => {
     setStep('cart')
     setAuthError('')
+    setOrderError('')
     setIsAuthSubmitting(false)
+    setIsOrderSubmitting(false)
     setOrderTouched(false)
     onClose()
   }, [onClose])
@@ -163,17 +172,40 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
     setAuthError('Реєстрація буде доступна після підключення endpoint бекенду.')
   }
 
-  function handleOrderSubmit(event: React.FormEvent<HTMLFormElement>) {
+  // PLIS-432: валідація всієї форми перед відправкою
+  // PLIS-433: очищення стейту кошика + localStorage після успіху + Toast
+  async function handleOrderSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setOrderTouched(true)
 
-    if (hasOrderErrors) {
+    if (hasOrderErrors || isOrderSubmitting) {
       return
     }
 
-    setOrderNumber(Math.floor(100 + Math.random() * 900))
-    clearCart()
-    setStep('success')
+    setOrderError('')
+    setIsOrderSubmitting(true)
+
+    try {
+      const { orderNumber: newOrderNumber } = await createOrderApi({
+        recipientName: orderForm.recipientName,
+        phone: orderForm.phone,
+        city: orderForm.city,
+        comment: orderForm.comment || undefined,
+        items: cartItems.map(({ productId, quantity }) => ({ productId, quantity })),
+      })
+
+      // clearCart() скидає стейт і через useEffect в useShop персистить [] в localStorage
+      clearCart()
+      setOrderNumber(newOrderNumber)
+      setStep('success')
+      showToast('Замовлення оформлено успішно!')
+    } catch (err) {
+      setOrderError(
+        err instanceof Error ? err.message : 'Не вдалося оформити замовлення. Спробуйте ще раз.',
+      )
+    } finally {
+      setIsOrderSubmitting(false)
+    }
   }
 
   function setQuantity(productId: string, quantity: number) {
@@ -195,8 +227,15 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
         aria-labelledby="cart-modal-title"
       >
         <div className="cart-modal__top">
-          <h2 id="cart-modal-title">{activeStep === 'cart' ? 'Кошик' : 'Оформлення замовлення'}</h2>
-          <button className="cart-modal__close" type="button" aria-label="Закрити" onClick={handleClose}>
+          <h2 id="cart-modal-title">
+            {activeStep === 'cart' ? 'Кошик' : 'Оформлення замовлення'}
+          </h2>
+          <button
+            className="cart-modal__close"
+            type="button"
+            aria-label="Закрити"
+            onClick={handleClose}
+          >
             <CloseIcon />
           </button>
         </div>
@@ -275,7 +314,7 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
           <form className="cart-modal__form" onSubmit={handleRegisterSubmit}>
             <p className="cart-modal__subtitle">Зареєструйтеся для оформлення замовлення</p>
             <TextField
-              label="Ім’я"
+              label="Ім'я"
               name="name"
               placeholder="Олексій Петренко"
               value={registerForm.name}
@@ -305,7 +344,11 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
               type="password"
               value={registerForm.confirmPassword}
               withVisibilityToggle
-              error={registerForm.confirmPassword.length > 0 && !canRegister ? 'Паролі мають збігатися' : undefined}
+              error={
+                registerForm.confirmPassword.length > 0 && !canRegister
+                  ? 'Паролі мають збігатися'
+                  : undefined
+              }
               onChange={(value) =>
                 setRegisterForm((form) => ({ ...form, confirmPassword: value }))
               }
@@ -340,15 +383,18 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
         )}
 
         {activeStep === 'order' && (
-          <form className="cart-modal__form cart-modal__form--order" onSubmit={handleOrderSubmit}>
+          <form
+            className="cart-modal__form cart-modal__form--order"
+            onSubmit={handleOrderSubmit}
+          >
             <OrderSummary cartLines={cartLines} cartTotal={cartTotal} compact />
             <div className="cart-modal__order-grid">
               <TextField
-                label="Ім’я та прізвище отримувача *"
+                label="Ім'я та прізвище отримувача *"
                 name="recipientName"
                 placeholder="Олексій Петренко"
                 value={orderForm.recipientName}
-                error={orderTouched && orderErrors.recipientName ? 'Заповніть ім’я' : undefined}
+                error={orderTouched && orderErrors.recipientName ? 'Заповніть ім\u2019я' : undefined}
                 onChange={(value) => setOrderForm((form) => ({ ...form, recipientName: value }))}
               />
               <TextField
@@ -391,21 +437,40 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
                 </span>
               </label>
             </div>
+            {orderError && (
+              <p className="cart-modal__form-error" role="alert">
+                {orderError}
+              </p>
+            )}
             <ModalActions
-              primaryLabel="Оформити замовлення"
+              primaryLabel={isOrderSubmitting ? 'Оформляємо...' : 'Оформити замовлення'}
               secondaryLabel="Повернутися назад"
-              onSecondary={() => setStep(orderBackStep)}
+              primaryDisabled={isOrderSubmitting}
+              onSecondary={() => {
+                setOrderError('')
+                setStep(orderBackStep)
+              }}
             />
           </form>
         )}
 
+        {/* PLIS-434: кнопка "Продовжити покупки" → редирект на каталог */}
         {activeStep === 'success' && (
           <div className="cart-modal__success">
             <p>Замовлення №{orderNumber} оформлене успішно!</p>
-            <span>Ми зв’яжемося з вами незабаром для уточнення деталей.</span>
-            <button className="cart-modal__primary" type="button" onClick={handleGoHome}>
-              На головну
-            </button>
+            <span>Ми зв'яжемося з вами незабаром для уточнення деталей.</span>
+            <div className="cart-modal__actions">
+              <button className="cart-modal__secondary" type="button" onClick={handleGoHome}>
+                На головну
+              </button>
+              <button
+                className="cart-modal__primary"
+                type="button"
+                onClick={handleGoToProducts}
+              >
+                Продовжити покупки
+              </button>
+            </div>
           </div>
         )}
       </section>
@@ -475,7 +540,11 @@ function OrderSummary({
   onSetQuantity,
 }: OrderSummaryProps) {
   return (
-    <div className={compact ? 'cart-modal__summary cart-modal__summary--compact' : 'cart-modal__summary'}>
+    <div
+      className={
+        compact ? 'cart-modal__summary cart-modal__summary--compact' : 'cart-modal__summary'
+      }
+    >
       {compact && <h3>Замовлення</h3>}
       <div className="cart-modal__items">
         {cartLines.map(({ product, productId, quantity }) => (
@@ -503,7 +572,9 @@ function OrderSummary({
                   max={maxCartQuantity}
                   min={1}
                   value={quantity}
-                  onChange={(event) => onSetQuantity?.(productId, Number(event.target.value) || 1)}
+                  onChange={(event) =>
+                    onSetQuantity?.(productId, Number(event.target.value) || 1)
+                  }
                 />
                 <button
                   type="button"

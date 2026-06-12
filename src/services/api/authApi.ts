@@ -4,7 +4,7 @@ export interface AuthUser {
   id: number
   name: string
   email: string
-  role: string // Додано для виправлення помилки в LoginPage.tsx
+  role: string
 }
 
 export interface LoginCredentials {
@@ -173,7 +173,7 @@ export async function removeFromFavoritesApi(productId: string): Promise<void> {
 }
 
 /* ==========================================================================
-   ФУНКЦІЇ ВІДНОВЛЕННЯ ПАРОЛЯ (Додано для ForgotPasswordPage.tsx)
+   ФУНКЦІЇ ВІДНОВЛЕННЯ ПАРОЛЯ
    ========================================================================== */
 
 export async function forgotPasswordApi(email: string): Promise<void> {
@@ -249,4 +249,42 @@ export async function verifyEmailApi(token: string): Promise<void> {
   if (!response.ok) {
     throw new Error(await getApiErrorMessage(response, 'Не вдалося підтвердити email. Можливо, посилання застаріло.'))
   }
+}
+
+/* ==========================================================================
+   ЗАМОВЛЕННЯ
+   ========================================================================== */
+
+export interface OrderPayload {
+  recipientName: string
+  phone: string
+  city: string
+  comment?: string
+  items: { productId: string; quantity: number }[]
+}
+
+export interface OrderResponse {
+  orderNumber: number
+}
+
+export async function createOrderApi(payload: OrderPayload): Promise<OrderResponse> {
+  if (!BASE_URL) {
+    // Імітуємо успіх поки бекенд не підключено
+    return { orderNumber: Math.floor(100 + Math.random() * 900) }
+  }
+
+  const response = await fetch(`${BASE_URL}/api/orders`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      await getApiErrorMessage(response, 'Не вдалося оформити замовлення. Спробуйте ще раз.'),
+    )
+  }
+
+  return response.json() as Promise<OrderResponse>
 }
