@@ -13,6 +13,7 @@ import { AccountPage } from "./components/pages/AccountPage/AccountPage";
 import { LoginPage } from "./components/pages/LoginPage/LoginPage";
 import { ForgotPasswordPage } from "./components/pages/ForgotPasswordPage/ForgotPasswordPage";
 import { RegisterPage } from "./components/pages/RegisterPage/RegisterPage";
+import { FavoritesPage } from "./components/pages/FavoriteProductPage/FavoritesPage";
 import { getProductById } from "./data/bestProducts";
 import { getAppPath } from "./utils/productUrl";
 import { getSiteVariant } from "./utils/siteVariant";
@@ -70,6 +71,8 @@ function App() {
     pageContent = <AboutPage siteVariant={siteVariant} />;
   } else if (appPath.match(/^\/reviews\/?$/)) {
     pageContent = <ReviewsPage siteVariant={siteVariant} />;
+  } else if (appPath.match(/^\/favorites\/?$/)) {
+    pageContent = <FavoritesPage siteVariant={siteVariant} />;
   } else if (appPath.match(/^\/account(\/.*)?$/)) {
     pageContent = <AccountPage siteVariant={siteVariant} />;
   } else if (productMatch) {
