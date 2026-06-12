@@ -12,6 +12,7 @@ import { ReviewsPage } from "./components/pages/ReviewsPage/ReviewsPage";
 import { AccountPage } from "./components/pages/AccountPage/AccountPage";
 import { LoginPage } from "./components/pages/LoginPage/LoginPage";
 import { ForgotPasswordPage } from "./components/pages/ForgotPasswordPage/ForgotPasswordPage";
+import { RegisterPage } from "./components/pages/RegisterPage/RegisterPage";
 import { getProductById } from "./data/bestProducts";
 import { getAppPath } from "./utils/productUrl";
 import { getSiteVariant } from "./utils/siteVariant";
@@ -60,6 +61,8 @@ function App() {
     pageContent = <LoginPage />;
   } else if (appPath.match(/^\/(forgot-password|reset-password)\/?$/)) {
     pageContent = <ForgotPasswordPage />;
+  } else if (appPath.match(/^\/register\/?$/)) {
+    pageContent = <RegisterPage />;
   } else if (appPath.match(/^\/gallery\/?$/)) {
     pageContent = <GalleryPage siteVariant={siteVariant} />;
   } else if (appPath.match(/^\/about\/?$/)) {
