@@ -8,14 +8,24 @@ import { FavoriteProductCard } from './FavoriteProductCard'
 type FavoritesSectionProps = {
   products: BestProduct[]
   siteVariant: SiteVariant
+  isLoading?: boolean
+  error?: string | null
+  onRetry?: () => void
 }
 
 const PAGE_SIZE = 12
 const MOBILE_INITIAL_COUNT = 10
 const MOBILE_LOAD_STEP = 10
 const MOBILE_BREAKPOINT = 760
+const SKELETON_COUNT = 8
 
-export function FavoritesSection({ products, siteVariant }: FavoritesSectionProps) {
+export function FavoritesSection({
+  products,
+  siteVariant,
+  isLoading = false,
+  error = null,
+  onRetry,
+}: FavoritesSectionProps) {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== 'undefined' && window.innerWidth <= MOBILE_BREAKPOINT,
   )
@@ -50,7 +60,30 @@ export function FavoritesSection({ products, siteVariant }: FavoritesSectionProp
         </div>
       )}
 
-      {products.length === 0 ? (
+      {isLoading ? (
+        <div className="favorites-grid" aria-busy="true" aria-label="Завантаження обраного">
+          {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
+            <div className="favorite-card-skeleton" key={index}>
+              <div className="favorite-card-skeleton__image" />
+              <div className="favorite-card-skeleton__line favorite-card-skeleton__line--short" />
+              <div className="favorite-card-skeleton__line" />
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="favorites-section__error" role="alert">
+          <p>{error}</p>
+          {onRetry && (
+            <button
+              className="favorites-section__retry"
+              type="button"
+              onClick={onRetry}
+            >
+              Спробувати ще раз
+            </button>
+          )}
+        </div>
+      ) : products.length === 0 ? (
         <p className="favorites-section__empty">
           Ви ще не додали жодного виробу до обраного.
         </p>
