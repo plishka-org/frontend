@@ -89,7 +89,7 @@ function validateName(value: string): string {
 }
 
 function validatePhone(value: string): string {
-  if (!value) return "Поле обов'язкове"
+  if (!value) return ''
   if (!/^\d+$/.test(value)) return 'Тільки цифри'
   if (!value.startsWith('0')) return 'Номер повинен починатися з 0'
   if (value.length !== 10) return 'Номер має бути із 10 цифр'
