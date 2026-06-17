@@ -1,9 +1,11 @@
+import { useState } from 'react'
+
 type DeleteAccountModalProps = {
   error: string | null;
   isDeleting: boolean;
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void | Promise<void>;
+  onConfirm: (currentPassword: string) => void | Promise<void>;
 };
 
 export function DeleteAccountModal({
@@ -13,6 +15,8 @@ export function DeleteAccountModal({
   onClose,
   onConfirm,
 }: DeleteAccountModalProps) {
+  const [currentPassword, setCurrentPassword] = useState('')
+
   if (!isOpen) return null;
 
   return (
@@ -53,6 +57,16 @@ export function DeleteAccountModal({
         <p className="delete-account-modal__text" id="delete-account-modal-description">
           Цю дію неможливо скасувати. Дані профілю будуть видалені, а вас буде повернуто на головну сторінку.
         </p>
+        <label className="delete-account-modal__field">
+          <span>Поточний пароль</span>
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            disabled={isDeleting}
+            onChange={(event) => setCurrentPassword(event.target.value)}
+          />
+        </label>
 
         {error && (
           <p className="delete-account-modal__error" role="alert">
@@ -72,8 +86,8 @@ export function DeleteAccountModal({
           <button
             className="delete-account-modal__btn delete-account-modal__btn--danger"
             type="button"
-            disabled={isDeleting}
-            onClick={onConfirm}
+            disabled={isDeleting || !currentPassword}
+            onClick={() => onConfirm(currentPassword)}
           >
             {isDeleting ? 'Видалення...' : 'Так'}
           </button>

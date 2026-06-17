@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   checkAuthStatus,
+  clearClientAuthState,
   deleteAccountApi,
   loginApi,
   logoutApi,
@@ -16,45 +17,10 @@ type User = AuthUser;
 interface AuthContextType {
   user: User | null;
   isAuthChecked: boolean;
-  deleteAccount: () => Promise<void>;
+  deleteAccount: (currentPassword: string) => Promise<void>;
   login: (credentials: LoginCredentials) => Promise<User>;
   logout: () => Promise<void>;
   requestLogin: (onSuccess?: (user: User) => void) => void;
-}
-
-const CLIENT_AUTH_STORAGE_KEYS = [
-  "accessToken",
-  "authToken",
-  "refreshToken",
-  "token",
-  "user",
-];
-
-const CLIENT_AUTH_COOKIE_NAMES = [
-  "accessToken",
-  "authToken",
-  "refreshToken",
-  "token",
-];
-
-function clearClientAuthState() {
-  CLIENT_AUTH_STORAGE_KEYS.forEach((key) => {
-    try {
-      localStorage.removeItem(key);
-      sessionStorage.removeItem(key);
-    } catch {
-      // Storage cleanup is best-effort; auth state is still cleared below.
-    }
-  });
-
-  CLIENT_AUTH_COOKIE_NAMES.forEach((name) => {
-    try {
-      document.cookie = `${name}=; Max-Age=0; path=/`;
-      document.cookie = `${name}=; Max-Age=0; path=/; SameSite=Lax`;
-    } catch {
-      // HttpOnly cookies are cleared by the backend endpoints.
-    }
-  });
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -91,8 +57,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  async function deleteAccount() {
-    await deleteAccountApi();
+  async function deleteAccount(currentPassword: string) {
+    await deleteAccountApi({ currentPassword });
     clearClientAuthState();
     setUser(null);
   }

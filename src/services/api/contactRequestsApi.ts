@@ -1,22 +1,48 @@
-const BASE_URL = import.meta.env.VITE_API_URL ?? ''
+import { apiRequest, hasApiBaseUrl } from './client'
+
 const contactRequestsStorageKey = 'contactRequests'
 
 export interface ContactRequestPayload {
   name: string
   phone: string
-  description: string
+  message: string
 }
 
 export interface ContactRequestResponse extends ContactRequestPayload {
   id: string | number
+  callbackRequestId?: number
+  description: string
   createdAt: string
 }
 
-function createLocalContactRequest(
-  payload: ContactRequestPayload,
-): ContactRequestResponse {
+type CallbackRequestDto = {
+  callbackRequestId: number
+  name: string
+  phone: string
+  message: string
+  createdAt: string
+}
+
+type PageResponse<T> = {
+  content: T[]
+}
+
+function normalizeCallback(dto: CallbackRequestDto): ContactRequestResponse {
+  return {
+    id: dto.callbackRequestId,
+    callbackRequestId: dto.callbackRequestId,
+    name: dto.name,
+    phone: dto.phone,
+    message: dto.message,
+    description: dto.message,
+    createdAt: dto.createdAt,
+  }
+}
+
+function createLocalContactRequest(payload: ContactRequestPayload): ContactRequestResponse {
   const request = {
     ...payload,
+    description: payload.message,
     id: Date.now(),
     createdAt: new Date().toISOString(),
   }
@@ -60,38 +86,26 @@ function getLocalContactRequests(): ContactRequestResponse[] {
 export async function createContactRequest(
   payload: ContactRequestPayload,
 ): Promise<ContactRequestResponse> {
-  if (!BASE_URL) {
+  if (!hasApiBaseUrl()) {
     return createLocalContactRequest(payload)
   }
 
-  const response = await fetch(`${BASE_URL}/api/contact-requests`, {
+  const response = await apiRequest<CallbackRequestDto>('/api/callback', {
     method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: payload,
   })
 
-  if (!response.ok) {
-    throw new Error('Failed to create contact request')
-  }
-
-  return response.json() as Promise<ContactRequestResponse>
+  return normalizeCallback(response)
 }
 
 export async function getContactRequests(): Promise<ContactRequestResponse[]> {
-  if (!BASE_URL) {
+  if (!hasApiBaseUrl()) {
     return getLocalContactRequests()
   }
 
-  const response = await fetch(`${BASE_URL}/api/contact-requests`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-  })
+  const response = await apiRequest<PageResponse<CallbackRequestDto>>(
+    '/api/users/me/callback-requests?size=100',
+  )
 
-  if (!response.ok) {
-    throw new Error('Failed to get contact requests')
-  }
-
-  return response.json() as Promise<ContactRequestResponse[]>
+  return response.content.map(normalizeCallback)
 }

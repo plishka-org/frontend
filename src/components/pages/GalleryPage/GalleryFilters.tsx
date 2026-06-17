@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import filterButtonIcon from '../../../assets/galery-block/icons/button-filter-2.svg'
-import { galleryCategories } from '../../../data/galleryProducts'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { ArrowIcon, CloseIcon, TrashIcon } from '../../icons/UiIcons'
 import type { GallerySort } from './types'
@@ -14,6 +13,7 @@ type GalleryFiltersProps = {
   onSortChange: (sort: GallerySort) => void
   onToggleCategory: (category: string) => void
   activeCategories: string[]
+  categories: string[]
   siteVariant: SiteVariant
   sort: GallerySort
 }
@@ -47,6 +47,7 @@ export function GalleryFilters({
   onSortChange,
   onToggleCategory,
   activeCategories,
+  categories,
   siteVariant,
   sort,
 }: GalleryFiltersProps) {
@@ -119,7 +120,7 @@ export function GalleryFilters({
               aria-label="Категорії виробів"
               onScroll={updateCategoryScrollState}
             >
-              {galleryCategories.map((category) => (
+              {categories.map((category) => (
                 <CategoryTag
                   isActive={
                     category === 'Усі категорії'

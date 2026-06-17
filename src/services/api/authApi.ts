@@ -1,10 +1,21 @@
-const BASE_URL = import.meta.env.VITE_API_URL ?? ''
+import {
+  apiRequest,
+  clearAuthTokens,
+  decodeJwtPayload,
+  getAccessToken,
+  getDeviceId,
+  hasApiBaseUrl,
+  saveAuthTokens,
+  type AuthTokens,
+} from './client'
 
 export interface AuthUser {
   id: number
   name: string
   email: string
-  role: string
+  phone?: string
+  role: 'admin' | 'user'
+  roles: string[]
 }
 
 export interface LoginCredentials {
@@ -13,11 +24,14 @@ export interface LoginCredentials {
 }
 
 export interface EmailChangePayload {
-  email: string
+  newEmail: string
+  currentPassword: string
 }
 
 export interface PasswordChangePayload {
+  currentPassword: string
   newPassword: string
+  confirmPassword: string
 }
 
 export interface AuthStatusResponse {
@@ -25,293 +39,165 @@ export interface AuthStatusResponse {
   user: AuthUser | null
 }
 
-interface LoginResponse {
-  user: AuthUser
-}
-
-async function getApiErrorMessage(response: Response, fallbackMessage: string) {
-  try {
-    const data = (await response.json()) as Partial<{ message: string; error: string }>
-    return data.message || data.error || fallbackMessage
-  } catch {
-    return fallbackMessage
-  }
-}
-
-export async function checkAuthStatus(): Promise<AuthStatusResponse> {
-  if (!BASE_URL) {
-    return { isAuthenticated: false, user: null }
-  }
-
-  const response = await fetch(`${BASE_URL}/api/auth/status`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-  })
-
-  if (!response.ok) {
-    return { isAuthenticated: false, user: null }
-  }
-
-  return response.json() as Promise<AuthStatusResponse>
-}
-
-export async function loginApi(credentials: LoginCredentials): Promise<AuthUser> {
-  if (!BASE_URL) {
-    throw new Error('Авторизацію ще не підключено. Вкажіть VITE_API_URL для входу.')
-  }
-
-  const response = await fetch(`${BASE_URL}/api/auth/login`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(credentials),
-  })
-
-  if (!response.ok) {
-    throw new Error('Не вдалося увійти. Перевірте email і пароль.')
-  }
-
-  const data = (await response.json()) as Partial<LoginResponse>
-
-  if (!data.user) {
-    throw new Error('Login response does not include user data.')
-  }
-
-  return data.user
-}
-
-export async function logoutApi(): Promise<void> {
-  if (!BASE_URL) {
-    return
-  }
-
-  const response = await fetch(`${BASE_URL}/api/auth/logout`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to logout')
-  }
-}
-
-export async function deleteAccountApi(): Promise<void> {
-  if (!BASE_URL) {
-    return
-  }
-
-  const response = await fetch(`${BASE_URL}/api/auth/account`, {
-    method: 'DELETE',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-  })
-
-  if (!response.ok) {
-    throw new Error(await getApiErrorMessage(response, 'Не вдалося видалити акаунт. Спробуйте ще раз.'))
-  }
-}
-
-export async function requestEmailChangeApi(payload: EmailChangePayload): Promise<void> {
-  if (!BASE_URL) {
-    throw new Error('API зміни email ще не підключено. Вкажіть VITE_API_URL.')
-  }
-
-  const response = await fetch(`${BASE_URL}/api/auth/change-email`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-
-  if (!response.ok) {
-    throw new Error(await getApiErrorMessage(response, 'Не вдалося надіслати запит на зміну email.'))
-  }
-}
-
-export async function changePasswordApi(payload: PasswordChangePayload): Promise<void> {
-  if (!BASE_URL) {
-    throw new Error('API зміни пароля ще не підключено. Вкажіть VITE_API_URL.')
-  }
-
-  const response = await fetch(`${BASE_URL}/api/auth/change-password`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-
-  if (!response.ok) {
-    throw new Error(await getApiErrorMessage(response, 'Не вдалося змінити пароль.'))
-  }
-}
-
-export async function addToFavoritesApi(productId: string): Promise<void> {
-  if (!BASE_URL) return
-
-  const response = await fetch(`${BASE_URL}/api/favorites`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ productId }),
-  })
-
-  if (!response.ok) throw new Error('Failed to add to favorites')
-}
-
-export async function removeFromFavoritesApi(productId: string): Promise<void> {
-  if (!BASE_URL) return
-
-  const response = await fetch(`${BASE_URL}/api/favorites/${productId}`, {
-    method: 'DELETE',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-  })
-
-  if (!response.ok) throw new Error('Failed to remove from favorites')
-}
-
-/* ==========================================================================
-   ФУНКЦІЇ ВІДНОВЛЕННЯ ПАРОЛЯ
-   ========================================================================== */
-
-export async function forgotPasswordApi(email: string): Promise<void> {
-  if (!BASE_URL) {
-    throw new Error('API відновлення пароля ще не підключено. Вкажіть VITE_API_URL.')
-  }
-
-  const response = await fetch(`${BASE_URL}/api/auth/forgot-password`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
-  })
-
-  if (!response.ok) {
-    throw new Error(await getApiErrorMessage(response, 'Не вдалося надіслати лист для відновлення.'))
-  }
-}
-
-export async function resetPasswordApi(token: string, password: string): Promise<void> {
-  if (!BASE_URL) {
-    throw new Error('API скидання пароля ще не підключено. Вкажіть VITE_API_URL.')
-  }
-
-  const response = await fetch(`${BASE_URL}/api/auth/reset-password`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, password }),
-  })
-
-  if (!response.ok) {
-    throw new Error(await getApiErrorMessage(response, 'Не вдалося оновити пароль. Можливо, посилання застаріло.'))
-  }
-}
-
 export interface RegisterPayload {
   name: string
   email: string
   phone?: string
   password: string
+  confirmPassword: string
+}
+
+export interface DeleteAccountPayload {
+  currentPassword: string
+}
+
+type JwtClaims = {
+  roles?: string[]
+  userId?: number
+}
+
+type UserProfileDto = {
+  id: number
+  name: string
+  email: string
+  phone?: string
+}
+
+type MessageResponseDto = {
+  message: string
+}
+
+function getRolesFromAccessToken() {
+  const token = getAccessToken()
+  if (!token) return []
+
+  const claims = decodeJwtPayload<JwtClaims>(token)
+  return Array.isArray(claims?.roles) ? claims.roles : []
+}
+
+function toAuthUser(profile: UserProfileDto): AuthUser {
+  const roles = getRolesFromAccessToken()
+  return {
+    ...profile,
+    roles,
+    role: roles.includes('ADMIN') ? 'admin' : 'user',
+  }
+}
+
+export function clearClientAuthState() {
+  clearAuthTokens()
+}
+
+export async function getCurrentUserApi(): Promise<AuthUser> {
+  const profile = await apiRequest<UserProfileDto>('/api/users/me')
+  return toAuthUser(profile)
+}
+
+export async function checkAuthStatus(): Promise<AuthStatusResponse> {
+  if (!hasApiBaseUrl() || !getAccessToken()) {
+    return { isAuthenticated: false, user: null }
+  }
+
+  try {
+    const user = await getCurrentUserApi()
+    return { isAuthenticated: true, user }
+  } catch {
+    clearAuthTokens()
+    return { isAuthenticated: false, user: null }
+  }
+}
+
+export async function loginApi(credentials: LoginCredentials): Promise<AuthUser> {
+  const tokens = await apiRequest<AuthTokens>('/api/auth/login', {
+    method: 'POST',
+    auth: false,
+    headers: { 'Device-Id': getDeviceId() },
+    body: credentials,
+  })
+
+  saveAuthTokens(tokens)
+  return getCurrentUserApi()
+}
+
+export async function logoutApi(): Promise<void> {
+  if (!hasApiBaseUrl() || !getAccessToken()) {
+    clearAuthTokens()
+    return
+  }
+
+  try {
+    await apiRequest<MessageResponseDto>('/api/auth/logout', {
+      method: 'POST',
+      headers: { 'Device-Id': getDeviceId() },
+    })
+  } finally {
+    clearAuthTokens()
+  }
+}
+
+export async function updateProfileApi(payload: { name: string; phone?: string }): Promise<AuthUser> {
+  const profile = await apiRequest<UserProfileDto>('/api/users/me', {
+    method: 'PUT',
+    body: payload,
+  })
+
+  return toAuthUser(profile)
+}
+
+export async function deleteAccountApi(payload: DeleteAccountPayload): Promise<void> {
+  await apiRequest<MessageResponseDto>('/api/users/me', {
+    method: 'DELETE',
+    body: payload,
+  })
+  clearAuthTokens()
+}
+
+export async function requestEmailChangeApi(payload: EmailChangePayload): Promise<void> {
+  await apiRequest<MessageResponseDto>('/api/users/me/email', {
+    method: 'PUT',
+    body: payload,
+  })
+}
+
+export async function changePasswordApi(payload: PasswordChangePayload): Promise<void> {
+  await apiRequest<MessageResponseDto>('/api/users/me/password', {
+    method: 'PUT',
+    body: payload,
+  })
+  clearAuthTokens()
+}
+
+export async function forgotPasswordApi(email: string): Promise<void> {
+  await apiRequest<MessageResponseDto>('/api/auth/forgot-password', {
+    method: 'POST',
+    auth: false,
+    body: { email },
+  })
+}
+
+export async function resetPasswordApi(
+  token: string,
+  password: string,
+  confirmPassword = password,
+): Promise<void> {
+  await apiRequest<MessageResponseDto>('/api/auth/reset-password', {
+    method: 'POST',
+    auth: false,
+    body: { token, password, confirmPassword },
+  })
 }
 
 export async function registerApi(payload: RegisterPayload): Promise<void> {
-  if (!BASE_URL) {
-    throw new Error('API реєстрації ще не підключено. Вкажіть VITE_API_URL.')
-  }
-
-  const response = await fetch(`${BASE_URL}/api/auth/register`, {
+  await apiRequest<MessageResponseDto>('/api/auth/register', {
     method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    auth: false,
+    body: payload,
   })
-
-  if (!response.ok) {
-    throw new Error(await getApiErrorMessage(response, 'Не вдалося зареєструватися. Спробуйте ще раз.'))
-  }
 }
 
 export async function verifyEmailApi(token: string): Promise<void> {
-  if (!BASE_URL) {
-    throw new Error('API верифікації email ще не підключено. Вкажіть VITE_API_URL.')
-  }
-
-  const response = await fetch(`${BASE_URL}/api/auth/verify-email`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token }),
-  })
-
-  if (!response.ok) {
-    throw new Error(await getApiErrorMessage(response, 'Не вдалося підтвердити email. Можливо, посилання застаріло.'))
-  }
-}
-
-/* ==========================================================================
-   ЗАМОВЛЕННЯ
-   ========================================================================== */
-
-export interface OrderPayload {
-  recipientName: string
-  phone: string
-  city: string
-  comment?: string
-  items: { productId: string; quantity: number }[]
-}
-
-export interface OrderResponse {
-  orderNumber: number
-}
-
-export async function createOrderApi(payload: OrderPayload): Promise<OrderResponse> {
-  if (!BASE_URL) {
-    // Імітуємо успіх поки бекенд не підключено
-    return { orderNumber: Math.floor(100 + Math.random() * 900) }
-  }
-
-  const response = await fetch(`${BASE_URL}/api/orders`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-
-  if (!response.ok) {
-    throw new Error(
-      await getApiErrorMessage(response, 'Не вдалося оформити замовлення. Спробуйте ще раз.'),
-    )
-  }
-
-  return response.json() as Promise<OrderResponse>
-}
-
-
-export async function getFavoritesApi(): Promise<string[]> {
-  if (!BASE_URL) {
-    return []
-  }
-
-  const response = await fetch(`${BASE_URL}/api/favorites`, {
+  await apiRequest<MessageResponseDto>(`/api/auth/verify?token=${encodeURIComponent(token)}`, {
     method: 'GET',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    auth: false,
   })
-
-  if (!response.ok) {
-    throw new Error(
-      await getApiErrorMessage(response, 'Не вдалося завантажити список обраного.'),
-    )
-  }
-
-  const data = (await response.json()) as { favorites?: string[] } | string[]
-
-  if (Array.isArray(data)) {
-    return data
-  }
-
-  return data.favorites ?? []
 }

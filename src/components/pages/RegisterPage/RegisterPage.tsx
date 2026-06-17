@@ -130,6 +130,7 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
         name: name.trim(),
         email: email.trim(),
         password,
+        confirmPassword: confirm,
       })
       onSuccess(email.trim())
     } catch (err) {

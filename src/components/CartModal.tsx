@@ -6,7 +6,7 @@ import { maxCartQuantity, useShop } from '../hooks/useShop'
 import { useToast } from '../hooks/useToast'
 import { formatPrice } from '../utils/formatPrice'
 import { getGalleryUrl, getHomeUrl } from '../utils/productUrl'
-import { createOrderApi } from '../services/api/authApi'
+import { createOrderApi } from '../services/api/ordersApi'
 
 type CartModalProps = {
   isOpen: boolean
@@ -19,7 +19,6 @@ type OrderBackStep = Extract<CheckoutStep, 'cart' | 'login' | 'register'>
 export function CartModal({ isOpen, onClose }: CartModalProps) {
   const { user, login } = useAuth()
   const {
-    cartItems,
     cartLines,
     cartTotal,
     clearCart,
@@ -48,7 +47,7 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
   const [orderTouched, setOrderTouched] = useState(false)
   const [orderError, setOrderError] = useState('')
   const [isOrderSubmitting, setIsOrderSubmitting] = useState(false)
-  const [orderNumber, setOrderNumber] = useState(0)
+  const [orderNumber, setOrderNumber] = useState('')
 
   const hasCartItems = cartLines.length > 0
   const activeStep = !hasCartItems && step !== 'success' ? 'cart' : step
@@ -187,11 +186,10 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
 
     try {
       const { orderNumber: newOrderNumber } = await createOrderApi({
-        recipientName: orderForm.recipientName,
-        phone: orderForm.phone,
-        city: orderForm.city,
-        comment: orderForm.comment || undefined,
-        items: cartItems.map(({ productId, quantity }) => ({ productId, quantity })),
+        customerName: orderForm.recipientName,
+        phone: `+38${orderForm.phone}`,
+        deliveryCity: orderForm.city,
+        notes: orderForm.comment || undefined,
       })
 
       // clearCart() скидає стейт і через useEffect в useShop персистить [] в localStorage

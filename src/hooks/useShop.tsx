@@ -5,7 +5,16 @@ import {
   addToFavoritesApi,
   getFavoritesApi,
   removeFromFavoritesApi,
-} from '../services/api/authApi'
+} from '../services/api/favoritesApi'
+import {
+  addCartItemApi,
+  clearCartApi,
+  getCartApi,
+  mergeCartApi,
+  removeCartItemApi,
+  updateCartItemApi,
+  type CartLine as ApiCartLine,
+} from '../services/api/cartApi'
 import { useAuth } from './useAuth'
 import {
   initCartFromStorage,
@@ -19,6 +28,7 @@ import {
   selectCartLines,
   selectCartTotal,
 } from '../store/cartSelectors'
+import { getProductById } from '../data/bestProducts'
 
 type CartItem = {
   productId: string
@@ -67,14 +77,16 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>(() =>
     initCartFromStorage(),
   )
+  const [serverCartLines, setServerCartLines] = useState<ApiCartLine[]>([])
 
   useEffect(() => {
     persistFavorites(favoriteProductIds)
   }, [favoriteProductIds])
 
   useEffect(() => {
+    if (user) return
     persistCart(cartItems)
-  }, [cartItems])
+  }, [cartItems, user])
 
   useEffect(() => {
     return subscribeToCartStorageSync((updatedItems) => {
@@ -109,6 +121,22 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     }
   }, [user])
 
+  const loadServerCart = useCallback(() => {
+    if (!user) return
+
+    let isCancelled = false
+
+    getCartApi()
+      .then((lines) => {
+        if (!isCancelled) setServerCartLines(lines)
+      })
+      .catch(console.error)
+
+    return () => {
+      isCancelled = true
+    }
+  }, [user])
+
 useEffect(() => {
     if (!isAuthChecked) return
     if (!user) return
@@ -118,13 +146,70 @@ useEffect(() => {
     return cancel
   }, [isAuthChecked, user, loadFavorites])
 
+  useEffect(() => {
+    if (!isAuthChecked || !user) return
+
+    const numericCartItems = cartItems.filter((item) => Number.isFinite(Number(item.productId)))
+    const cancel = numericCartItems.length
+      ? undefined
+      : loadServerCart()
+
+    if (numericCartItems.length) {
+      mergeCartApi(numericCartItems)
+        .then((lines) => {
+          setServerCartLines(lines)
+          setCartItems([])
+          persistCart([])
+        })
+        .catch(() => {
+          const fallbackCancel = loadServerCart()
+          fallbackCancel?.()
+        })
+    }
+
+    return cancel
+  }, [cartItems, isAuthChecked, loadServerCart, user])
+
+  function enrichServerCartLine(line: ApiCartLine): CartLine {
+    const localProduct = getProductById(line.productId)
+
+    return {
+      productId: line.productId,
+      quantity: line.quantity,
+      product: {
+        ...line.product,
+        image: line.product.image || localProduct?.image || '',
+        gallery: localProduct?.gallery ?? [],
+        description: localProduct?.description ?? '',
+      },
+      lineTotal: line.lineTotal,
+    }
+  }
+
   const value = useMemo<ShopContextType>(() => {
-    const cartLines = selectCartLines(cartItems)
+    const cartLines = user
+      ? serverCartLines.map(enrichServerCartLine)
+      : selectCartLines(cartItems)
     const cartCount = selectCartBadgeCount(cartItems)
-    const cartTotal = selectCartTotal(cartItems)
+    const cartTotal = user
+      ? serverCartLines.reduce((total, line) => total + line.lineTotal, 0)
+      : selectCartTotal(cartItems)
+    const visibleCartItems = user
+      ? serverCartLines.map(({ productId, quantity }) => ({ productId, quantity }))
+      : cartItems
+    const visibleCartCount = user
+      ? serverCartLines.reduce((total, line) => total + line.quantity, 0)
+      : cartCount
 
     function addToCart(productId: string, quantity = 1) {
       const quantityToAdd = normalizeCartQuantity(quantity)
+      if (user && Number.isFinite(Number(productId))) {
+        addCartItemApi(productId, quantityToAdd)
+          .then(setServerCartLines)
+          .catch(console.error)
+        return
+      }
+
       setCartItems((currentItems) => {
         const existingItem = currentItems.find((item) => item.productId === productId)
         if (existingItem) {
@@ -139,10 +224,31 @@ useEffect(() => {
     }
 
     function removeFromCart(productId: string) {
+      if (user && Number.isFinite(Number(productId))) {
+        removeCartItemApi(productId)
+          .then(setServerCartLines)
+          .catch(console.error)
+        return
+      }
+
       setCartItems((currentItems) => currentItems.filter((item) => item.productId !== productId))
     }
 
     function updateCartQuantity(productId: string, quantity: number) {
+      if (user && Number.isFinite(Number(productId))) {
+        if (quantity <= 0) {
+          removeCartItemApi(productId)
+            .then(setServerCartLines)
+            .catch(console.error)
+          return
+        }
+
+        updateCartItemApi(productId, normalizeCartQuantity(quantity))
+          .then(setServerCartLines)
+          .catch(console.error)
+        return
+      }
+
       setCartItems((currentItems) => {
         if (quantity <= 0) {
           return currentItems.filter((item) => item.productId !== productId)
@@ -156,6 +262,13 @@ useEffect(() => {
     }
 
     function clearCart() {
+      if (user) {
+        clearCartApi()
+          .then(setServerCartLines)
+          .catch(console.error)
+        return
+      }
+
       setCartItems([])
     }
 
@@ -188,8 +301,8 @@ useEffect(() => {
     return {
       addToCart,
       cartLines,
-      cartCount,
-      cartItems,
+      cartCount: visibleCartCount,
+      cartItems: visibleCartItems,
       cartTotal,
       clearCart,
       favoriteProductIds,
@@ -197,7 +310,7 @@ useEffect(() => {
       favoritesError,
       refetchFavorites: loadFavorites,
       isFavorite: (productId) => favoriteProductIds.includes(productId),
-      isInCart: (productId) => cartItems.some((item) => item.productId === productId),
+      isInCart: (productId) => visibleCartItems.some((item) => item.productId === productId),
       removeFromCart,
       toggleFavorite,
       updateCartQuantity,
@@ -211,6 +324,7 @@ useEffect(() => {
     isAuthChecked,
     requestLogin,
     user,
+    serverCartLines,
   ])
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>

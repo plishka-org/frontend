@@ -119,7 +119,7 @@ const ContactForm = () => {
       await createContactRequest({
         name: trimmedName,
         phone: `+38${phone}`,
-        description,
+        message: description,
       });
       resetForm();
       setIsSubmitted(true);
