@@ -1,4 +1,4 @@
-import fallbackProductImage from '../../assets/galery-block/galery-1.svg'
+import fallbackProductImage from '../../assets/galery-block/galery-1.webp'
 import { apiRequest } from './client'
 import { resolveMediaUrl, type MediaPreviewDto } from './mediaApi'
 

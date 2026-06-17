@@ -81,7 +81,7 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
   return (
     <article className="best-product-card" data-cart-actions={features.showCartActions}>
       <a className="best-product-card__link" href={getProductUrl(product.id, siteVariant)}>
-        <img src={product.image} alt={product.name} />
+        <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
 
         <div className="best-product-card__body">
           <p>{product.category}</p>

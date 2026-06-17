@@ -70,7 +70,7 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
                     aria-pressed={imageIndex === activeImageIndex}
                     onClick={() => setActiveImageIndex(imageIndex)}
                   >
-                    <img src={image} alt="" />
+                    <img src={image} alt="" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>
@@ -79,6 +79,8 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
                 className="reviews-feature-gallery__main"
                 src={activeReview.images[activeImageIndex]}
                 alt={`Виріб з відгуку ${activeReview.author}`}
+                loading="lazy"
+                decoding="async"
               />
 
               <div className="reviews-feature-gallery__controls" aria-label="Перемикання фото">
@@ -156,7 +158,7 @@ function ReviewCard({ isActive, onSelect, review }: ReviewCardProps) {
         aria-pressed={isActive}
         onClick={onSelect}
       >
-        <img src={review.cardImage} alt="" />
+        <img src={review.cardImage} alt="" loading="lazy" decoding="async" />
         <span className="review-card__text">{review.text}</span>
         <span className="review-card__author">{review.author}</span>
       </button>

@@ -36,6 +36,7 @@ export function OrderItem({ order }: OrderItemProps) {
               alt={product.name}
               className="order-item__product-img"
               loading="lazy"
+              decoding="async"
               width={100}
               height={100}
             />

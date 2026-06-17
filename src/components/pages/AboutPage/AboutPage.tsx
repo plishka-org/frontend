@@ -41,6 +41,7 @@ export function AboutPage({ siteVariant }: AboutPageProps) {
               className="about-story-block__image"
               src={aboutHeroImage}
               alt="Деревʼяна споруда майстерні Plishka серед зелені"
+              decoding="async"
             />
           </article>
 
@@ -49,6 +50,8 @@ export function AboutPage({ siteVariant }: AboutPageProps) {
               className="about-story-block__image"
               src={aboutTodayImage}
               alt="Деталі деревʼяної покрівлі споруди Plishka"
+              loading="lazy"
+              decoding="async"
             />
             <div className="about-story-block__text">
               <h2>Plishka - сьогодні</h2>
@@ -63,17 +66,23 @@ export function AboutPage({ siteVariant }: AboutPageProps) {
                   alt="Деревʼяна господарська будівля біля майстерні"
                   className="about-gallery__item about-gallery__item--small"
                   src={aboutGalleryYardImage}
+                  loading="lazy"
+                  decoding="async"
                 />
                 <img
                   alt="Деревʼяний каркас конструкції біля майстерні"
                   className="about-gallery__item about-gallery__item--small"
                   src={aboutGalleryFrameImage}
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               <img
                 alt="Накрита деревʼяна конструкція на території майстерні"
                 className="about-gallery__item about-gallery__item--main"
                 src={aboutGalleryMainImage}
+                loading="lazy"
+                decoding="async"
               />
             </div>
             <div className="about-gallery__bottom">
@@ -81,11 +90,15 @@ export function AboutPage({ siteVariant }: AboutPageProps) {
                 alt="Літній вигляд деревʼяної споруди Plishka"
                 className="about-gallery__item about-gallery__item--large"
                 src={aboutGallerySummerImage}
+                loading="lazy"
+                decoding="async"
               />
               <img
                 alt="Деревʼяна споруда Plishka восени"
                 className="about-gallery__item about-gallery__item--large"
                 src={aboutGalleryWinterImage}
+                loading="lazy"
+                decoding="async"
               />
             </div>
           </div>

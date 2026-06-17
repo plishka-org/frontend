@@ -18,7 +18,7 @@ export function FavoriteProductCard({ product, siteVariant }: FavoriteProductCar
   return (
     <article className="gallery-card" data-has-price={siteVariant === 'order'}>
       <a className="gallery-card__image-link" href={href}>
-        <img src={product.image} alt={product.name} />
+        <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
       </a>
 
       <p>{product.category}</p>

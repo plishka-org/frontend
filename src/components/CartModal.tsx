@@ -547,7 +547,7 @@ function OrderSummary({
       <div className="cart-modal__items">
         {cartLines.map(({ product, productId, quantity }) => (
           <article className="cart-modal__item" key={productId}>
-            <img src={product.image} alt={product.name} />
+            <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
             <div className="cart-modal__item-name">
               <strong>{product.name}</strong>
               <span>{product.category}</span>

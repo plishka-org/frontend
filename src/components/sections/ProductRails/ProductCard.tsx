@@ -27,7 +27,7 @@ export function ProductCard({ product, siteVariant }: ProductCardProps) {
   return (
     <article className="product-rail-card">
       <a className="product-rail-card__link" href={href}>
-        <img src={product.image} alt={product.name} />
+        <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
         <span>{product.category}</span>
         <h3 title={product.name}>{product.displayName ?? product.name}</h3>
         {siteVariant === 'order' && <p>{formatPrice(product.price)}</p>}

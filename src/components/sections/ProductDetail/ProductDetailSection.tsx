@@ -71,7 +71,7 @@ export function ProductDetailSection({
                 onClick={() => openGalleryImage(image, index)}
                 aria-label={`Відкрити фото ${index + 1}`}
               >
-                <img src={image} alt="" />
+                <img src={image} alt="" loading="lazy" decoding="async" />
               </button>
             ))}
           </div>
@@ -82,7 +82,7 @@ export function ProductDetailSection({
             onClick={() => setLightboxImage(selectedImage)}
             aria-label="Відкрити фото на весь екран"
           >
-            <img src={selectedImage} alt={product.name} />
+            <img src={selectedImage} alt={product.name} decoding="async" />
           </button>
 
           <div
@@ -162,6 +162,7 @@ export function ProductDetailSection({
             <img
               src={lightboxImage}
               alt={product.name}
+              decoding="async"
               onClick={(e) => e.stopPropagation()}
             />
             <button

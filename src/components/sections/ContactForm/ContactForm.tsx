@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { IMaskInput } from "react-imask";
-import contactImage from "../../../icons/contact-form-image.png";
+import contactImage from "../../../icons/contact-form-image.webp";
 import { useAuth } from "../../../hooks/useAuth";
 import { createContactRequest } from "../../../services/api/contactRequestsApi";
 import "../../../styles/sections/_contact-form.scss";
@@ -253,7 +253,7 @@ const ContactForm = () => {
           )}
         </div>
         <div className="contact-form__image-wrapper">
-          <img src={contactImage} alt="Контактна форма" />
+          <img src={contactImage} alt="Контактна форма" loading="lazy" decoding="async" />
         </div>
       </div>
     </section>
