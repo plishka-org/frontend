@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { IMaskInput } from 'react-imask'
 import { registerApi, verifyEmailApi } from '../../../services/api/authApi'
 import './RegisterPage.scss'
 
@@ -58,6 +59,14 @@ function validateEmail(value: string): string {
   return ''
 }
 
+function validatePhone(value: string): string {
+  if (!value) return "Поле обов'язкове"
+  if (!value.startsWith('0')) return 'Номер повинен починатися з "0"'
+  if (!/^\d+$/.test(value)) return 'Тільки цифри'
+  if (value.length !== 10) return 'Номер має бути із 10 цифр'
+  return ''
+}
+
 function validatePassword(value: string): string {
   if (!value) return "Поле обов'язкове"
   if (value.length < 8) return 'Мінімум 8 символів'
@@ -90,6 +99,10 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
   const [emailTouched, setEmailTouched] = useState(false)
   const [emailError, setEmailError] = useState('')
 
+  const [phone, setPhone] = useState('')
+  const [phoneTouched, setPhoneTouched] = useState(false)
+  const [phoneError, setPhoneError] = useState('')
+
   const [password, setPassword] = useState('')
   const [passwordTouched, setPasswordTouched] = useState(false)
   const [passwordError, setPasswordError] = useState('')
@@ -103,25 +116,34 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [globalError, setGlobalError] = useState<string | null>(null)
 
+  const handlePhoneAccept = (value: string) => {
+    const nextPhone = value.replace(/\D/g, '').slice(0, 10)
+    setPhone(nextPhone)
+    if (phoneTouched) setPhoneError(validatePhone(nextPhone))
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
     const nErr = validateName(name)
     const eErr = validateEmail(email)
+    const phErr = validatePhone(phone)
     const pwErr = validatePassword(password)
     const cErr = validateConfirm(confirm, password)
 
     setNameTouched(true)
     setEmailTouched(true)
+    setPhoneTouched(true)
     setPasswordTouched(true)
     setConfirmTouched(true)
 
     setNameError(nErr)
     setEmailError(eErr)
+    setPhoneError(phErr)
     setPasswordError(pwErr)
     setConfirmError(cErr)
 
-    if (nErr || eErr || pwErr || cErr) return
+    if (nErr || eErr || phErr || pwErr || cErr) return
 
     setGlobalError(null)
     setIsLoading(true)
@@ -129,6 +151,7 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
       await registerApi({
         name: name.trim(),
         email: email.trim(),
+        phone: `+38${phone}`,
         password,
       })
       onSuccess(email.trim())
@@ -154,6 +177,8 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
         <div className="register-page__global-error" role="alert">{globalError}</div>
       )}
       <form className="register-page__form" onSubmit={handleSubmit} noValidate>
+
+        {/* Ім'я */}
         <div className="register-page__field">
           <label htmlFor="register-name">Ім'я</label>
           <input
@@ -183,8 +208,9 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
           )}
         </div>
 
+        {/* Пошта */}
         <div className="register-page__field">
-          <label htmlFor="register-email">Email</label>
+          <label htmlFor="register-email">Пошта</label>
           <input
             id="register-email"
             type="email"
@@ -212,6 +238,37 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
           )}
         </div>
 
+        {/* Телефон */}
+        <div className="register-page__field">
+          <label htmlFor="register-phone">Номер телефону</label>
+          <div className="register-page__phone-wrapper">
+            <span className="register-page__phone-prefix">+38</span>
+            <IMaskInput
+              id="register-phone"
+              autoComplete="tel-national"
+              className={`register-page__phone-input${phoneTouched && phoneError ? ' is-error' : ''}`}
+              mask="000 000 00 00"
+              unmask={true}
+              value={phone}
+              placeholder="0XX XXX XX XX"
+              disabled={isLoading}
+              onAccept={(value) => handlePhoneAccept(String(value))}
+              onBlur={() => {
+                setPhoneTouched(true)
+                setPhoneError(validatePhone(phone))
+              }}
+              aria-describedby={phoneTouched && phoneError ? 'register-phone-error' : undefined}
+              aria-invalid={Boolean(phoneTouched && phoneError)}
+            />
+          </div>
+          {phoneTouched && phoneError && (
+            <span className="register-page__field-error" id="register-phone-error" role="alert">
+              <AlertIcon />{phoneError}
+            </span>
+          )}
+        </div>
+
+        {/* Пароль */}
         <div className="register-page__field">
           <label htmlFor="register-password">Пароль</label>
           <div className="register-page__password-wrapper">
@@ -249,6 +306,7 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
           )}
         </div>
 
+        {/* Повторіть пароль */}
         <div className="register-page__field">
           <label htmlFor="register-confirm-password">Повторіть пароль</label>
           <div className="register-page__password-wrapper">
