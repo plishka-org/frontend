@@ -125,6 +125,67 @@
     }
   }
 
+  // Телефон
+  &__phone-wrapper {
+    display: flex;
+    align-items: stretch;
+    height: 44px;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+    background: var(--color-surface);
+
+    &:focus-within {
+      border-color: var(--color-primary);
+    }
+
+    &:has(.is-error) {
+      border-color: var(--color-error) !important;
+
+      .register-page__phone-prefix {
+        background: var(--color-error);
+        color: #fff;
+        border-right-color: transparent;
+      }
+    }
+  }
+
+  &__phone-prefix {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    background: var(--color-surface-alt);
+    border-right: 1px solid var(--color-border);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-heading);
+    white-space: nowrap;
+    user-select: none;
+    flex-shrink: 0;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  &__phone-input {
+    flex: 1;
+    height: 100%;
+    padding: 10px 12px;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent;
+    color: var(--color-heading);
+    font: inherit;
+    font-size: 14px;
+    outline: none !important;
+    box-sizing: border-box;
+    box-shadow: none !important;
+
+    &::placeholder {
+      color: var(--color-muted);
+    }
+  }
+
+  // Пароль
   &__password-wrapper {
     position: relative;
     width: 100%;
