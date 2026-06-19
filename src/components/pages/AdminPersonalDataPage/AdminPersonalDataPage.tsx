@@ -41,11 +41,23 @@ function LogoutArrowIcon() {
   );
 }
 
+function CloseIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
 function validateName(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "Поле обов'язкове";
   if (trimmed.length < 2) return "Мінімум 2 символи";
-  if (trimmed.length > 64) return "Максимум 64 символи";
+  if (trimmed.length > 50) return "Максимум 50 символів";
+  if (!/^[A-Za-zА-ЯЇІЄҐа-яїієґ'\- ]+$/.test(trimmed)) {
+    return "Допускаються лише літери, пробіл, дефіс та апостроф";
+  }
   return "";
 }
 
@@ -54,20 +66,23 @@ function validateEmail(value: string): string {
   if (!trimmed) return "Поле обов'язкове";
   if (trimmed.length < 6) return "Мінімум 6 символів";
   if (trimmed.length > 128) return "Максимум 128 символів";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return "Невірний формат email";
+  if (!/^[^\s@]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(trimmed)) {
+    return "Невірний формат email";
+  }
   return "";
 }
 
 function validatePhone(value: string): string {
-  if (!value) return "Поле обов'язкове";
+  if (!value) return "";
   if (!value.startsWith("0")) return 'Номер повинен починатися з "0"';
   if (!/^\d+$/.test(value)) return "Тільки цифри";
   if (value.length !== 10) return "Номер має бути із 10 цифр";
   return "";
 }
 
-function validatePassword(value: string): string {
-  if (!value) return "";
+function validatePassword(value: string, repeatValue: string): string {
+  if (!value && !repeatValue) return "";
+  if (!value) return "Щоб змінити пароль, введіть новий пароль";
   if (value.length < 8) return "Мінімум 8 символів";
   if (value.length > 64) return "Максимум 64 символи";
   if (!/[A-ZА-ЯЇІЄҐ]/.test(value)) return "Потрібна хоча б одна велика літера";
@@ -79,8 +94,7 @@ function validatePassword(value: string): string {
 
 function validateConfirm(value: string, pw: string): string {
   if (!pw) return "";
-  if (!value) return "Поле обов'язкове";
-  if (value !== pw) return "Паролі не збігаються";
+  if (!value || value !== pw) return "Паролі мають збігатися, повторіть новий пароль";
   return "";
 }
 
@@ -113,6 +127,9 @@ export function AdminPersonalDataPage() {
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [globalSuccess, setGlobalSuccess] = useState<string | null>(null);
 
+  const [showEmailChangeModal, setShowEmailChangeModal] = useState(false);
+  const [changedEmail, setChangedEmail] = useState("");
+
   const hasChanges =
     name !== (user?.name ?? "") ||
     email !== (user?.email ?? "") ||
@@ -131,14 +148,14 @@ export function AdminPersonalDataPage() {
     const nErr = validateName(name);
     const eErr = validateEmail(email);
     const phErr = phone ? validatePhone(phone) : "";
-    const pwErr = validatePassword(newPassword);
+    const pwErr = validatePassword(newPassword, repeatPassword);
     const cErr = validateConfirm(repeatPassword, newPassword);
 
     setNameTouched(true);
     setEmailTouched(true);
     setPhoneTouched(Boolean(phone));
-    setNewPasswordTouched(Boolean(newPassword));
-    setRepeatPasswordTouched(Boolean(newPassword));
+    setNewPasswordTouched(Boolean(newPassword) || Boolean(repeatPassword));
+    setRepeatPasswordTouched(Boolean(newPassword) || Boolean(repeatPassword));
 
     setNameError(nErr);
     setEmailError(eErr);
@@ -146,22 +163,33 @@ export function AdminPersonalDataPage() {
     setNewPasswordError(pwErr);
     setRepeatPasswordError(cErr);
 
-    if (nErr || eErr || phErr || pwErr || cErr) return
+    if (nErr || eErr || phErr || pwErr || cErr) return;
 
     setGlobalError(null);
     setGlobalSuccess(null);
     setIsSubmitting(true);
 
     try {
-      if (email !== (user?.email ?? "")) {
+      const isEmailChanged = email !== (user?.email ?? "");
+
+      if (isEmailChanged) {
         await requestEmailChangeApi({ email: email.trim() });
       }
       if (newPassword) {
         await changePasswordApi({ newPassword });
       }
-      setGlobalSuccess("Зміни збережено.");
+
+      if (isEmailChanged) {
+        setChangedEmail(email.trim());
+        setShowEmailChangeModal(true);
+      } else {
+        setGlobalSuccess("Зміни збережено.");
+      }
+
       setNewPassword("");
       setRepeatPassword("");
+      setNewPasswordTouched(false);
+      setRepeatPasswordTouched(false);
     } catch (err) {
       setGlobalError(err instanceof Error ? err.message : "Сталася помилка. Спробуйте ще раз.");
     } finally {
@@ -184,7 +212,7 @@ export function AdminPersonalDataPage() {
         )}
 
         <div className="admin-personal-data__row">
-          <label className="admin-personal-data__field">
+          <label className={`admin-personal-data__field${nameTouched && nameError ? " is-error" : ""}`}>
             <span>Ім'я</span>
             <input
               type="text"
@@ -208,7 +236,7 @@ export function AdminPersonalDataPage() {
             )}
           </label>
 
-          <label className="admin-personal-data__field">
+          <label className={`admin-personal-data__field${phoneTouched && phoneError ? " is-error" : ""}`}>
             <span>Телефон</span>
             <div className={`admin-personal-data__phone${phoneTouched && phoneError ? " is-error" : ""}`}>
               <span className="admin-personal-data__phone-prefix">+38</span>
@@ -216,7 +244,7 @@ export function AdminPersonalDataPage() {
                 type="tel"
                 value={phone}
                 disabled={isSubmitting}
-                placeholder="  0ХХХХХХХХХ"
+                placeholder="0506767677"
                 onChange={(e) => {
                   const next = e.target.value.replace(/\D/g, "").slice(0, 10);
                   setPhone(next);
@@ -236,7 +264,7 @@ export function AdminPersonalDataPage() {
             )}
           </label>
 
-          <label className="admin-personal-data__field">
+          <label className={`admin-personal-data__field${emailTouched && emailError ? " is-error" : ""}`}>
             <span>Email</span>
             <input
               type="email"
@@ -262,7 +290,7 @@ export function AdminPersonalDataPage() {
         </div>
 
         <div className="admin-personal-data__row">
-          <label className="admin-personal-data__field">
+          <label className={`admin-personal-data__field${newPasswordTouched && newPasswordError ? " is-error" : ""}`}>
             <span>Новий пароль</span>
             <div className="admin-personal-data__password">
               <input
@@ -273,13 +301,16 @@ export function AdminPersonalDataPage() {
                 className={newPasswordTouched && newPasswordError ? "is-error" : ""}
                 onChange={(e) => {
                   setNewPassword(e.target.value);
-                  if (newPasswordTouched) setNewPasswordError(validatePassword(e.target.value));
-                  if (repeatPasswordTouched) setRepeatPasswordError(validateConfirm(repeatPassword, e.target.value));
+                  if (newPasswordTouched) {
+                    setNewPasswordError(validatePassword(e.target.value, repeatPassword));
+                  }
+                  if (repeatPasswordTouched) {
+                    setRepeatPasswordError(validateConfirm(repeatPassword, e.target.value));
+                  }
                 }}
                 onBlur={() => {
-                  if (!newPassword) return;
                   setNewPasswordTouched(true);
-                  setNewPasswordError(validatePassword(newPassword));
+                  setNewPasswordError(validatePassword(newPassword, repeatPassword));
                 }}
               />
               <button
@@ -298,7 +329,7 @@ export function AdminPersonalDataPage() {
             )}
           </label>
 
-          <label className="admin-personal-data__field">
+          <label className={`admin-personal-data__field${repeatPasswordTouched && repeatPasswordError ? " is-error" : ""}`}>
             <span>Повторити пароль</span>
             <div className="admin-personal-data__password">
               <input
@@ -309,10 +340,11 @@ export function AdminPersonalDataPage() {
                 className={repeatPasswordTouched && repeatPasswordError ? "is-error" : ""}
                 onChange={(e) => {
                   setRepeatPassword(e.target.value);
-                  if (repeatPasswordTouched) setRepeatPasswordError(validateConfirm(e.target.value, newPassword));
+                  if (repeatPasswordTouched) {
+                    setRepeatPasswordError(validateConfirm(e.target.value, newPassword));
+                  }
                 }}
                 onBlur={() => {
-                  if (!newPassword) return;
                   setRepeatPasswordTouched(true);
                   setRepeatPasswordError(validateConfirm(repeatPassword, newPassword));
                 }}
@@ -351,6 +383,27 @@ export function AdminPersonalDataPage() {
           <span>Вийти з акаунта</span>
         </button>
       </form>
+
+      {showEmailChangeModal && (
+        <div className="email-change-modal">
+          <div className="email-change-modal__card">
+            <button
+              type="button"
+              className="email-change-modal__close"
+              aria-label="Закрити"
+              onClick={() => setShowEmailChangeModal(false)}
+            >
+              <CloseIcon />
+            </button>
+            <h2 className="email-change-modal__title">Зміна пошти</h2>
+            <p className="email-change-modal__text">
+              На вказану електронну пошту <strong>{changedEmail}</strong> відправлено
+              посилання для підтвердження. Перейдіть за посиланням, щоб підтвердити
+              електронну пошту.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

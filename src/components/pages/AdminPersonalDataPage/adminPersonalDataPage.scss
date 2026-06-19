@@ -62,10 +62,6 @@
       color: var(--color-error);
     }
 
-    &.is-error > span:first-child::after {
-      content: " *";
-    }
-
     input {
       height: 44px;
       border: 1px solid var(--color-border);
@@ -119,9 +115,7 @@
     border-radius: 100px;
     overflow: hidden;
     background-color: var(--color-surface);
-    transition:
-      border-color 0.15s,
-      background-color 0.15s;
+    transition: border-color 0.15s, background-color 0.15s;
 
     &:focus-within {
       border-color: var(--color-primary);
@@ -129,13 +123,14 @@
 
     input {
       flex: 1;
-      border: none;
-      border-radius: 0;
+      border: none !important;
+      border-radius: 0 !important;
       background: transparent;
-      padding: 0 18px 0 14px;
+      padding-right: 18px;
 
       &:focus {
         border-color: transparent;
+        outline: none;
       }
     }
 
@@ -153,14 +148,16 @@
   &__phone-prefix {
     display: flex;
     align-items: center;
-    padding: 0 18px;
+    padding: 0 16px;
     background-color: var(--color-surface-alt);
     color: var(--color-text);
     font-weight: 600;
     flex-shrink: 0;
-    transition:
-      background-color 0.15s,
-      color 0.15s;
+    transition: background-color 0.15s, color 0.15s;
+  }
+
+  &__phone input {
+    padding-left: 16px;
   }
 
   &__password {
@@ -171,9 +168,7 @@
     border-radius: 100px;
     overflow: hidden;
     background-color: var(--color-surface);
-    transition:
-      border-color 0.15s,
-      background-color 0.15s;
+    transition: border-color 0.15s, background-color 0.15s;
 
     &:focus-within {
       border-color: var(--color-primary);
@@ -253,6 +248,67 @@
     &:hover {
       border-color: var(--color-error);
       color: var(--color-error);
+    }
+  }
+}
+
+.email-change-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+
+  &__card {
+    position: relative;
+    width: min(480px, calc(100vw - 32px));
+    padding: 32px 36px;
+    background: var(--color-surface);
+    border-radius: 16px;
+    box-shadow: 0 8px 48px rgba(0, 0, 0, 0.22);
+    text-align: center;
+  }
+
+  &__close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: var(--color-muted);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-surface-alt);
+      color: var(--color-heading);
+    }
+  }
+
+  &__title {
+    margin: 0 0 16px;
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-heading);
+  }
+
+  &__text {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--color-heading);
+
+    strong {
+      font-weight: 600;
     }
   }
 }
