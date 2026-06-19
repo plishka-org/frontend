@@ -1,0 +1,158 @@
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--color-surface-alt);
+
+  &__content {
+    flex: 1;
+    padding: 32px 40px;
+  }
+
+  &__card {
+    background-color: var(--color-surface);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 1px 3px rgba(17, 25, 24, 0.06);
+  }
+}
+
+.admin-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  flex-shrink: 0;
+  padding: 28px 16px;
+  background-color: var(--color-surface-alt);
+
+  &__brand {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+
+  &__logo {
+    width: 88px;
+    height: 88px;
+    object-fit: contain;
+  }
+
+  &__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+
+  &__link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--color-text);
+    padding: 12px 16px;
+    border-radius: 100px;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background-color: rgba(17, 25, 24, 0.05);
+    }
+
+    &[data-active="true"] {
+      color: var(--color-surface);
+      background-color: var(--color-primary);
+    }
+
+    &[data-active="true"] &-icon,
+    &[data-active="true"] img {
+      filter: brightness(0) invert(1);
+    }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+  }
+
+  &__logout {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 100px;
+    background: transparent;
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+      background-color: rgba(168, 5, 5, 0.06);
+      border-color: var(--color-error);
+      color: var(--color-error);
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .admin-layout {
+    flex-direction: column;
+
+    &__content {
+      padding: 20px;
+    }
+
+    &__card {
+      padding: 20px;
+    }
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    padding: 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    &__brand {
+      margin-bottom: 0;
+      margin-right: 20px;
+      flex-shrink: 0;
+    }
+
+    &__logo {
+      width: 48px;
+      height: 48px;
+    }
+
+    &__nav {
+      flex-direction: row;
+      flex-shrink: 0;
+    }
+
+    &__link {
+      white-space: nowrap;
+    }
+
+    &__logout {
+      margin-top: 0;
+      margin-left: 12px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+  }
+}
