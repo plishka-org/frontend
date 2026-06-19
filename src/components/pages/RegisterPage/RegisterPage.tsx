@@ -46,7 +46,10 @@ function validateName(value: string): string {
   const trimmed = value.trim()
   if (!trimmed) return "Поле обов'язкове"
   if (trimmed.length < 2) return 'Мінімум 2 символи'
-  if (trimmed.length > 64) return 'Максимум 64 символи'
+  if (trimmed.length > 50) return 'Максимум 50 символів'
+  if (!/^[A-Za-zА-ЯЇІЄҐа-яїієґ'\- ]+$/.test(trimmed)) {
+    return 'Допускаються лише літери, пробіл, дефіс та апостроф'
+  }
   return ''
 }
 
@@ -55,12 +58,14 @@ function validateEmail(value: string): string {
   if (!trimmed) return "Поле обов'язкове"
   if (trimmed.length < 6) return 'Мінімум 6 символів'
   if (trimmed.length > 128) return 'Максимум 128 символів'
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return 'Невірний формат email'
+  if (!/^[^\s@]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(trimmed)) {
+    return 'Невірний формат email'
+  }
   return ''
 }
 
 function validatePhone(value: string): string {
-  if (!value) return "Поле обов'язкове"
+  if (!value) return ''
   if (!value.startsWith('0')) return 'Номер повинен починатися з "0"'
   if (!/^\d+$/.test(value)) return 'Тільки цифри'
   if (value.length !== 10) return 'Номер має бути із 10 цифр'
@@ -133,7 +138,7 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
 
     setNameTouched(true)
     setEmailTouched(true)
-    setPhoneTouched(true)
+    setPhoneTouched(Boolean(phone))
     setPasswordTouched(true)
     setConfirmTouched(true)
 
@@ -151,7 +156,7 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
       await registerApi({
         name: name.trim(),
         email: email.trim(),
-        phone: `+38${phone}`,
+        phone: phone ? `+38${phone}` : undefined,
         password,
       })
       onSuccess(email.trim())
@@ -254,6 +259,7 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
               disabled={isLoading}
               onAccept={(value) => handlePhoneAccept(String(value))}
               onBlur={() => {
+                if (!phone) return
                 setPhoneTouched(true)
                 setPhoneError(validatePhone(phone))
               }}
