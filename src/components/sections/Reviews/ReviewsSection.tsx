@@ -58,7 +58,7 @@ export function ReviewsSection({ siteVariant }: ReviewsSectionProps) {
                   aria-pressed={imageIndex === activeImageIndex}
                   onClick={() => setActiveImageIndex(imageIndex)}
                 >
-                  <img src={image} alt="" />
+                  <img src={image} alt="" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>
@@ -67,6 +67,8 @@ export function ReviewsSection({ siteVariant }: ReviewsSectionProps) {
               className="reviews-gallery__main"
               src={activeReview.images[activeImageIndex]}
               alt={`Виріб з відгуку ${activeReview.author}`}
+              loading="lazy"
+              decoding="async"
             />
 
             <div className="reviews-gallery__controls" aria-label="Перемикання фото">

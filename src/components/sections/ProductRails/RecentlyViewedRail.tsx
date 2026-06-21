@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 import { useRecentlyViewed } from '../../../hooks/useRecentlyViewed'
 import { ProductCard } from './ProductCard'
-import type { BestProduct } from '../../../data/bestProducts'
+import type { ProductUi } from '../../../services/api/productsApi'
 import type { SiteVariant } from '../../../utils/siteVariant'
 
 type RecentlyViewedRailProps = {
-  currentProduct?: BestProduct
+  currentProduct?: ProductUi
   siteVariant: SiteVariant
 }
 

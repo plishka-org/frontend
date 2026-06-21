@@ -158,6 +158,7 @@ function StepRegister({ onClose, onSuccess, onLogin }: StepRegisterProps) {
         email: email.trim(),
         phone: phone ? `+38${phone}` : undefined,
         password,
+        confirmPassword: confirm,
       })
       onSuccess(email.trim())
     } catch (err) {

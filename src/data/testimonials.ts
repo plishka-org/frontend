@@ -1,7 +1,7 @@
-import reviewImage from '../assets/block-reviews/reviews.svg'
-import reviewImage2 from '../assets/block-reviews/reviews-2.svg'
-import reviewImage3 from '../assets/block-reviews/reviews-3.svg'
-import reviewImage4 from '../assets/block-reviews/reviews-4.svg'
+import reviewImage from '../assets/block-reviews/reviews.webp'
+import reviewImage2 from '../assets/block-reviews/reviews-2.webp'
+import reviewImage3 from '../assets/block-reviews/reviews-3.webp'
+import reviewImage4 from '../assets/block-reviews/reviews-4.webp'
 
 export type Testimonial = {
   id: number

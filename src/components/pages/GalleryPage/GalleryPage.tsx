@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { galleryCategories, galleryProducts } from '../../../data/galleryProducts'
+import { getCategoriesApi, getProductsApi, type CategoryDto, type ProductUi } from '../../../services/api/productsApi'
+import { hasApiBaseUrl } from '../../../services/api/client'
 import { siteVariantFeatures } from '../../../utils/siteVariant'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { OrderUnavailableNotice } from '../../OrderUnavailableNotice'
@@ -21,18 +23,23 @@ const gallerySorts: GallerySort[] = ['az', 'za', 'priceHigh', 'priceLow']
 const galleryStateStorageKey = 'plishkaGalleryState'
 const galleryProductsPerPage = 12
 const gallerySkeletonCardCount = 12
+const localGalleryProducts: ProductUi[] = galleryProducts.map((product) => ({
+  ...product,
+  description: '',
+  gallery: [product.image],
+}))
 
 type GalleryUrlState = {
   activeCategories: string[]
   sort: GallerySort
 }
 
-function filterProductsByCategories(activeCategories: string[]) {
+function filterProductsByCategories(products: ProductUi[], activeCategories: string[]) {
   if (activeCategories.length === 0) {
-    return galleryProducts
+    return products
   }
 
-  return galleryProducts.filter((product) => activeCategories.includes(product.category))
+  return products.filter((product) => activeCategories.includes(product.category))
 }
 
 function readStoredGalleryState(): GalleryUrlState | null {
@@ -123,13 +130,49 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
   )
   const [sort, setSort] = useState<GallerySort>(() => readGalleryUrlState().sort)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [isProductsLoading] = useState(false)
+  const [isProductsLoading, setIsProductsLoading] = useState(false)
+  const [products, setProducts] = useState<ProductUi[]>(localGalleryProducts)
+  const [categories, setCategories] = useState<string[]>(galleryCategories)
+  const [categoryDtos, setCategoryDtos] = useState<CategoryDto[]>([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [serverTotalPages, setServerTotalPages] = useState(0)
   const productsRef = useRef<HTMLDivElement>(null)
   const activeFilterCount = activeCategories.length
 
+  useEffect(() => {
+    let isCancelled = false
+
+    Promise.resolve()
+      .then(() => {
+        if (!isCancelled) setIsProductsLoading(true)
+        return Promise.all([getCategoriesApi(), getProductsApi({ page: 0, size: galleryProductsPerPage, sort: 'name,asc' })])
+      })
+      .then(([nextCategories, nextProducts]) => {
+        if (isCancelled) return
+
+        setCategoryDtos(nextCategories)
+        setCategories(['Усі категорії', ...nextCategories.map((category) => category.name)])
+        setProducts(nextProducts.content)
+        setServerTotalPages(nextProducts.totalPages)
+      })
+      .catch(() => {
+        if (isCancelled) return
+        setCategoryDtos([])
+        setCategories(galleryCategories)
+        setProducts(localGalleryProducts)
+        setServerTotalPages(0)
+      })
+      .finally(() => {
+        if (!isCancelled) setIsProductsLoading(false)
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [])
+
   const visibleProducts = useMemo(() => {
-    const filteredProducts = filterProductsByCategories(activeCategories)
+    const filteredProducts = filterProductsByCategories(products, activeCategories)
 
     return [...filteredProducts].sort((firstProduct, secondProduct) => {
       if (sort === 'za') {
@@ -146,14 +189,55 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
 
       return firstProduct.name.localeCompare(secondProduct.name, 'uk')
     })
-  }, [activeCategories, sort])
+  }, [activeCategories, products, sort])
 
-  const totalPages = Math.ceil(visibleProducts.length / galleryProductsPerPage)
+  const activeCategoryIds = useMemo(() => {
+    const categoryIdByName = new Map(categoryDtos.map((category) => [category.name, category.categoryId]))
+    return activeCategories.flatMap((categoryName) => {
+      const categoryId = categoryIdByName.get(categoryName)
+      return categoryId ? [String(categoryId)] : []
+    })
+  }, [activeCategories, categoryDtos])
+
+  useEffect(() => {
+    if (!categoryDtos.length) return
+
+    let isCancelled = false
+
+    Promise.resolve()
+      .then(() => {
+        if (!isCancelled) setIsProductsLoading(true)
+        return getProductsApi({
+          categoryIds: activeCategoryIds,
+          page: currentPage - 1,
+          size: galleryProductsPerPage,
+          sort: sort === 'za' ? 'name,desc' : 'name,asc',
+        })
+      })
+      .then((nextProducts) => {
+        if (!isCancelled) {
+          setProducts(nextProducts.content)
+          setServerTotalPages(nextProducts.totalPages)
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) setProducts(localGalleryProducts)
+      })
+      .finally(() => {
+        if (!isCancelled) setIsProductsLoading(false)
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [activeCategoryIds, categoryDtos.length, currentPage, sort])
+
+  const usesServerPagination = hasApiBaseUrl() && categoryDtos.length > 0
+  const totalPages = usesServerPagination ? serverTotalPages : Math.ceil(visibleProducts.length / galleryProductsPerPage)
   const activePage = totalPages > 0 ? Math.min(currentPage, totalPages) : 1
-  const paginatedProducts = visibleProducts.slice(
-    (activePage - 1) * galleryProductsPerPage,
-    activePage * galleryProductsPerPage,
-  )
+  const paginatedProducts = usesServerPagination
+    ? visibleProducts
+    : visibleProducts.slice((activePage - 1) * galleryProductsPerPage, activePage * galleryProductsPerPage)
 
   useEffect(() => {
     function syncFromUrl() {
@@ -254,6 +338,7 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
           onSortChange={changeSort}
           onToggleCategory={toggleCategory}
           activeCategories={activeCategories}
+          categories={categories}
           siteVariant={siteVariant}
           sort={sort}
         />

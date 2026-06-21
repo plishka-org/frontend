@@ -1,4 +1,4 @@
-import type { BestProduct } from '../../../data/bestProducts'
+import type { ProductUi } from '../../../services/api/productsApi'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
 import type { SiteVariant } from '../../../utils/siteVariant'
@@ -6,7 +6,7 @@ import { getProductUrl } from '../../../utils/productUrl'
 import { HeartIcon } from '../../icons/UiIcons'
 
 type FavoriteProductCardProps = {
-  product: BestProduct
+  product: ProductUi
   siteVariant: SiteVariant
 }
 
@@ -18,7 +18,7 @@ export function FavoriteProductCard({ product, siteVariant }: FavoriteProductCar
   return (
     <article className="gallery-card" data-has-price={siteVariant === 'order'}>
       <a className="gallery-card__image-link" href={href}>
-        <img src={product.image} alt={product.name} />
+        <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
       </a>
 
       <p>{product.category}</p>

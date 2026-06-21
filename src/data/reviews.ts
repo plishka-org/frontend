@@ -1,4 +1,4 @@
-import reviewImage from '../assets/block-reviews/reviews.svg'
+import reviewImage from '../assets/block-reviews/reviews.webp'
 
 export type Review = {
   id: number

@@ -30,12 +30,12 @@ export function AccountLayout({ children }: AccountLayoutProps) {
     setIsDeleteModalOpen(false)
   }
 
-  async function handleDeleteAccount() {
+  async function handleDeleteAccount(currentPassword: string) {
     setDeleteError(null)
     setIsDeleting(true)
 
     try {
-      await deleteAccount()
+      await deleteAccount(currentPassword)
       window.location.href = '/'
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Не вдалося видалити акаунт. Спробуйте ще раз.')

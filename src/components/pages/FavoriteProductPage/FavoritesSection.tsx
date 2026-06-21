@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import type { BestProduct } from '../../../data/bestProducts'
+import type { ProductUi } from '../../../services/api/productsApi'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { OrderUnavailableNotice } from '../../OrderUnavailableNotice'
 import { GalleryPagination } from '../GalleryPage/GalleryPagination'
 import { FavoriteProductCard } from './FavoriteProductCard'
 
 type FavoritesSectionProps = {
-  products: BestProduct[]
+  products: ProductUi[]
   siteVariant: SiteVariant
   isLoading?: boolean
   error?: string | null

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { BestProductsSection } from "./components/sections/BestProducts/BestProductsSection";
 import { ContactsSection } from "./components/sections/Contacts/ContactsSection";
 import { ReviewsSection } from "./components/sections/Reviews/ReviewsSection";
@@ -15,6 +15,9 @@ import { ForgotPasswordPage } from "./components/pages/ForgotPasswordPage/Forgot
 import { RegisterPage } from "./components/pages/RegisterPage/RegisterPage";
 import { FavoritesPage } from "./components/pages/FavoriteProductPage/FavoritesPage";
 import { getProductById } from "./data/bestProducts";
+import { getProductApi, type ProductUi } from "./services/api/productsApi";
+import { hasApiBaseUrl } from "./services/api/client";
+import { getSettingsApi } from './services/api/contentApi'
 import { getAppPath } from "./utils/productUrl";
 import { getSiteVariant } from "./utils/siteVariant";
 import "./App.scss";
@@ -58,8 +61,14 @@ function App() {
   }, [appPath]);
 
   const productMatch = appPath.match(/^\/products\/([^/]+)\/?$/);
+  const fallbackVariant = getSiteVariant();
+  const [siteVariant, setSiteVariant] = useState(fallbackVariant)
+
+  useEffect(() => {
+    if (!hasApiBaseUrl()) return
+    getSettingsApi().then((settings) => setSiteVariant(settings.isShopModeEnabled ? 'order' : 'usual')).catch(() => setSiteVariant(fallbackVariant))
+  }, [fallbackVariant])
   const adminMatch = appPath.match(/^\/admin\/?(.*)$/);
-  const siteVariant = getSiteVariant();
 
   let pageContent;
 
@@ -96,14 +105,11 @@ function App() {
   } else if (appPath.match(/^\/account(\/.*)?$/)) {
     pageContent = <AccountPage siteVariant={siteVariant} />;
   } else if (productMatch) {
-    const product = getProductById(productMatch[1]);
-    pageContent = product ? (
-      <ProductPage product={product} siteVariant={siteVariant} />
-    ) : (
-      <NotFoundPage
-        description="Можливо, посилання застаріле або товар більше недоступний."
+    pageContent = (
+      <ProductRoute
+        key={productMatch[1]}
+        productId={productMatch[1]}
         siteVariant={siteVariant}
-        title="Товар не знайдено"
       />
     );
   } else if (appPath.match(/^\/?$/)) {
@@ -123,6 +129,56 @@ function App() {
       </ShopProvider>
     </AuthProvider>
   );
+}
+
+function ProductRoute({
+  productId,
+  siteVariant,
+}: {
+  productId: string;
+  siteVariant: ReturnType<typeof getSiteVariant>;
+}) {
+  const localProduct = useMemo(() => getProductById(productId), [productId]);
+  const [product, setProduct] = useState<ProductUi | undefined>(localProduct);
+  const [isNotFound, setIsNotFound] = useState(!localProduct);
+
+  useEffect(() => {
+    if (!hasApiBaseUrl() || !Number.isFinite(Number(productId))) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    getProductApi(productId)
+      .then((nextProduct) => {
+        if (!isCancelled) {
+          setProduct(nextProduct);
+          setIsNotFound(false);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setProduct(localProduct);
+          setIsNotFound(!localProduct);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [localProduct, productId]);
+
+  if (isNotFound || !product) {
+    return (
+      <NotFoundPage
+        description="Можливо, посилання застаріле або товар більше недоступний."
+        siteVariant={siteVariant}
+        title="Товар не знайдено"
+      />
+    );
+  }
+
+  return <ProductPage product={product} siteVariant={siteVariant} />;
 }
 
 function HomePage({
