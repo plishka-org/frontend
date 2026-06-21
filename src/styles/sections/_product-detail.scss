@@ -307,28 +307,100 @@
   background: rgba(17, 25, 24, 0.78);
   cursor: zoom-out;
 
-  img {
-    display: block;
-    width: 500px;
-    height: 500px;
-    max-width: 92vw;
-    max-height: 92vh;
-    border-radius: 24px;
-    object-fit: cover;
-    cursor: default;
-  }
   &__close {
     position: absolute;
     z-index: 2;
     top: 24px;
     right: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
     border: 1px solid rgba(247, 245, 242, 0.4);
-    border-radius: 999px;
+    border-radius: 50%;
     background: rgba(17, 25, 24, 0.65);
     color: var(--color-surface);
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    padding: 12px 18px;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 1;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  &__figure {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    cursor: default;
+
+    img {
+      display: block;
+      width: 500px;
+      height: 500px;
+      max-width: 72vw;
+      max-height: 75vh;
+      border-radius: 24px;
+      object-fit: cover;
+    }
+  }
+
+  &__caption {
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    text-align: center;
+    opacity: 0.85;
+  }
+
+  &__nav {
+    position: absolute;
+    z-index: 2;
+    top: calc(50% - 16px); // зміщення вгору щоб не накладатись на caption
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    &--prev {
+      left: -60px;
+
+      svg {
+        transform: rotate(180deg);
+      }
+    }
+
+    &--next {
+      right: -60px;
+    }
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
   }
 }

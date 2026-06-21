@@ -4,7 +4,7 @@ import type { ProductUi } from "../../../services/api/productsApi";
 import { useShop } from "../../../hooks/useShop";
 import { formatPrice } from "../../../utils/formatPrice";
 import type { SiteVariant } from "../../../utils/siteVariant";
-import { ArrowIcon, CheckIcon, HeartIcon } from "../../icons/UiIcons";
+import { ArrowIcon, CheckIcon, CloseIcon, HeartIcon } from "../../icons/UiIcons";
 import { OrderUnavailableNotice } from "../../OrderUnavailableNotice";
 
 type ProductDetailSectionProps = {
@@ -19,7 +19,7 @@ export function ProductDetailSection({
   const [selectedIndex, setSelectedIndex] = useState(
     Math.min(1, product.gallery.length - 1),
   );
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { addToCart, isFavorite, isInCart, toggleFavorite } = useShop();
 
@@ -30,15 +30,27 @@ export function ProductDetailSection({
   const hasLongTitle = product.name.length > 14;
 
   useEffect(() => {
-    if (!lightboxImage) return;
+    if (!lightboxOpen) return;
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setLightboxImage(null);
+      if (event.key === "Escape") {
+        setLightboxOpen(false);
+      }
+      if (event.key === "ArrowRight") {
+        setSelectedIndex((current) =>
+          current + 1 >= product.gallery.length ? 0 : current + 1,
+        );
+      }
+      if (event.key === "ArrowLeft") {
+        setSelectedIndex((current) =>
+          current - 1 < 0 ? product.gallery.length - 1 : current - 1,
+        );
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [lightboxImage]);
+  }, [lightboxOpen, product.gallery]);
 
   function moveSelection(direction: 1 | -1) {
     setSelectedIndex((currentIndex) => {
@@ -49,9 +61,9 @@ export function ProductDetailSection({
     });
   }
 
-  function openGalleryImage(image: string, index: number) {
+  function openGalleryImage(index: number) {
     setSelectedIndex(index);
-    setLightboxImage(image);
+    setLightboxOpen(true);
   }
 
   return (
@@ -68,7 +80,7 @@ export function ProductDetailSection({
                 data-active={index === selectedIndex}
                 key={`${image}-${index}`}
                 type="button"
-                onClick={() => openGalleryImage(image, index)}
+                onClick={() => openGalleryImage(index)}
                 aria-label={`Відкрити фото ${index + 1}`}
               >
                 <img src={image} alt="" loading="lazy" decoding="async" />
@@ -79,7 +91,7 @@ export function ProductDetailSection({
           <button
             className="product-gallery__main"
             type="button"
-            onClick={() => setLightboxImage(selectedImage)}
+            onClick={() => setLightboxOpen(true)}
             aria-label="Відкрити фото на весь екран"
           >
             <img src={selectedImage} alt={product.name} decoding="async" />
@@ -151,27 +163,61 @@ export function ProductDetailSection({
         </div>
       </section>
 
-      {lightboxImage &&
+      {lightboxOpen &&
         createPortal(
           <div
             className="product-lightbox"
             role="dialog"
             aria-modal="true"
-            onClick={() => setLightboxImage(null)}
+            aria-label={product.name}
+            onClick={() => setLightboxOpen(false)}
           >
-            <img
-              src={lightboxImage}
-              alt={product.name}
-              decoding="async"
-              onClick={(e) => e.stopPropagation()}
-            />
             <button
               className="product-lightbox__close"
               type="button"
-              onClick={() => setLightboxImage(null)}
+              aria-label="Закрити (Esc)"
+              onClick={() => setLightboxOpen(false)}
             >
-              Закрити
+              <CloseIcon />
             </button>
+
+            <figure
+              className="product-lightbox__figure"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="product-lightbox__nav product-lightbox__nav--prev"
+                type="button"
+                aria-label="Попереднє фото"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  moveSelection(-1);
+                }}
+              >
+                <ArrowIcon />
+              </button>
+
+              <img
+                src={selectedImage}
+                alt={product.name}
+              />
+
+              <button
+                className="product-lightbox__nav product-lightbox__nav--next"
+                type="button"
+                aria-label="Наступне фото"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  moveSelection(1);
+                }}
+              >
+                <ArrowIcon />
+              </button>
+
+              <figcaption className="product-lightbox__caption">
+                {product.name}
+              </figcaption>
+            </figure>
           </div>,
           document.body,
         )}

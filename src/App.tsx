@@ -28,6 +28,9 @@ import { AuthProvider } from "./hooks/useAuth";
 import { ShopProvider } from "./hooks/useShop";
 import { RecentlyViewedProvider } from "./hooks/useRecentlyViewed";
 import { ToastProvider } from "./hooks/useToast";
+import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute";
+import { AdminLayout } from "./components/layout/AdminLayout/AdminLayout";
+import { AdminPersonalDataPage } from "./components/pages/AdminPersonalDataPage/AdminPersonalDataPage";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -65,6 +68,7 @@ function App() {
     if (!hasApiBaseUrl()) return
     getSettingsApi().then((settings) => setSiteVariant(settings.isShopModeEnabled ? 'order' : 'usual')).catch(() => setSiteVariant(fallbackVariant))
   }, [fallbackVariant])
+  const adminMatch = appPath.match(/^\/admin\/?(.*)$/);
 
   let pageContent;
 
@@ -74,6 +78,22 @@ function App() {
     pageContent = <ForgotPasswordPage />;
   } else if (appPath.match(/^\/register\/?$/)) {
     pageContent = <RegisterPage />;
+  } else if (adminMatch) {
+    const adminKey = adminMatch[1]?.split("/")[0] || "products";
+    pageContent = (
+      <ProtectedRoute>
+        <AdminLayout activeKey={adminKey}>
+          {adminKey === "settings" ? (
+            <AdminPersonalDataPage />
+          ) : (
+            <div>
+              Контент розділу «{adminKey}» (буде реалізовано в наступних
+              тасках)
+            </div>
+          )}
+        </AdminLayout>
+      </ProtectedRoute>
+    );
   } else if (appPath.match(/^\/gallery\/?$/)) {
     pageContent = <GalleryPage siteVariant={siteVariant} />;
   } else if (appPath.match(/^\/about\/?$/)) {
