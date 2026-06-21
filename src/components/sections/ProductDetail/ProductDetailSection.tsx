@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import type { BestProduct } from "../../../data/bestProducts";
+import type { ProductUi } from "../../../services/api/productsApi";
 import { useShop } from "../../../hooks/useShop";
 import { formatPrice } from "../../../utils/formatPrice";
 import type { SiteVariant } from "../../../utils/siteVariant";
@@ -8,7 +8,7 @@ import { ArrowIcon, CheckIcon, HeartIcon } from "../../icons/UiIcons";
 import { OrderUnavailableNotice } from "../../OrderUnavailableNotice";
 
 type ProductDetailSectionProps = {
-  product: BestProduct;
+  product: ProductUi;
   siteVariant: SiteVariant;
 };
 

@@ -10,6 +10,7 @@ import {
   type AuthUser,
   type LoginCredentials,
 } from "../services/api/authApi";
+import { onAuthCleared } from '../services/api/client'
 import { AuthPromptModal } from "../ui/AuthPromptModal";
 
 type User = AuthUser;
@@ -39,6 +40,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .catch(() => setUser(null))
       .finally(() => setIsAuthChecked(true));
   }, []);
+
+  useEffect(() => onAuthCleared(() => setUser(null)), [])
 
   async function login(credentials: LoginCredentials) {
     const nextUser = await loginApi(credentials);

@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react'
-import type { BestProduct } from '../../../data/bestProducts'
+import type { ProductUi } from '../../../services/api/productsApi'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
 import { HeartIcon } from '../../icons/UiIcons'
@@ -7,7 +7,7 @@ import type { SiteVariant } from '../../../utils/siteVariant'
 import { getProductUrl } from '../../../utils/productUrl'
 
 type ProductCardProps = {
-  product: BestProduct
+  product: ProductUi
   siteVariant: SiteVariant
 }
 

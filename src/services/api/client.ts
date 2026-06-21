@@ -12,12 +12,16 @@ export type AuthTokens = {
 export class ApiError extends Error {
   status: number
   data: unknown
+  fieldErrors: string[]
 
   constructor(status: number, message: string, data: unknown) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.data = data
+    this.fieldErrors = Array.isArray((data as { fieldErrors?: unknown })?.fieldErrors)
+      ? (data as { fieldErrors: string[] }).fieldErrors
+      : []
   }
 }
 
@@ -28,6 +32,14 @@ type ApiRequestOptions = Omit<RequestInit, 'body'> & {
 }
 
 let refreshPromise: Promise<AuthTokens> | null = null
+const authClearedListeners = new Set<() => void>()
+
+export function onAuthCleared(listener: () => void) {
+  authClearedListeners.add(listener)
+  return () => {
+    authClearedListeners.delete(listener)
+  }
+}
 
 function safeStorage() {
   if (typeof window === 'undefined') return null
@@ -106,6 +118,7 @@ export function clearAuthTokens() {
   storage.removeItem('authToken')
   storage.removeItem('token')
   storage.removeItem('user')
+  authClearedListeners.forEach((listener) => listener())
 }
 
 export function decodeJwtPayload<T = Record<string, unknown>>(token: string): T | null {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { galleryCategories, galleryProducts } from '../../../data/galleryProducts'
 import { getCategoriesApi, getProductsApi, type CategoryDto, type ProductUi } from '../../../services/api/productsApi'
+import { hasApiBaseUrl } from '../../../services/api/client'
 import { siteVariantFeatures } from '../../../utils/siteVariant'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { OrderUnavailableNotice } from '../../OrderUnavailableNotice'
@@ -134,6 +135,7 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
   const [categories, setCategories] = useState<string[]>(galleryCategories)
   const [categoryDtos, setCategoryDtos] = useState<CategoryDto[]>([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [serverTotalPages, setServerTotalPages] = useState(0)
   const productsRef = useRef<HTMLDivElement>(null)
   const activeFilterCount = activeCategories.length
 
@@ -143,7 +145,7 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
     Promise.resolve()
       .then(() => {
         if (!isCancelled) setIsProductsLoading(true)
-        return Promise.all([getCategoriesApi(), getProductsApi({ size: 100, sort: 'name,asc' })])
+        return Promise.all([getCategoriesApi(), getProductsApi({ page: 0, size: galleryProductsPerPage, sort: 'name,asc' })])
       })
       .then(([nextCategories, nextProducts]) => {
         if (isCancelled) return
@@ -151,12 +153,14 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
         setCategoryDtos(nextCategories)
         setCategories(['Усі категорії', ...nextCategories.map((category) => category.name)])
         setProducts(nextProducts.content)
+        setServerTotalPages(nextProducts.totalPages)
       })
       .catch(() => {
         if (isCancelled) return
         setCategoryDtos([])
         setCategories(galleryCategories)
         setProducts(localGalleryProducts)
+        setServerTotalPages(0)
       })
       .finally(() => {
         if (!isCancelled) setIsProductsLoading(false)
@@ -205,12 +209,16 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
         if (!isCancelled) setIsProductsLoading(true)
         return getProductsApi({
           categoryIds: activeCategoryIds,
-          size: 100,
+          page: currentPage - 1,
+          size: galleryProductsPerPage,
           sort: sort === 'za' ? 'name,desc' : 'name,asc',
         })
       })
       .then((nextProducts) => {
-        if (!isCancelled) setProducts(nextProducts.content)
+        if (!isCancelled) {
+          setProducts(nextProducts.content)
+          setServerTotalPages(nextProducts.totalPages)
+        }
       })
       .catch(() => {
         if (!isCancelled) setProducts(localGalleryProducts)
@@ -222,14 +230,14 @@ export function GalleryPage({ siteVariant }: GalleryPageProps) {
     return () => {
       isCancelled = true
     }
-  }, [activeCategoryIds, categoryDtos.length, sort])
+  }, [activeCategoryIds, categoryDtos.length, currentPage, sort])
 
-  const totalPages = Math.ceil(visibleProducts.length / galleryProductsPerPage)
+  const usesServerPagination = hasApiBaseUrl() && categoryDtos.length > 0
+  const totalPages = usesServerPagination ? serverTotalPages : Math.ceil(visibleProducts.length / galleryProductsPerPage)
   const activePage = totalPages > 0 ? Math.min(currentPage, totalPages) : 1
-  const paginatedProducts = visibleProducts.slice(
-    (activePage - 1) * galleryProductsPerPage,
-    activePage * galleryProductsPerPage,
-  )
+  const paginatedProducts = usesServerPagination
+    ? visibleProducts
+    : visibleProducts.slice((activePage - 1) * galleryProductsPerPage, activePage * galleryProductsPerPage)
 
   useEffect(() => {
     function syncFromUrl() {

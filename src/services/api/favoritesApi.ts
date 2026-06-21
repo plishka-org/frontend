@@ -1,5 +1,5 @@
 import { apiRequest } from './client'
-import type { ProductSummaryDto } from './productsApi'
+import { normalizeProductSummary, type ProductSummaryDto, type ProductUi } from './productsApi'
 
 type PageResponse<T> = {
   content: T[]
@@ -16,9 +16,9 @@ export type FavoriteDto = {
   product: ProductSummaryDto
 }
 
-export async function getFavoritesApi(): Promise<string[]> {
+export async function getFavoritesApi(): Promise<ProductUi[]> {
   const page = await apiRequest<PageResponse<FavoriteDto>>('/api/users/me/favorites?size=100')
-  return page.content.map(({ product }) => String(product.productId))
+  return Promise.all(page.content.map(({ product }) => normalizeProductSummary(product)))
 }
 
 export async function addToFavoritesApi(productId: string): Promise<void> {

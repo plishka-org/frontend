@@ -29,6 +29,7 @@ import {
   selectCartTotal,
 } from '../store/cartSelectors'
 import { getProductById } from '../data/bestProducts'
+import type { ProductUi } from '../services/api/productsApi'
 
 type CartItem = {
   productId: string
@@ -45,6 +46,7 @@ type ShopContextType = {
   cartTotal: number
   clearCart: () => void
   favoriteProductIds: string[]
+  favoriteProducts: ProductUi[]
   favoritesLoading: boolean
   favoritesError: string | null
   refetchFavorites: () => void
@@ -58,7 +60,7 @@ type ShopContextType = {
 const ShopContext = createContext<ShopContextType | null>(null)
 
 const minCartQuantity = 1
-export const maxCartQuantity = 10
+export const maxCartQuantity = 50
 
 function normalizeCartQuantity(quantity: number) {
   if (!Number.isFinite(quantity)) {
@@ -72,6 +74,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [favoriteProductIds, setFavoriteProductIds] = useState<string[]>(() =>
     initFavoritesFromStorage(),
   )
+  const [favoriteProducts, setFavoriteProducts] = useState<ProductUi[]>([])
   const [favoritesLoading, setFavoritesLoading] = useState(false)
   const [favoritesError, setFavoritesError] = useState<string | null>(null)
   const [cartItems, setCartItems] = useState<CartItem[]>(() =>
@@ -102,9 +105,10 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     setFavoritesError(null)
 
     getFavoritesApi()
-      .then((ids) => {
+      .then((products) => {
         if (isCancelled) return
-        setFavoriteProductIds(ids)
+        setFavoriteProducts(products)
+        setFavoriteProductIds(products.map((product) => product.id))
       })
       .catch((error: unknown) => {
         if (isCancelled) return
@@ -306,6 +310,7 @@ useEffect(() => {
       cartTotal,
       clearCart,
       favoriteProductIds,
+      favoriteProducts,
       favoritesLoading,
       favoritesError,
       refetchFavorites: loadFavorites,
@@ -318,6 +323,7 @@ useEffect(() => {
   }, [
     cartItems,
     favoriteProductIds,
+    favoriteProducts,
     favoritesLoading,
     favoritesError,
     loadFavorites,

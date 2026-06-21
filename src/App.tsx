@@ -15,8 +15,9 @@ import { ForgotPasswordPage } from "./components/pages/ForgotPasswordPage/Forgot
 import { RegisterPage } from "./components/pages/RegisterPage/RegisterPage";
 import { FavoritesPage } from "./components/pages/FavoriteProductPage/FavoritesPage";
 import { getProductById } from "./data/bestProducts";
-import { getProductApi } from "./services/api/productsApi";
+import { getProductApi, type ProductUi } from "./services/api/productsApi";
 import { hasApiBaseUrl } from "./services/api/client";
+import { getSettingsApi } from './services/api/contentApi'
 import { getAppPath } from "./utils/productUrl";
 import { getSiteVariant } from "./utils/siteVariant";
 import "./App.scss";
@@ -57,7 +58,13 @@ function App() {
   }, [appPath]);
 
   const productMatch = appPath.match(/^\/products\/([^/]+)\/?$/);
-  const siteVariant = getSiteVariant();
+  const fallbackVariant = getSiteVariant();
+  const [siteVariant, setSiteVariant] = useState(fallbackVariant)
+
+  useEffect(() => {
+    if (!hasApiBaseUrl()) return
+    getSettingsApi().then((settings) => setSiteVariant(settings.isShopModeEnabled ? 'order' : 'usual')).catch(() => setSiteVariant(fallbackVariant))
+  }, [fallbackVariant])
 
   let pageContent;
 
@@ -112,7 +119,7 @@ function ProductRoute({
   siteVariant: ReturnType<typeof getSiteVariant>;
 }) {
   const localProduct = useMemo(() => getProductById(productId), [productId]);
-  const [product, setProduct] = useState(localProduct);
+  const [product, setProduct] = useState<ProductUi | undefined>(localProduct);
   const [isNotFound, setIsNotFound] = useState(!localProduct);
 
   useEffect(() => {

@@ -1,7 +1,5 @@
 import { Footer } from '../../layout/Footer/Footer'
 import { Header } from '../../layout/Header/Header'
-import { getProductById } from '../../../data/bestProducts'
-import type { BestProduct } from '../../../data/bestProducts'
 import { useShop } from '../../../hooks/useShop'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { FavoritesSection } from './FavoritesSection'
@@ -13,11 +11,7 @@ type FavoritesPageProps = {
 }
 
 export function FavoritesPage({ siteVariant }: FavoritesPageProps) {
-  const { favoriteProductIds, favoritesLoading, favoritesError, refetchFavorites } = useShop()
-
-  const favoriteProducts: BestProduct[] = favoriteProductIds
-    .map((productId) => getProductById(productId))
-    .filter((product): product is BestProduct => Boolean(product))
+  const { favoriteProducts, favoritesLoading, favoritesError, refetchFavorites } = useShop()
 
   return (
     <main className="page-shell">

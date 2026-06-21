@@ -1,4 +1,4 @@
-import type { BestProduct } from '../../../data/bestProducts'
+import type { ProductUi } from '../../../services/api/productsApi'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
 import type { SiteVariant } from '../../../utils/siteVariant'
@@ -6,7 +6,7 @@ import { getProductUrl } from '../../../utils/productUrl'
 import { HeartIcon } from '../../icons/UiIcons'
 
 type FavoriteProductCardProps = {
-  product: BestProduct
+  product: ProductUi
   siteVariant: SiteVariant
 }
 
