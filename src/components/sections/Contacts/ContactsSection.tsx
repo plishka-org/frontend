@@ -13,14 +13,27 @@ export function ContactsSection() {
     phone: contacts.phoneDisplay,
     email: contacts.email,
     address: 'Село Город, Косівський район, Івано-Франківська обл., вул. Незалежності, 55',
-    mapUrl: contacts.mapUrl,
+    mapEmbedUrl: contacts.mapEmbedUrl,
+    mapLinkUrl: contacts.mapUrl,
     facebookUrl: contacts.facebookUrl,
   })
 
   useEffect(() => {
     getContactsApi().then((response) => {
       const facebookUrl = response.socialLinks.find((link) => link.name.toLowerCase().includes('facebook'))?.url ?? contacts.facebookUrl
-      setContent({ phone: response.phoneNumber, email: response.email, address: response.address, mapUrl: response.googleMapsUrl, facebookUrl })
+      const phoneNumber = response.phoneNumber?.trim()
+      const email = response.email?.trim()
+      const address = response.address?.trim()
+      const googleMapsUrl = response.googleMapsUrl?.trim()
+
+      setContent({
+        phone: phoneNumber && phoneNumber !== '+380000000000' ? phoneNumber : contacts.phoneDisplay,
+        email: email && email !== 'team@plishka.com.ua' ? email : contacts.email,
+        address: address && address !== 'Косівщина, Україна' ? address : contacts.address,
+        mapEmbedUrl: googleMapsUrl || contacts.mapEmbedUrl,
+        mapLinkUrl: googleMapsUrl || contacts.mapUrl,
+        facebookUrl,
+      })
     }).catch(() => undefined)
   }, [])
 
@@ -59,7 +72,7 @@ export function ContactsSection() {
             <article className="contact-card contact-card--wide">
               <h2>Адреса майстерні</h2>
               <a
-                href={content.mapUrl}
+                href={content.mapLinkUrl}
                 className="contact-link contact-link--address"
                 target="_blank"
                 rel="noreferrer"
@@ -80,7 +93,7 @@ export function ContactsSection() {
 
         <div className="map-card">
           <iframe
-            src={content.mapUrl}
+            src={content.mapEmbedUrl}
             title="Адреса майстерні Plishka на Google Maps"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"

@@ -248,14 +248,14 @@ function getVariantSwitchUrl(siteVariant: SiteVariant) {
   if (siteVariant === "order") {
     nextUrl.searchParams.set("site", "order");
   } else {
-    nextUrl.searchParams.delete("site");
+    nextUrl.searchParams.set("site", "usual");
   }
 
   return `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
 }
 
 function getFavoritesUrl(siteVariant: SiteVariant) {
-  const search = siteVariant === "order" ? "?site=order" : "";
+  const search = `?site=${siteVariant}`;
   return `${search}#/favorites`;
 }
 

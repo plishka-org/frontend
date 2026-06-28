@@ -19,7 +19,7 @@ import { getProductApi, type ProductUi } from "./services/api/productsApi";
 import { hasApiBaseUrl } from "./services/api/client";
 import { getSettingsApi } from './services/api/contentApi'
 import { getAppPath } from "./utils/productUrl";
-import { getSiteVariant } from "./utils/siteVariant";
+import { getRequestedSiteVariant, getSiteVariant } from "./utils/siteVariant";
 import "./App.scss";
 import { InformBlock } from "./components/sections/InformBlock/InformBlock";
 import Advantages from "./components/sections/Advantages/Advantages";
@@ -61,13 +61,19 @@ function App() {
   }, [appPath]);
 
   const productMatch = appPath.match(/^\/products\/([^/]+)\/?$/);
+  const requestedVariant = getRequestedSiteVariant();
   const fallbackVariant = getSiteVariant();
   const [siteVariant, setSiteVariant] = useState(fallbackVariant)
 
   useEffect(() => {
+    if (requestedVariant) {
+      setSiteVariant(requestedVariant)
+      return
+    }
+
     if (!hasApiBaseUrl()) return
     getSettingsApi().then((settings) => setSiteVariant(settings.isShopModeEnabled ? 'order' : 'usual')).catch(() => setSiteVariant(fallbackVariant))
-  }, [fallbackVariant])
+  }, [fallbackVariant, requestedVariant])
   const adminMatch = appPath.match(/^\/admin\/?(.*)$/);
 
   let pageContent;
