@@ -21,10 +21,20 @@ export const siteVariantFeatures = {
 >
 
 export function getSiteVariant(): SiteVariant {
+  return getRequestedSiteVariant() ?? 'usual'
+}
+
+export function getRequestedSiteVariant(): SiteVariant | null {
   if (typeof window === 'undefined') {
-    return 'usual'
+    return null
   }
 
   const searchParams = new URLSearchParams(window.location.search)
-  return searchParams.get('site') === 'order' ? 'order' : 'usual'
+  const requestedSite = searchParams.get('site')
+
+  if (requestedSite === 'order' || requestedSite === 'usual') {
+    return requestedSite
+  }
+
+  return null
 }

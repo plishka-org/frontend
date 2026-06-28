@@ -10,7 +10,7 @@ function withSiteVariant(path: string, siteVariant: SiteVariant, useHashRoute = 
   const routePath = path === '/' ? '/' : path
   const hashRoute = useHashRoute ? `#${routePath}` : ''
 
-  return `${documentPath}${siteVariant === 'order' ? '?site=order' : ''}${hashRoute}`
+  return `${documentPath}?site=${siteVariant}${hashRoute}`
 }
 
 export function getAppPath(pathname: string, hash = '') {
