@@ -36,6 +36,7 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: https://plishka-backend-dev.up.railway.app
+          VITE_BASE_PATH: /frontend/
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
