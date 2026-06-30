@@ -67,9 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     checkAuthStatus()
-      .then(({ isAuthenticated, user: userData }) => {
-        setUser(isAuthenticated && userData ? userData : null);
-      })
+      .then((response) => setUser(response.user))
       .catch(() => setUser(null))
       .finally(() => setIsAuthChecked(true));
   }, []);
@@ -122,7 +120,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthChecked, deleteAccount, login, logout, requestLogin }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthChecked,
+        deleteAccount,
+        login,
+        logout,
+        requestLogin,
+      }}
+    >
       {children}
       <AuthPromptModal
         description="Введіть email і пароль, щоб продовжити."
