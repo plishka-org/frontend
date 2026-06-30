@@ -3,22 +3,28 @@ import type { DragEvent, ChangeEvent } from "react";
 import type {
   Product,
   Category,
+  AdminProductFilters,
+  BulkPriceOperation,
   PriceActionType,
   PriceTargetType,
 } from "../../../types/product";
 import {
-  fetchProductsApi,
-  fetchCategoriesApi,
-  createProductApi,
-  updateProductApi,
-  deleteProductApi,
-  deleteProductsApi,
-  uploadProductMediaApi,
-  deleteProductMediaApi,
-  setMainMediaApi,
-  bulkUpdatePricesApi,
-  reorderProductsApi,
-} from "../../../services/api/productsApi";
+  bulkDeleteAdminProductsApi,
+  bulkUpdateAdminCategoriesApi,
+  bulkUpdateAdminPricesApi,
+  createAdminProductApi,
+  deleteAdminProductApi,
+  deleteAdminProductMediaApi,
+  fetchAdminCategoriesApi,
+  fetchAdminProductApi,
+  fetchAdminProductsApi,
+  fetchHomeProductIdsApi,
+  reorderHomeProductsApi,
+  replaceHomeProductsApi,
+  setPrimaryAdminMediaApi,
+  updateAdminProductApi,
+  uploadAdminProductMediaApi,
+} from "../../../services/api/adminProductsApi";
 import { useToast } from "../../../hooks/useToast";
 import trashIcon from "../../../icons/trash.png";
 import editIcon from "../../../icons/Type=Edit.png";
@@ -31,6 +37,21 @@ const ITEMS_PER_PAGE = 10;
 const NO_CATEGORY_ID = -1;
 
 const PRICE_ACTIONS: PriceActionType[] = ["+%", "-%", "+", "-"];
+const PRICE_OPERATION_BY_ACTION: Record<PriceActionType, BulkPriceOperation> = {
+  "+%": "INCREASE_PERCENT",
+  "-%": "DECREASE_PERCENT",
+  "+": "INCREASE_AMOUNT",
+  "-": "DECREASE_AMOUNT",
+};
+
+type BulkTargetType = "selected" | "unselected" | "all" | "category";
+
+type DeleteConfirmState = {
+  count: number;
+  ids?: number[];
+  selectionMode?: "SELECTED" | "EXCEPT_SELECTED";
+  filters?: AdminProductFilters | null;
+};
 
 function pluralizeProductWord(count: number): string {
   const mod10 = count % 10;
@@ -330,8 +351,8 @@ function MultiSelect({
 
 // ─── Delete target dropdown ───────────────────────────────────
 interface DeleteTargetDropdownProps {
-  value: "selected" | "unselected" | "all" | "category";
-  onChange: (value: "selected" | "unselected" | "all" | "category") => void;
+  value: BulkTargetType;
+  onChange: (value: BulkTargetType) => void;
   options: { value: string; label: string }[];
 }
 
@@ -385,7 +406,7 @@ function DeleteTargetDropdown({
                 checked={value === opt.value}
                 onChange={() => {
                   onChange(
-                    opt.value as "selected" | "unselected" | "all" | "category",
+                    opt.value as BulkTargetType,
                   );
                   setOpen(false);
                 }}
@@ -810,7 +831,12 @@ interface EditModalProps {
   onClose: () => void;
   onSave: (
     id: number,
-    data: Partial<Product>,
+    data: {
+      name: string;
+      price: number;
+      categoryId: number;
+      description: string;
+    },
     newFiles: File[],
     deletedMediaIds: number[],
     mainMediaId: number | null,
@@ -827,13 +853,15 @@ function EditModal({
 }: EditModalProps) {
   const [name, setName] = useState(product.name);
   const [price, setPrice] = useState(String(product.price));
-  const [categoryId, setCategoryId] = useState(product.categoryId);
+  const [categoryId, setCategoryId] = useState<number | "">(
+    product.categoryId ?? "",
+  );
   const [description, setDescription] = useState(product.description);
   const [existingMedia, setExistingMedia] = useState(product.media);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [newPreviews, setNewPreviews] = useState<string[]>([]);
   const [mainMediaId, setMainMediaId] = useState<number | null>(
-    product.media.find((m) => m.isMain)?.id ?? null,
+    product.media.find((m) => m.isPrimary)?.id ?? null,
   );
   const [deletedMediaIds, setDeletedMediaIds] = useState<number[]>([]);
   const [saving, setSaving] = useState(false);
@@ -902,7 +930,7 @@ function EditModal({
     try {
       await onSave(
         product.id,
-        { name, price: Number(price), categoryId, description },
+        { name, price: Number(price), categoryId: Number(categoryId), description },
         newFiles,
         deletedMediaIds,
         mainMediaId,
@@ -1110,7 +1138,13 @@ function EditModal({
                 type="button"
                 className="edit-modal__btn edit-modal__btn--primary"
                 onClick={handleSave}
-                disabled={saving}
+                disabled={
+                  saving ||
+                  !name.trim() ||
+                  categoryId === "" ||
+                  !price.trim() ||
+                  !description.trim()
+                }
               >
                 {saving ? "Збереження..." : "Зберегти зміни"}
               </button>
@@ -1128,6 +1162,11 @@ export function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [noCategoryCount, setNoCategoryCount] = useState(0);
+  const [homeProductIds, setHomeProductIds] = useState<number[]>([]);
+  const [mainProducts, setMainProducts] = useState<Product[]>([]);
 
   const addFormRef = useRef<HTMLDivElement>(null);
   const allProductsSectionRef = useRef<HTMLDivElement>(null);
@@ -1136,18 +1175,14 @@ export function AdminProductsPage() {
   const [newPrice, setNewPrice] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
-  const [newPreviews, setNewPreviews] = useState<
-    { url: string; isMain: boolean }[]
-  >([]);
+  const [newPreviews, setNewPreviews] = useState<string[]>([]);
   const [addLoading, setAddLoading] = useState(false);
   const addFileRef = useRef<HTMLInputElement>(null);
   const replaceFileRef = useRef<HTMLInputElement>(null);
   const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
 
   const [filterCategoryIds, setFilterCategoryIds] = useState<number[]>([]);
-  const [deleteTarget, setDeleteTarget] = useState<
-    "selected" | "unselected" | "all" | "category"
-  >("selected");
+  const [deleteTarget, setDeleteTarget] = useState<BulkTargetType>("selected");
   const [deleteCategoryId, setDeleteCategoryId] = useState<number | "">("");
   const [priceAction, setPriceAction] = useState<PriceActionType>("+%");
   const [priceValue, setPriceValue] = useState("");
@@ -1164,64 +1199,77 @@ export function AdminProductsPage() {
   const [selected, setSelected] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<{
-    ids: number[];
-  } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<DeleteConfirmState | null>(
+    null,
+  );
   const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
 
   const dragIdRef = useRef<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
 
+  const buildCurrentFilters = useCallback((): AdminProductFilters => {
+    const categoryIds = filterCategoryIds.filter((id) => id !== NO_CATEGORY_ID);
+    const filters: AdminProductFilters = {};
+    if (categoryIds.length > 0) filters.categoryIds = categoryIds;
+    if (filterCategoryIds.includes(NO_CATEGORY_ID)) filters.uncategorized = true;
+    if (search.trim()) filters.search = search.trim();
+    return filters;
+  }, [filterCategoryIds, search]);
+
+  const loadProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const filters = buildCurrentFilters();
+      const homeIds = await fetchHomeProductIdsApi();
+      const [page, uncategorizedPage, currentHomeProducts] = await Promise.all([
+        fetchAdminProductsApi(
+          {
+            ...filters,
+            page: currentPage - 1,
+            size: ITEMS_PER_PAGE,
+            sort: "name,asc",
+          },
+          homeIds,
+        ),
+        fetchAdminProductsApi({ uncategorized: true, page: 0, size: 1 }),
+        Promise.all(homeIds.map((id) => fetchAdminProductApi(id, homeIds))),
+      ]);
+      setHomeProductIds(homeIds);
+      setProducts(page.content);
+      setMainProducts(currentHomeProducts);
+      setTotalPages(page.totalPages);
+      setTotalProducts(page.totalElements);
+      setNoCategoryCount(uncategorizedPage.totalElements);
+      setSelected((prev) =>
+        prev.filter((id) => page.content.some((product) => product.id === id)),
+      );
+      if (page.totalPages > 0 && currentPage > page.totalPages) {
+        setCurrentPage(page.totalPages);
+      }
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : "Помилка завантаження даних");
+    } finally {
+      setLoading(false);
+    }
+  }, [buildCurrentFilters, currentPage, showToast]);
+
   useEffect(() => {
-    Promise.all([fetchProductsApi(), fetchCategoriesApi()])
-      .then(([prods, cats]) => {
-        setProducts(prods);
-        setCategories(cats);
-      })
+    fetchAdminCategoriesApi()
+      .then(setCategories)
       .catch((e) => {
         showToast(
-          e instanceof Error ? e.message : "Помилка завантаження даних",
+          e instanceof Error ? e.message : "Помилка завантаження категорій",
         );
-      })
-      .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      });
+  }, [showToast]);
 
-  const mainProducts = products
-    .filter((p) => p.isOnMain)
-    .sort((a, b) => (a.mainOrder ?? 0) - (b.mainOrder ?? 0));
+  useEffect(() => {
+    void loadProducts();
+  }, [loadProducts]);
 
-  const noCategoryCount = products.filter((p) => !p.categoryId).length;
+  const paginated = products;
 
-  const allProductsFiltered = products
-    .filter((p) => {
-      if (filterCategoryIds.length > 0) {
-        const wantsNoCategory = filterCategoryIds.includes(NO_CATEGORY_ID);
-        const realIds = filterCategoryIds.filter((id) => id !== NO_CATEGORY_ID);
-        const matchesNoCategory = wantsNoCategory && !p.categoryId;
-        const matchesReal =
-          realIds.length > 0 && realIds.includes(p.categoryId);
-        if (!matchesNoCategory && !matchesReal) return false;
-      }
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        return (
-          p.name.toLowerCase().includes(q) ||
-          p.category?.name?.toLowerCase().includes(q) ||
-          String(p.price).includes(q)
-        );
-      }
-      return true;
-    })
-    .sort((a, b) => a.displayOrder - b.displayOrder);
-
-  const totalPages = Math.ceil(allProductsFiltered.length / ITEMS_PER_PAGE);
-  const paginated = allProductsFiltered.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE,
-  );
-
-  const mainCount = mainProducts.length;
+  const mainCount = homeProductIds.length;
   const isMainFull = mainCount >= MAX_MAIN_PRODUCTS;
 
   function handleGoToNoCategoryProducts() {
@@ -1234,41 +1282,63 @@ export function AdminProductsPage() {
     });
   }
 
+  function getFiltersForTarget(
+    target: BulkTargetType | ChangeCategoryFromType | PriceTargetType,
+    categoryId?: number | "",
+  ): AdminProductFilters | null {
+    if (target === "category" && categoryId) {
+      return { categoryIds: [Number(categoryId)] };
+    }
+    return buildCurrentFilters();
+  }
+
+  function getBulkSelection(
+    target: BulkTargetType | ChangeCategoryFromType | PriceTargetType,
+    categoryId?: number | "",
+  ) {
+    if (target === "selected") {
+      return {
+        selectionMode: "SELECTED" as const,
+        productIds: selected,
+        filters: null,
+      };
+    }
+    if (target === "unselected") {
+      return {
+        selectionMode: "EXCEPT_SELECTED" as const,
+        productIds: selected,
+        filters: getFiltersForTarget(target, categoryId),
+      };
+    }
+    return {
+      selectionMode: "EXCEPT_SELECTED" as const,
+      productIds: [],
+      filters: getFiltersForTarget(target, categoryId),
+    };
+  }
+
   function handleAddFileChange(e: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
     setNewFiles((prev) => [...prev, ...files]);
-    files.forEach((f, i) => {
+    files.forEach((f) => {
       const url = URL.createObjectURL(f);
-      setNewPreviews((prev) => [
-        ...prev,
-        { url, isMain: prev.length === 0 && i === 0 },
-      ]);
+      setNewPreviews((prev) => [...prev, url]);
     });
     e.target.value = "";
   }
 
-  function handleSetMainPreview(idx: number) {
-    setNewPreviews((prev) => prev.map((p, i) => ({ ...p, isMain: i === idx })));
-  }
-
   function handleRemovePreview(idx: number) {
     setNewFiles((prev) => prev.filter((_, i) => i !== idx));
-    setNewPreviews((prev) => {
-      const next = prev.filter((_, i) => i !== idx);
-      if (prev[idx]?.isMain && next.length > 0) {
-        next[0] = { ...next[0], isMain: true };
-      }
-      return next;
-    });
+    setNewPreviews((prev) => prev.filter((_, i) => i !== idx));
   }
 
   function handleReplacePreviewFile(idx: number, file: File) {
-    const oldUrl = newPreviews[idx]?.url;
+    const oldUrl = newPreviews[idx];
     const newUrl = URL.createObjectURL(file);
     setNewFiles((prev) => prev.map((f, i) => (i === idx ? file : f)));
     setNewPreviews((prev) =>
-      prev.map((p, i) => (i === idx ? { ...p, url: newUrl } : p)),
+      prev.map((url, i) => (i === idx ? newUrl : url)),
     );
     if (oldUrl) URL.revokeObjectURL(oldUrl);
   }
@@ -1286,23 +1356,22 @@ export function AdminProductsPage() {
       return;
     setAddLoading(true);
     try {
-      let product = await createProductApi({
+      const product = await createAdminProductApi({
         name: newName.trim(),
         categoryId: Number(newCategoryId),
         price: Number(newPrice),
         description: newDescription,
-        isOnMain: false,
       });
       if (newFiles.length > 0) {
-        product = await uploadProductMediaApi(product.id, newFiles);
+        await uploadAdminProductMediaApi(product.id, newFiles);
       }
-      setProducts((prev) => [...prev, product]);
       setNewName("");
       setNewCategoryId("");
       setNewPrice("");
       setNewDescription("");
       setNewFiles([]);
       setNewPreviews([]);
+      await loadProducts();
       showToast("Виріб додано");
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Помилка додавання");
@@ -1312,60 +1381,55 @@ export function AdminProductsPage() {
   }
 
   async function handleToggleMain(product: Product) {
-    const willBeOn = !product.isOnMain;
+    const willBeOn = !product.isOnHome;
     if (willBeOn && isMainFull) return;
+    if (willBeOn && !product.categoryId) return;
 
-    const newMainOrder = willBeOn ? mainCount + 1 : null;
+    const nextHomeIds = willBeOn
+      ? [...homeProductIds, product.id]
+      : homeProductIds.filter((id) => id !== product.id);
     try {
-      const updated = await updateProductApi(product.id, {
-        isOnMain: willBeOn,
-        mainOrder: newMainOrder,
-      });
-      setProducts((prev) =>
-        prev.map((p) => (p.id === updated.id ? updated : p)),
-      );
+      await replaceHomeProductsApi(nextHomeIds);
+      await loadProducts();
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Помилка оновлення");
     }
   }
 
   function requestDeleteBulk() {
-    let ids: number[] = [];
+    if (deleteTarget === "selected" && selected.length === 0) return;
+    if (deleteTarget === "category" && !deleteCategoryId) return;
 
-    if (deleteTarget === "selected") {
-      ids = selected;
-    } else if (deleteTarget === "unselected") {
-      ids = products.filter((p) => !selected.includes(p.id)).map((p) => p.id);
-    } else if (deleteTarget === "all") {
-      ids = products.map((p) => p.id);
-    } else if (deleteTarget === "category" && deleteCategoryId) {
-      ids = products
-        .filter((p) => p.categoryId === Number(deleteCategoryId))
-        .map((p) => p.id);
-    }
-
-    if (!ids.length) return;
-    setDeleteConfirm({ ids });
+    const selection = getBulkSelection(deleteTarget, deleteCategoryId);
+    const count =
+      deleteTarget === "selected"
+        ? selected.length
+        : Math.max(totalProducts - (deleteTarget === "unselected" ? selected.length : 0), 1);
+    if (count <= 0) return;
+    setDeleteConfirm({ ...selection, count });
   }
 
   function requestDeleteOne(id: number) {
-    setDeleteConfirm({ ids: [id] });
+    setDeleteConfirm({ count: 1, ids: [id] });
   }
 
   async function handleConfirmDelete() {
     if (!deleteConfirm) return;
-    const { ids } = deleteConfirm;
     setDeleteConfirmLoading(true);
     try {
-      if (ids.length === 1) {
-        await deleteProductApi(ids[0]);
+      if (deleteConfirm.ids?.length === 1) {
+        await deleteAdminProductApi(deleteConfirm.ids[0]);
       } else {
-        await deleteProductsApi(ids);
+        await bulkDeleteAdminProductsApi({
+          selectionMode: deleteConfirm.selectionMode ?? "SELECTED",
+          productIds: deleteConfirm.ids ?? [],
+          filters: deleteConfirm.filters ?? null,
+        });
       }
-      setProducts((prev) => prev.filter((p) => !ids.includes(p.id)));
-      setSelected((prev) => prev.filter((id) => !ids.includes(id)));
-      showToast(ids.length > 1 ? "Вироби видалено" : "Виріб видалено");
+      setSelected([]);
       setDeleteConfirm(null);
+      await loadProducts();
+      showToast(deleteConfirm.count > 1 ? "Вироби видалено" : "Виріб видалено");
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Помилка видалення");
     } finally {
@@ -1375,8 +1439,8 @@ export function AdminProductsPage() {
 
   async function handleDeleteOne(id: number) {
     try {
-      await deleteProductApi(id);
-      setProducts((prev) => prev.filter((p) => p.id !== id));
+      await deleteAdminProductApi(id);
+      await loadProducts();
       showToast("Виріб видалено");
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Помилка видалення");
@@ -1386,31 +1450,18 @@ export function AdminProductsPage() {
   async function handlePriceChange() {
     const val = Number(priceValue);
     if (!priceValue || isNaN(val) || val <= 0) return;
-
-    const targetIds =
-      priceTarget === "selected"
-        ? selected
-        : priceTarget === "unselected"
-          ? products.filter((p) => !selected.includes(p.id)).map((p) => p.id)
-          : undefined;
+    if (priceTarget === "selected" && selected.length === 0) return;
+    if (priceTarget === "category" && !priceCategoryId) return;
 
     setPriceLoading(true);
     try {
-      const updated = await bulkUpdatePricesApi({
-        action: priceAction,
+      await bulkUpdateAdminPricesApi({
+        ...getBulkSelection(priceTarget, priceCategoryId),
+        operation: PRICE_OPERATION_BY_ACTION[priceAction],
         value: val,
-        target: priceTarget,
-        categoryId:
-          priceTarget === "category" && priceCategoryId
-            ? Number(priceCategoryId)
-            : undefined,
-        productIds: targetIds,
-      });
-      setProducts((prev) => {
-        const map = new Map(updated.map((p) => [p.id, p]));
-        return prev.map((p) => map.get(p.id) ?? p);
       });
       setPriceValue("");
+      await loadProducts();
       showToast("Ціни оновлено успішно");
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Помилка оновлення цін");
@@ -1422,31 +1473,32 @@ export function AdminProductsPage() {
   const handleEditSave = useCallback(
     async (
       id: number,
-      data: Partial<Product>,
+      data: {
+        name: string;
+        price: number;
+        categoryId: number;
+        description: string;
+      },
       files: File[],
       deletedMediaIds: number[],
       mainMediaId: number | null,
     ) => {
-      const updated = await updateProductApi(id, data);
+      await updateAdminProductApi(id, data, homeProductIds);
 
       for (const mediaId of deletedMediaIds) {
-        await deleteProductMediaApi(id, mediaId);
+        await deleteAdminProductMediaApi(id, mediaId);
       }
-      let final = updated;
       if (files.length > 0) {
-        final = await uploadProductMediaApi(id, files);
+        await uploadAdminProductMediaApi(id, files);
       }
       if (mainMediaId !== null) {
-        await setMainMediaApi(id, mainMediaId);
+        await setPrimaryAdminMediaApi(id, mainMediaId);
       }
 
-      setProducts((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, ...final } : p)),
-      );
+      await loadProducts();
       showToast("Зміни збережено");
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [],
+    [homeProductIds, loadProducts, showToast],
   );
 
   function handleDragStart(e: DragEvent<HTMLTableRowElement>, id: number) {
@@ -1465,28 +1517,8 @@ export function AdminProductsPage() {
   ) {
     e.preventDefault();
     setDragOverId(null);
-    const sourceId = dragIdRef.current;
-    if (!sourceId || sourceId === targetId) return;
-
-    const list = [...allProductsFiltered];
-    const from = list.findIndex((p) => p.id === sourceId);
-    const to = list.findIndex((p) => p.id === targetId);
-    if (from === -1 || to === -1) return;
-
-    const reordered = [...list];
-    const [moved] = reordered.splice(from, 1);
-    reordered.splice(to, 0, moved);
-
-    const withOrder = reordered.map((p, i) => ({ ...p, displayOrder: i + 1 }));
-    setProducts((prev) => {
-      const map = new Map(withOrder.map((p) => [p.id, p]));
-      return prev.map((p) => map.get(p.id) ?? p);
-    });
-
-    try {
-      await reorderProductsApi(withOrder.map((p) => p.id));
-    } catch {
-      showToast("Помилка збереження порядку");
+    if (dragIdRef.current && dragIdRef.current !== targetId) {
+      showToast("Порядок загального каталогу задається сортуванням");
     }
   }
 
@@ -1521,18 +1553,11 @@ export function AdminProductsPage() {
     const [moved] = reordered.splice(from, 1);
     reordered.splice(to, 0, moved);
 
-    const withOrder = reordered.map((p, i) => ({ ...p, mainOrder: i + 1 }));
-    setProducts((prev) => {
-      const map = new Map(withOrder.map((p) => [p.id, p]));
-      return prev.map((p) => map.get(p.id) ?? p);
-    });
+    const nextIds = reordered.map((p) => p.id);
 
     try {
-      await Promise.all(
-        withOrder.map((p) =>
-          updateProductApi(p.id, { mainOrder: p.mainOrder }),
-        ),
-      );
+      await reorderHomeProductsApi(nextIds);
+      await loadProducts();
     } catch {
       showToast("Помилка збереження порядку");
     }
@@ -1655,20 +1680,11 @@ export function AdminProductsPage() {
           </button>
           {newPreviews.length > 0 && (
             <div className="admin-products__media-grid">
-              {newPreviews.map((p, i) => (
+              {newPreviews.map((url, i) => (
                 <div key={i} className="admin-products__media-item">
                   <div className="admin-products__media-img">
-                    <img src={p.url} alt="" />
+                    <img src={url} alt="" />
                   </div>
-                  <label className="admin-products__media-radio">
-                    <input
-                      type="radio"
-                      name="newMainMedia"
-                      checked={p.isMain}
-                      onChange={() => handleSetMainPreview(i)}
-                    />
-                    <span>Встановити головним</span>
-                  </label>
                   <div className="admin-products__media-actions">
                     <button
                       type="button"
@@ -1708,7 +1724,8 @@ export function AdminProductsPage() {
               addLoading ||
               !newName.trim() ||
               newCategoryId === "" ||
-              newPrice.trim() === ""
+              newPrice.trim() === "" ||
+              !newDescription.trim()
             }
           >
             {addLoading ? "Додавання..." : "Додати виріб"}
@@ -1819,7 +1836,11 @@ export function AdminProductsPage() {
             <div className="admin-products__select-wrap">
               <select
                 value={priceCategoryId}
-                onChange={(e) => setPriceCategoryId(Number(e.target.value))}
+                onChange={(e) =>
+                  setPriceCategoryId(
+                    e.target.value === "" ? "" : Number(e.target.value),
+                  )
+                }
               >
                 <option value="">Категорія</option>
                 {categories.map((c) => (
@@ -1884,41 +1905,20 @@ export function AdminProductsPage() {
             className="admin-products__action-btn"
             disabled={
               !changeCategoryTo ||
+              (changeCategoryFrom === "selected" && selected.length === 0) ||
               (changeCategoryFrom === "category" && !changeCategoryFromCategoryId)
             }
             onClick={async () => {
-              const targetProds =
-                changeCategoryFrom === "selected"
-                  ? products.filter((p) => selected.includes(p.id))
-                  : changeCategoryFrom === "unselected"
-                    ? products.filter((p) => !selected.includes(p.id))
-                    : changeCategoryFrom === "all"
-                      ? products
-                      : products.filter(
-                          (p) =>
-                            p.categoryId === Number(changeCategoryFromCategoryId),
-                        );
               try {
-                await Promise.all(
-                  targetProds.map((p) =>
-                    updateProductApi(p.id, {
-                      categoryId: Number(changeCategoryTo),
-                    }),
+                await bulkUpdateAdminCategoriesApi({
+                  ...getBulkSelection(
+                    changeCategoryFrom,
+                    changeCategoryFromCategoryId,
                   ),
-                );
-                setProducts((prev) =>
-                  prev.map((p) =>
-                    targetProds.find((t) => t.id === p.id)
-                      ? {
-                          ...p,
-                          categoryId: Number(changeCategoryTo),
-                          category: categories.find(
-                            (c) => c.id === Number(changeCategoryTo),
-                          )!,
-                        }
-                      : p,
-                  ),
-                );
+                  categoryId: Number(changeCategoryTo),
+                });
+                setSelected([]);
+                await loadProducts();
                 showToast("Категорію змінено");
               } catch {
                 showToast("Помилка зміни категорії");
@@ -1979,7 +1979,7 @@ export function AdminProductsPage() {
                     <td className="admin-products__td--drag">
                       <DragIcon />
                     </td>
-                    <td>{p.mainOrder}</td>
+                    <td>{p.homeOrder}</td>
                     <td>
                       <input
                         type="checkbox"
@@ -1989,9 +1989,9 @@ export function AdminProductsPage() {
                     </td>
                     <td>
                       <div className="admin-products__thumb">
-                        {p.media.find((m) => m.isMain) && (
+                        {p.media.find((m) => m.isPrimary) && (
                           <img
-                            src={p.media.find((m) => m.isMain)!.url}
+                            src={p.media.find((m) => m.isPrimary)!.url}
                             alt={p.name}
                           />
                         )}
@@ -2010,7 +2010,7 @@ export function AdminProductsPage() {
                     <td>{p.price}</td>
                     <td>
                       <Toggle
-                        checked={p.isOnMain}
+                        checked={p.isOnHome}
                         onChange={() => handleToggleMain(p)}
                         disabled={!p.categoryId}
                       />
@@ -2045,7 +2045,7 @@ export function AdminProductsPage() {
 
       <section className="admin-products__section" ref={allProductsSectionRef}>
         <h2 className="admin-products__section-title">Усі вироби</h2>
-        {allProductsFiltered.length === 0 ? (
+        {products.length === 0 ? (
           <div className="admin-products__empty">
             <img
               src={packIcon}
@@ -2091,7 +2091,7 @@ export function AdminProductsPage() {
                   {paginated.map((p) => (
                     <tr
                       key={p.id}
-                      draggable
+                      draggable={false}
                       onDragStart={(e) => handleDragStart(e, p.id)}
                       onDragOver={(e) => handleDragOver(e, p.id)}
                       onDrop={(e) => handleDrop(e, p.id)}
@@ -2110,9 +2110,9 @@ export function AdminProductsPage() {
                       </td>
                       <td>
                         <div className="admin-products__thumb">
-                          {p.media.find((m) => m.isMain) && (
+                          {p.media.find((m) => m.isPrimary) && (
                             <img
-                              src={p.media.find((m) => m.isMain)!.url}
+                              src={p.media.find((m) => m.isPrimary)!.url}
                               alt={p.name}
                             />
                           )}
@@ -2131,9 +2131,9 @@ export function AdminProductsPage() {
                       <td>{p.price}</td>
                       <td>
                         <Toggle
-                          checked={p.isOnMain}
+                          checked={p.isOnHome}
                           onChange={() => handleToggleMain(p)}
-                          disabled={(!p.isOnMain && isMainFull) || !p.categoryId}
+                          disabled={(!p.isOnHome && isMainFull) || !p.categoryId}
                         />
                       </td>
                       <td>
@@ -2210,7 +2210,7 @@ export function AdminProductsPage() {
 
       {deleteConfirm && (
         <DeleteConfirmModal
-          count={deleteConfirm.ids.length}
+          count={deleteConfirm.count}
           onCancel={() => setDeleteConfirm(null)}
           onConfirm={handleConfirmDelete}
           loading={deleteConfirmLoading}

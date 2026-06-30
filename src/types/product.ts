@@ -1,40 +1,47 @@
 export interface Category {
   id: number;
   name: string;
-  slug: string;
 }
+
+export type AdminMediaType = "IMAGE" | "VIDEO";
 
 export interface ProductMedia {
   id: number;
+  s3Key: string | null;
   url: string;
-  isMain: boolean;
-  order: number;
+  mediaType: AdminMediaType;
+  isPrimary: boolean;
+  displayOrder: number;
 }
 
 export interface Product {
   id: number;
   name: string;
-  categoryId: number;
-  category: Category;
+  categoryId: number | null;
+  category: Category | null;
   price: number;
   description: string;
   media: ProductMedia[];
-  isOnMain: boolean;
-  mainOrder: number | null; // порядок відображення на головній (1-10)
-  displayOrder: number;     // порядок у загальному списку (drag-and-drop)
-  isActive: boolean;
+  isOnHome: boolean;
+  homeOrder: number | null;
 }
 
 export type PriceActionType = "+%" | "-%" | "+" | "-";
 
 export type PriceTargetType = "all" | "category" | "selected" | "unselected";
 
-export interface BulkPriceUpdate {
-  action: PriceActionType;
-  value: number;
-  target: PriceTargetType;
-  categoryId?: number;
-  productIds?: number[];
+export type SelectionMode = "SELECTED" | "EXCEPT_SELECTED";
+
+export type BulkPriceOperation =
+  | "INCREASE_PERCENT"
+  | "DECREASE_PERCENT"
+  | "INCREASE_AMOUNT"
+  | "DECREASE_AMOUNT";
+
+export interface AdminProductFilters {
+  categoryIds?: number[];
+  uncategorized?: boolean;
+  search?: string | null;
 }
 
 export interface CreateProductPayload {
@@ -42,15 +49,6 @@ export interface CreateProductPayload {
   categoryId: number;
   price: number;
   description: string;
-  isOnMain: boolean;
 }
 
-export interface UpdateProductPayload {
-  name?: string;
-  categoryId?: number;
-  price?: number;
-  description?: string;
-  isOnMain?: boolean;
-  displayOrder?: number;
-  mainOrder?: number | null;
-}
+export type UpdateProductPayload = CreateProductPayload;
