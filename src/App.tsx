@@ -28,6 +28,7 @@ import { ToastProvider } from "./hooks/useToast";
 import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute";
 import { AdminLayout } from "./components/layout/AdminLayout/AdminLayout";
 import { AdminPersonalDataPage } from "./components/pages/AdminPersonalDataPage/AdminPersonalDataPage";
+import { AdminProductsPage } from "./components/pages/AdminProductsPage/AdminProductsPage";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -76,6 +77,8 @@ function App() {
         <AdminLayout activeKey={adminKey}>
           {adminKey === "settings" ? (
             <AdminPersonalDataPage />
+          ) : adminKey === "products" ? (
+            <AdminProductsPage />
           ) : (
             <div>
               Контент розділу «{adminKey}» (буде реалізовано в наступних
