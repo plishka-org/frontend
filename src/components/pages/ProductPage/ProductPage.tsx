@@ -4,11 +4,11 @@ import { Header } from '../../layout/Header/Header'
 import { ProductDetailSection } from '../../sections/ProductDetail/ProductDetailSection'
 import { ProductRails } from '../../sections/ProductRails/ProductRails'
 import ContactForm from '../../sections/ContactForm/ContactForm'
-import type { BestProduct } from '../../../data/bestProducts'
+import type { ProductUi } from '../../../services/api/productsApi'
 import type { SiteVariant } from '../../../utils/siteVariant'
 
 type ProductPageProps = {
-  product: BestProduct
+  product: ProductUi
   siteVariant: SiteVariant
 }
 

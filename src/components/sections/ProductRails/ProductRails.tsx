@@ -1,32 +1,34 @@
-import type { BestProduct } from '../../../data/bestProducts'
+import { useEffect, useState } from 'react'
 import { getRelatedProducts } from '../../../data/bestProducts'
+import type { ProductUi } from '../../../services/api/productsApi'
+import { getRelatedProductsApi } from '../../../services/api/productsApi'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { ProductCard } from './ProductCard'
 import { RecentlyViewedRail } from './RecentlyViewedRail'
 
 type ProductRailsProps = {
-  product: BestProduct
+  product: ProductUi
   siteVariant: SiteVariant
 }
 
-function repeatProducts(products: BestProduct[], count: number) {
-  return Array.from({ length: count }, (_, index) => ({
-    product: products[index % products.length],
-    renderKey: `${products[index % products.length].id}-${index}`,
-  }))
-}
-
 export function ProductRails({ product, siteVariant }: ProductRailsProps) {
-  const relatedProducts = getRelatedProducts(product)
-  const relatedRailProducts = repeatProducts(relatedProducts, 10)
+  const [relatedProducts, setRelatedProducts] = useState<ProductUi[]>(() => getRelatedProducts(product))
+
+  useEffect(() => {
+    let cancelled = false
+    getRelatedProductsApi(product.id)
+      .then((page) => { if (!cancelled) setRelatedProducts(page.content) })
+      .catch(() => { if (!cancelled) setRelatedProducts(getRelatedProducts(product)) })
+    return () => { cancelled = true }
+  }, [product])
 
   return (
     <div className="product-rails">
       <section className="product-rail" aria-labelledby="related-products-title">
         <h2 id="related-products-title">Схожі вироби</h2>
         <div className="product-rail__scroller">
-          {relatedRailProducts.map(({ product: item, renderKey }) => (
-            <ProductCard key={renderKey} product={item} siteVariant={siteVariant} />
+          {relatedProducts.map((item) => (
+            <ProductCard key={item.id} product={item} siteVariant={siteVariant} />
           ))}
         </div>
       </section>

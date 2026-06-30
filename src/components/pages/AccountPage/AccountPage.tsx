@@ -3,6 +3,7 @@ import { getAppPath } from '../../../utils/productUrl'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { getContactRequests } from '../../../services/api/contactRequestsApi'
 import type { ContactRequestResponse } from '../../../services/api/contactRequestsApi'
+import { getOrdersApi } from '../../../services/api/ordersApi'
 import { Footer } from '../../layout/Footer/Footer'
 import { Header } from '../../layout/Header/Header'
 import ContactForm from '../../sections/ContactForm/ContactForm'
@@ -17,9 +18,6 @@ import type { Request } from '../../../types/request'
 type AccountPageProps = {
   siteVariant: SiteVariant
 }
-//замінити коли буде бек
-const MOCK_ORDERS: Order[] = []
-
 function mapContactRequestToRequest(request: ContactRequestResponse): Request {
   return {
     id: request.id,
@@ -32,6 +30,7 @@ function mapContactRequestToRequest(request: ContactRequestResponse): Request {
 export function AccountPage({ siteVariant }: AccountPageProps) {
   const currentPath = getAppPath(window.location.pathname, window.location.hash)
   const [requests, setRequests] = useState<Request[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
 
   useEffect(() => {
     if (!currentPath.startsWith('/account/requests')) {
@@ -45,10 +44,20 @@ export function AccountPage({ siteVariant }: AccountPageProps) {
       .catch(() => setRequests([]))
   }, [currentPath])
 
+  useEffect(() => {
+    if (!currentPath.startsWith('/account/orders')) {
+      return
+    }
+
+    getOrdersApi()
+      .then(setOrders)
+      .catch(() => setOrders([]))
+  }, [currentPath])
+
   let section: React.ReactNode
 
   if (currentPath.startsWith('/account/orders')) {
-    section = <OrderList orders={MOCK_ORDERS} siteVariant={siteVariant} />
+    section = <OrderList orders={orders} siteVariant={siteVariant} />
   } else if (currentPath.startsWith('/account/requests')) {
     section = <RequestList requests={requests} />
   } else {

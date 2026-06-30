@@ -109,6 +109,9 @@ export function AdminPersonalDataPage() {
   const [repeatPasswordError, setRepeatPasswordError] = useState("");
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
 
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const [globalSuccess, setGlobalSuccess] = useState<string | null>(null);
@@ -118,7 +121,8 @@ export function AdminPersonalDataPage() {
     email !== (user?.email ?? "") ||
     phone !== "" ||
     newPassword !== "" ||
-    repeatPassword !== "";
+    repeatPassword !== "" ||
+    currentPassword !== "";
 
   async function handleLogout() {
     await logout();
@@ -133,6 +137,7 @@ export function AdminPersonalDataPage() {
     const phErr = phone ? validatePhone(phone) : "";
     const pwErr = validatePassword(newPassword);
     const cErr = validateConfirm(repeatPassword, newPassword);
+    const needsCurrentPassword = email !== (user?.email ?? "") || Boolean(newPassword);
 
     setNameTouched(true);
     setEmailTouched(true);
@@ -146,7 +151,10 @@ export function AdminPersonalDataPage() {
     setNewPasswordError(pwErr);
     setRepeatPasswordError(cErr);
 
-    if (nErr || eErr || phErr || pwErr || cErr) return
+    if (nErr || eErr || phErr || pwErr || cErr || (needsCurrentPassword && !currentPassword)) {
+      if (needsCurrentPassword && !currentPassword) setGlobalError("Введіть поточний пароль для підтвердження змін.");
+      return
+    }
 
     setGlobalError(null);
     setGlobalSuccess(null);
@@ -154,14 +162,15 @@ export function AdminPersonalDataPage() {
 
     try {
       if (email !== (user?.email ?? "")) {
-        await requestEmailChangeApi({ email: email.trim() });
+        await requestEmailChangeApi({ newEmail: email.trim(), currentPassword });
       }
       if (newPassword) {
-        await changePasswordApi({ newPassword });
+        await changePasswordApi({ currentPassword, newPassword, confirmPassword: repeatPassword });
       }
       setGlobalSuccess("Зміни збережено.");
       setNewPassword("");
       setRepeatPassword("");
+      setCurrentPassword("");
     } catch (err) {
       setGlobalError(err instanceof Error ? err.message : "Сталася помилка. Спробуйте ще раз.");
     } finally {
@@ -184,6 +193,22 @@ export function AdminPersonalDataPage() {
         )}
 
         <div className="admin-personal-data__row">
+          <label className="admin-personal-data__field">
+            <span>Поточний пароль</span>
+            <div className="admin-personal-data__password">
+              <input
+                type={showCurrentPassword ? "text" : "password"}
+                placeholder="Потрібен для зміни email або пароля"
+                value={currentPassword}
+                disabled={isSubmitting}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+              <button type="button" onClick={() => setShowCurrentPassword((value) => !value)} aria-label="Показати пароль" tabIndex={-1}>
+                {showCurrentPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+          </label>
+
           <label className="admin-personal-data__field">
             <span>Ім'я</span>
             <input

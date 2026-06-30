@@ -1,8 +1,8 @@
-# React + TypeScript + Vite
+# Frontend Plishka
 
-## Getting started
+## Запуск проєкту
 
-Use the Node.js version pinned in `.nvmrc`:
+Використовуйте версію Node.js, зазначену у `.nvmrc`:
 
 ```bash
 nvm use
@@ -10,76 +10,15 @@ npm install
 npm run dev
 ```
 
-The project is pinned to Node.js `22.22.2`. Using Node.js 24 can break Vite/Rolldown native bindings on macOS.
+## API бекенду
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Скопіюйте `.env.example` у `.env.local` та задайте `VITE_API_URL` як **origin** API (без `/api`).
+Для локального Spring Boot це `http://localhost:8080`.
 
-Currently, two official plugins are available:
+Бекенд має дозволити origin фронтенду через `CORS_ALLOWED_ORIGINS`, наприклад:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+CORS_ALLOWED_ORIGINS=http://localhost:5173,https://your-frontend.example
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Проєкт використовує Node.js `22.22.2`. Node.js 24 може порушити роботу нативних залежностей Vite/Rolldown на macOS.

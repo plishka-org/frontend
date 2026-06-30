@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react'
-import type { BestProduct } from '../../../data/bestProducts'
+import type { ProductUi } from '../../../services/api/productsApi'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
 import { HeartIcon } from '../../icons/UiIcons'
@@ -7,7 +7,7 @@ import type { SiteVariant } from '../../../utils/siteVariant'
 import { getProductUrl } from '../../../utils/productUrl'
 
 type ProductCardProps = {
-  product: BestProduct
+  product: ProductUi
   siteVariant: SiteVariant
 }
 
@@ -27,7 +27,7 @@ export function ProductCard({ product, siteVariant }: ProductCardProps) {
   return (
     <article className="product-rail-card">
       <a className="product-rail-card__link" href={href}>
-        <img src={product.image} alt={product.name} />
+        <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
         <span>{product.category}</span>
         <h3 title={product.name}>{product.displayName ?? product.name}</h3>
         {siteVariant === 'order' && <p>{formatPrice(product.price)}</p>}

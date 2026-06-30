@@ -2,7 +2,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getProductById } from '../data/bestProducts'
-import type { BestProduct } from '../data/bestProducts'
+import type { ProductUi } from '../services/api/productsApi'
+import { getViewedProductsApi, recordProductViewApi } from '../services/api/viewsApi'
+import { useAuth } from './useAuth'
 
 const STORAGE_KEY = 'plishkaRecentlyViewed'
 const MAX_ITEMS = 11
@@ -24,7 +26,7 @@ function writeStoredIds(ids: string[]) {
 }
 
 type RecentlyViewedContextType = {
-  recentlyViewedProducts: BestProduct[]
+  recentlyViewedProducts: ProductUi[]
   trackView: (productId: string) => void
   clearRecentlyViewed: () => void
 }
@@ -32,30 +34,42 @@ type RecentlyViewedContextType = {
 const RecentlyViewedContext = createContext<RecentlyViewedContextType | null>(null)
 
 export function RecentlyViewedProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth()
   const [productIds, setProductIds] = useState<string[]>(readStoredIds)
+  const [serverProducts, setServerProducts] = useState<ProductUi[]>([])
 
   useEffect(() => {
     writeStoredIds(productIds)
   }, [productIds])
 
+  useEffect(() => {
+    if (!user) return
+    getViewedProductsApi().then(setServerProducts).catch(() => setServerProducts([]))
+  }, [user])
+
   const trackView = useCallback((productId: string) => {
+    if (user) {
+      recordProductViewApi(productId).then(() => getViewedProductsApi()).then(setServerProducts).catch(console.error)
+      return
+    }
     if (!getProductById(productId)) return
     setProductIds((prev) => {
       const filtered = prev.filter((id) => id !== productId)
       return [productId, ...filtered].slice(0, MAX_ITEMS)
     })
-  }, [])
+  }, [user])
 
   const clearRecentlyViewed = useCallback(() => {
     setProductIds([])
   }, [])
 
-  const recentlyViewedProducts = useMemo<BestProduct[]>(() => {
+  const recentlyViewedProducts = useMemo<ProductUi[]>(() => {
+    if (user) return serverProducts
     return productIds.flatMap((id) => {
       const product = getProductById(id)
       return product ? [product] : []
     })
-  }, [productIds])
+  }, [productIds, serverProducts, user])
 
   const value = useMemo<RecentlyViewedContextType>(
     () => ({ recentlyViewedProducts, trackView, clearRecentlyViewed }),

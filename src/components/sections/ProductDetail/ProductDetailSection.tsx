@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import type { BestProduct } from "../../../data/bestProducts";
+import type { ProductUi } from "../../../services/api/productsApi";
 import { useShop } from "../../../hooks/useShop";
 import { formatPrice } from "../../../utils/formatPrice";
 import type { SiteVariant } from "../../../utils/siteVariant";
@@ -8,7 +8,7 @@ import { ArrowIcon, CheckIcon, CloseIcon, HeartIcon } from "../../icons/UiIcons"
 import { OrderUnavailableNotice } from "../../OrderUnavailableNotice";
 
 type ProductDetailSectionProps = {
-  product: BestProduct;
+  product: ProductUi;
   siteVariant: SiteVariant;
 };
 
@@ -83,7 +83,7 @@ export function ProductDetailSection({
                 onClick={() => openGalleryImage(index)}
                 aria-label={`Відкрити фото ${index + 1}`}
               >
-                <img src={image} alt="" />
+                <img src={image} alt="" loading="lazy" decoding="async" />
               </button>
             ))}
           </div>
@@ -94,7 +94,7 @@ export function ProductDetailSection({
             onClick={() => setLightboxOpen(true)}
             aria-label="Відкрити фото на весь екран"
           >
-            <img src={selectedImage} alt={product.name} />
+            <img src={selectedImage} alt={product.name} decoding="async" />
           </button>
 
           <div

@@ -1,5 +1,33 @@
 import { testimonials } from '../../data/testimonials'
 import type { Testimonial } from '../../data/testimonials'
+import { apiRequest, hasApiBaseUrl } from './client'
+import { resolveMediaUrl, type MediaPreviewDto } from './mediaApi'
+
+type PageResponse<T> = {
+  content: T[]
+}
+
+type ReviewSummaryDto = {
+  reviewId: number
+  authorName: string
+  content: string
+  createdAt: string
+  primaryMedia?: MediaPreviewDto | null
+}
+
+type ReviewMediaDto = MediaPreviewDto & {
+  reviewMediaId: number
+  isPrimary: boolean
+  displayOrder: number
+}
+
+type ReviewDetailDto = {
+  reviewId: number
+  authorName: string
+  content: string
+  createdAt: string
+  media: ReviewMediaDto[]
+}
 
 function cloneDefaultReviews() {
   return testimonials.map((review) => ({ ...review, images: [...review.images] }))
@@ -14,6 +42,34 @@ function normalizeReview(review: Testimonial): Testimonial {
   }
 }
 
+async function normalizeReviewDto(summary: ReviewSummaryDto): Promise<Testimonial> {
+  const fallback = testimonials[summary.reviewId % testimonials.length] ?? testimonials[0]
+  let detail: ReviewDetailDto | null = null
+
+  try {
+    detail = await apiRequest<ReviewDetailDto>(`/api/reviews/${summary.reviewId}`, { auth: false })
+  } catch {
+    detail = null
+  }
+
+  const media = detail?.media?.length
+    ? detail.media
+    : summary.primaryMedia
+      ? [summary.primaryMedia]
+      : []
+  const images = await Promise.all(media.map((item) => resolveMediaUrl(item.s3Key, fallback.cardImage)))
+  const safeImages = images.length ? images : fallback.images
+
+  return normalizeReview({
+    id: summary.reviewId,
+    author: summary.authorName,
+    text: summary.content,
+    images: safeImages,
+    cardImage: safeImages[0] ?? fallback.cardImage,
+    createdAt: summary.createdAt,
+  })
+}
+
 export function getReviews(): Testimonial[] {
   return cloneDefaultReviews().map(normalizeReview)
 }
@@ -24,4 +80,17 @@ export function getTopReviews(limit = 3): Testimonial[] {
       return Date.parse(secondReview.createdAt) - Date.parse(firstReview.createdAt)
     })
     .slice(0, limit)
+}
+
+export async function getReviewsApi(limit?: number): Promise<Testimonial[]> {
+  if (!hasApiBaseUrl()) {
+    return limit ? getTopReviews(limit) : getReviews()
+  }
+
+  const page = await apiRequest<PageResponse<ReviewSummaryDto>>(
+    `/api/reviews?size=${limit ?? 16}`,
+    { auth: false },
+  )
+  const reviews = await Promise.all(page.content.map(normalizeReviewDto))
+  return limit ? reviews.slice(0, limit) : reviews
 }

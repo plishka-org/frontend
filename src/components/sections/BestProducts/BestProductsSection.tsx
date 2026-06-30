@@ -1,6 +1,5 @@
-import type { MouseEvent } from 'react'
+import { useEffect, useState, type MouseEvent } from 'react'
 import { bestProducts } from '../../../data/bestProducts'
-import type { BestProduct } from '../../../data/bestProducts'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
 import { getGalleryUrl, getProductUrl } from '../../../utils/productUrl'
@@ -8,17 +7,25 @@ import { siteVariantFeatures } from '../../../utils/siteVariant'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { OrderUnavailableNotice } from '../../OrderUnavailableNotice'
 import { CheckIcon, HeartIcon } from '../../icons/UiIcons'
+import { getHomeApi } from '../../../services/api/contentApi'
+import { getProductApi, type ProductUi } from '../../../services/api/productsApi'
 
 type BestProductsSectionProps = {
   siteVariant?: SiteVariant
 }
 
-const featuredProducts = Array.from({ length: 10 }, (_, index) => ({
-  product: bestProducts[index % bestProducts.length],
-  renderKey: `${bestProducts[index % bestProducts.length].id}-${index}`,
-}))
+const fallbackProducts = bestProducts
 
 export function BestProductsSection({ siteVariant = 'usual' }: BestProductsSectionProps) {
+  const [products, setProducts] = useState<ProductUi[]>(fallbackProducts)
+
+  useEffect(() => {
+    getHomeApi()
+      .then((home) => Promise.all(home.products.map((product) => getProductApi(String(product.productId)))))
+      .then((items) => { if (items.length) setProducts(items) })
+      .catch(() => undefined)
+  }, [])
+
   return (
     <section
       className="best-products-section"
@@ -38,8 +45,8 @@ export function BestProductsSection({ siteVariant = 'usual' }: BestProductsSecti
         {siteVariant === 'usual' && <OrderUnavailableNotice />}
 
         <div className="best-products-carousel" aria-label="Найкращі вироби">
-          {featuredProducts.map(({ product, renderKey }) => (
-            <BestProductCard key={renderKey} product={product} siteVariant={siteVariant} />
+          {products.map((product) => (
+            <BestProductCard key={product.id} product={product} siteVariant={siteVariant} />
           ))}
         </div>
       </div>
@@ -48,7 +55,7 @@ export function BestProductsSection({ siteVariant = 'usual' }: BestProductsSecti
 }
 
 type BestProductCardProps = {
-  product: BestProduct
+  product: ProductUi
   siteVariant: SiteVariant
 }
 
@@ -81,7 +88,7 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
   return (
     <article className="best-product-card" data-cart-actions={features.showCartActions}>
       <a className="best-product-card__link" href={getProductUrl(product.id, siteVariant)}>
-        <img src={product.image} alt={product.name} />
+        <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
 
         <div className="best-product-card__body">
           <p>{product.category}</p>

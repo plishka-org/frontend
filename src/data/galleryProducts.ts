@@ -1,9 +1,9 @@
-import gallery1 from '../assets/galery-block/galery-1.svg'
-import gallery2 from '../assets/galery-block/galery-2.svg'
-import gallery3 from '../assets/galery-block/galery-3.svg'
-import gallery4 from '../assets/galery-block/galery-4.svg'
-import gallery5 from '../assets/galery-block/galery-5.svg'
-import gallery6 from '../assets/galery-block/galery-6.svg'
+import gallery1 from '../assets/galery-block/galery-1.webp'
+import gallery2 from '../assets/galery-block/galery-2.webp'
+import gallery3 from '../assets/galery-block/galery-3.webp'
+import gallery4 from '../assets/galery-block/galery-4.webp'
+import gallery5 from '../assets/galery-block/galery-5.webp'
+import gallery6 from '../assets/galery-block/galery-6.webp'
 
 export type GalleryProduct = {
   id: string

@@ -53,7 +53,7 @@ export function GalleryProductCard({ product, siteVariant }: GalleryProductCardP
         href={productUrl}
         aria-label={`Переглянути ${product.name}`}
       >
-        <img src={product.image} alt={product.name} />
+        <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
       </a>
       <p>{product.category}</p>
       <a className="gallery-card__title-link" href={productUrl}>

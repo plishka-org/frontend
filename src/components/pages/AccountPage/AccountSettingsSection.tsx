@@ -4,6 +4,7 @@ import { useAuth } from '../../../hooks/useAuth'
 import {
   changePasswordApi,
   requestEmailChangeApi,
+  updateProfileApi,
   type AuthUser,
 } from '../../../services/api/authApi'
 
@@ -11,6 +12,7 @@ type AccountSettingsValues = {
   name: string
   phone: string
   email: string
+  currentPassword: string
   newPassword: string
   confirmPassword: string
 }
@@ -31,6 +33,7 @@ const emptyTouched: AccountSettingsTouched = {
   name: false,
   phone: false,
   email: false,
+  currentPassword: false,
   newPassword: false,
   confirmPassword: false,
 }
@@ -38,8 +41,9 @@ const emptyTouched: AccountSettingsTouched = {
 function createInitialValues(user: AuthUser | null): AccountSettingsValues {
   return {
     name: user?.name ?? '',
-    phone: '',
+    phone: user?.phone?.replace(/^\+38/, '') ?? '',
     email: user?.email ?? '',
+    currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   }
@@ -124,6 +128,12 @@ function validatePassword(value: string, confirmValue: string): string {
   return ''
 }
 
+function validateCurrentPassword(values: AccountSettingsValues): string {
+  const needsPassword = Boolean(values.newPassword)
+  if (!needsPassword) return ''
+  return values.currentPassword ? '' : "Введіть поточний пароль"
+}
+
 function validatePasswordConfirm(password: string, confirmValue: string): string {
   if (!password && !confirmValue) return ''
   if (!confirmValue) return "Поле обов'язкове"
@@ -137,6 +147,7 @@ function validateForm(values: AccountSettingsValues): AccountSettingsErrors {
     name: validateName(values.name),
     phone: validatePhone(values.phone),
     email: validateEmail(values.email),
+    currentPassword: validateCurrentPassword(values),
     newPassword: validatePassword(values.newPassword, values.confirmPassword),
     confirmPassword: validatePasswordConfirm(values.newPassword, values.confirmPassword),
   }
@@ -256,6 +267,7 @@ export function AccountSettingsSection() {
       name: true,
       phone: true,
       email: true,
+      currentPassword: true,
       newPassword: true,
       confirmPassword: true,
     })
@@ -264,31 +276,60 @@ export function AccountSettingsSection() {
 
     const isEmailChanged = values.email.trim() !== savedValues.email.trim()
     const isPasswordChanged = Boolean(values.newPassword)
+    const isProfileChanged =
+      values.name.trim() !== savedValues.name.trim() ||
+      values.phone.trim() !== savedValues.phone.trim()
+
+    if ((isEmailChanged || isPasswordChanged) && !values.currentPassword) {
+      setTouched((currentTouched) => ({ ...currentTouched, currentPassword: true }))
+      setToast({ type: 'error', message: 'Введіть поточний пароль для зміни email або пароля.' })
+      return
+    }
 
     setIsSubmitting(true)
     setToast(null)
 
     try {
+      const nextUser = isProfileChanged
+        ? await updateProfileApi({
+            name: values.name.trim(),
+            phone: values.phone ? `+38${values.phone}` : undefined,
+          })
+        : null
+
       await Promise.all([
-        isEmailChanged ? requestEmailChangeApi({ email: values.email.trim() }) : Promise.resolve(),
-        isPasswordChanged ? changePasswordApi({ newPassword: values.newPassword }) : Promise.resolve(),
+        isEmailChanged
+          ? requestEmailChangeApi({
+              newEmail: values.email.trim(),
+              currentPassword: values.currentPassword,
+            })
+          : Promise.resolve(),
+        isPasswordChanged
+          ? changePasswordApi({
+              currentPassword: values.currentPassword,
+              newPassword: values.newPassword,
+              confirmPassword: values.confirmPassword,
+            })
+          : Promise.resolve(),
       ])
 
       const nextSavedValues: AccountSettingsValues = {
         ...values,
+        name: nextUser?.name ?? values.name,
+        phone: nextUser?.phone?.replace(/^\+38/, '') ?? values.phone,
         email: isEmailChanged ? savedValues.email : values.email,
+        currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       }
       const nextValues: AccountSettingsValues = {
-        ...values,
+        ...nextSavedValues,
         email: isEmailChanged ? savedValues.email : values.email,
-        newPassword: '',
-        confirmPassword: '',
       }
       const successMessages = [
+        isProfileChanged ? 'Особисті дані збережено.' : '',
         isEmailChanged ? 'Ми надіслали посилання для підтвердження нового email.' : '',
-        isPasswordChanged ? 'Пароль успішно змінено.' : '',
+        isPasswordChanged ? 'Пароль успішно змінено. Увійдіть повторно.' : '',
       ].filter(Boolean)
 
       setSavedValues(nextSavedValues)
@@ -311,6 +352,7 @@ export function AccountSettingsSection() {
   const nameError = touched.name ? errors.name : ''
   const phoneError = touched.phone ? errors.phone : ''
   const emailError = touched.email ? errors.email : ''
+  const currentPasswordError = touched.currentPassword ? errors.currentPassword : ''
   const newPasswordError = touched.newPassword ? errors.newPassword : ''
   const confirmPasswordError = touched.confirmPassword ? errors.confirmPassword : ''
 
@@ -374,6 +416,23 @@ export function AccountSettingsSection() {
 
         <div className="account-settings__col">
           <h2 className="account-settings__title">Змінити пароль</h2>
+
+          <Field id="settings-current-password" label="Поточний пароль" error={currentPasswordError}>
+            <div className="account-settings__password-wrapper">
+              <input
+                id="settings-current-password"
+                type="password"
+                autoComplete="current-password"
+                value={values.currentPassword}
+                placeholder="Потрібен для зміни email або пароля"
+                className={hasVisibleError('currentPassword', touched, errors) ? 'is-error' : ''}
+                aria-invalid={hasVisibleError('currentPassword', touched, errors)}
+                aria-describedby={currentPasswordError ? 'settings-current-password-error' : undefined}
+                onChange={(event) => handleFieldChange('currentPassword', event.target.value)}
+                onBlur={() => handleFieldBlur('currentPassword')}
+              />
+            </div>
+          </Field>
 
           <Field id="settings-new-password" label="Новий пароль" error={newPasswordError}>
             <div className="account-settings__password-wrapper">
