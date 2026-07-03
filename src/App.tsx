@@ -31,6 +31,7 @@ import { ToastProvider } from "./hooks/useToast";
 import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute";
 import { AdminLayout } from "./components/layout/AdminLayout/AdminLayout";
 import { AdminPersonalDataPage } from "./components/pages/AdminPersonalDataPage/AdminPersonalDataPage";
+import { AdminProductsPage } from "./components/pages/AdminProductsPage/AdminProductsPage";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -67,13 +68,13 @@ function App() {
 
   useEffect(() => {
     if (requestedVariant) {
-      setSiteVariant(requestedVariant)
       return
     }
 
     if (!hasApiBaseUrl()) return
     getSettingsApi().then((settings) => setSiteVariant(settings.isShopModeEnabled ? 'order' : 'usual')).catch(() => setSiteVariant(fallbackVariant))
   }, [fallbackVariant, requestedVariant])
+  const activeSiteVariant = requestedVariant ?? siteVariant
   const adminMatch = appPath.match(/^\/admin\/?(.*)$/);
 
   let pageContent;
@@ -91,6 +92,8 @@ function App() {
         <AdminLayout activeKey={adminKey}>
           {adminKey === "settings" ? (
             <AdminPersonalDataPage />
+          ) : adminKey === "products" ? (
+            <AdminProductsPage />
           ) : (
             <div>
               Контент розділу «{adminKey}» (буде реалізовано в наступних
@@ -101,27 +104,27 @@ function App() {
       </ProtectedRoute>
     );
   } else if (appPath.match(/^\/gallery\/?$/)) {
-    pageContent = <GalleryPage siteVariant={siteVariant} />;
+    pageContent = <GalleryPage siteVariant={activeSiteVariant} />;
   } else if (appPath.match(/^\/about\/?$/)) {
-    pageContent = <AboutPage siteVariant={siteVariant} />;
+    pageContent = <AboutPage siteVariant={activeSiteVariant} />;
   } else if (appPath.match(/^\/reviews\/?$/)) {
-    pageContent = <ReviewsPage siteVariant={siteVariant} />;
+    pageContent = <ReviewsPage siteVariant={activeSiteVariant} />;
   } else if (appPath.match(/^\/favorites\/?$/)) {
-    pageContent = <FavoritesPage siteVariant={siteVariant} />;
+    pageContent = <FavoritesPage siteVariant={activeSiteVariant} />;
   } else if (appPath.match(/^\/account(\/.*)?$/)) {
-    pageContent = <AccountPage siteVariant={siteVariant} />;
+    pageContent = <AccountPage siteVariant={activeSiteVariant} />;
   } else if (productMatch) {
     pageContent = (
       <ProductRoute
         key={productMatch[1]}
         productId={productMatch[1]}
-        siteVariant={siteVariant}
+        siteVariant={activeSiteVariant}
       />
     );
   } else if (appPath.match(/^\/?$/)) {
-    pageContent = <HomePage siteVariant={siteVariant} />;
+    pageContent = <HomePage siteVariant={activeSiteVariant} />;
   } else {
-    pageContent = <NotFoundPage siteVariant={siteVariant} />;
+    pageContent = <NotFoundPage siteVariant={activeSiteVariant} />;
   }
 
   return (
