@@ -15,7 +15,7 @@ export function InformBlock({ siteVariant }: InformBlockProps) {
   })
 
   useEffect(() => {
-    getHomeApi().then((home) => setContent(home.content)).catch(() => undefined)
+    getHomeApi().then((home) => setContent({ ...home.content, description: home.content.description ?? '' })).catch(() => undefined)
   }, [])
 
   return (
