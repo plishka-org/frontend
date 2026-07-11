@@ -30,11 +30,39 @@ import trashIcon from "../../../icons/trash.png";
 import editIcon from "../../../icons/Type=Edit.png";
 import roundIcon from "../../../icons/Round.png";
 import packIcon from "../../../icons/Type=Pack.png";
+import demoProductImage1 from "../../../assets/best-products-block/product-1.webp";
+import demoProductImage2 from "../../../assets/best-products-block/product-2.webp";
+import demoProductImage3 from "../../../assets/best-products-block/product-3.webp";
 import "./adminProductsPage.scss";
 
 const MAX_MAIN_PRODUCTS = 10;
 const ITEMS_PER_PAGE = 10;
 const NO_CATEGORY_ID = -1;
+const DEMO_CATEGORIES: Category[] = [
+  { id: 1, name: "Альтанки" },
+  { id: 2, name: "Перголи" },
+  { id: 3, name: "Садові меблі" },
+];
+const DEMO_PRODUCT_IMAGES = [demoProductImage1, demoProductImage2, demoProductImage3];
+const DEMO_PRODUCTS: Product[] = Array.from({ length: 16 }, (_, index) => ({
+  id: index + 1,
+  name: "Альтанка",
+  categoryId: 1,
+  category: DEMO_CATEGORIES[0],
+  price: 1500,
+  description: "Дерев’яна альтанка",
+  media: Array.from({ length: 6 }, (_, mediaIndex) => ({
+    id: index * 10 + mediaIndex + 1,
+    s3Key: null,
+    url: DEMO_PRODUCT_IMAGES[(index + mediaIndex) % DEMO_PRODUCT_IMAGES.length],
+    mediaType: "IMAGE",
+    isPrimary: mediaIndex === 0,
+    displayOrder: mediaIndex + 1,
+  })),
+  isOnHome: index < 4,
+  homeOrder: index < 4 ? index + 1 : null,
+}));
+const DEMO_HOME_PRODUCTS = DEMO_PRODUCTS.filter((product) => product.isOnHome);
 
 const PRICE_ACTIONS: PriceActionType[] = ["+%", "-%", "+", "-"];
 const PRICE_OPERATION_BY_ACTION: Record<PriceActionType, BulkPriceOperation> = {
@@ -1158,15 +1186,16 @@ function EditModal({
 
 export function AdminProductsPage() {
   const { showToast } = useToast();
+  const isAdminDemoMode = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEMO_MODE === "true";
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>(isAdminDemoMode ? DEMO_PRODUCTS : []);
+  const [categories, setCategories] = useState<Category[]>(isAdminDemoMode ? DEMO_CATEGORIES : []);
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
   const [noCategoryCount, setNoCategoryCount] = useState(0);
-  const [homeProductIds, setHomeProductIds] = useState<number[]>([]);
-  const [mainProducts, setMainProducts] = useState<Product[]>([]);
+  const [homeProductIds, setHomeProductIds] = useState<number[]>(isAdminDemoMode ? DEMO_HOME_PRODUCTS.map((product) => product.id) : []);
+  const [mainProducts, setMainProducts] = useState<Product[]>(isAdminDemoMode ? DEMO_HOME_PRODUCTS : []);
 
   const addFormRef = useRef<HTMLDivElement>(null);
   const allProductsSectionRef = useRef<HTMLDivElement>(null);
@@ -1175,7 +1204,8 @@ export function AdminProductsPage() {
   const [newPrice, setNewPrice] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
-  const [newPreviews, setNewPreviews] = useState<string[]>([]);
+  const [newPreviews, setNewPreviews] = useState<string[]>(isAdminDemoMode ? DEMO_PRODUCT_IMAGES : []);
+  const [newPrimaryIndex, setNewPrimaryIndex] = useState(0);
   const [addLoading, setAddLoading] = useState(false);
   const addFileRef = useRef<HTMLInputElement>(null);
   const replaceFileRef = useRef<HTMLInputElement>(null);
@@ -1218,6 +1248,16 @@ export function AdminProductsPage() {
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
+    if (isAdminDemoMode) {
+      setHomeProductIds(DEMO_HOME_PRODUCTS.map((product) => product.id));
+      setProducts(DEMO_PRODUCTS);
+      setMainProducts(DEMO_HOME_PRODUCTS);
+      setTotalPages(Math.ceil((DEMO_PRODUCTS.length - DEMO_HOME_PRODUCTS.length) / ITEMS_PER_PAGE));
+      setTotalProducts(DEMO_PRODUCTS.length);
+      setNoCategoryCount(0);
+      setLoading(false);
+      return;
+    }
     try {
       const filters = buildCurrentFilters();
       const homeIds = await fetchHomeProductIdsApi();
@@ -1251,9 +1291,12 @@ export function AdminProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [buildCurrentFilters, currentPage, showToast]);
+  }, [buildCurrentFilters, currentPage, isAdminDemoMode, showToast]);
 
   useEffect(() => {
+    if (isAdminDemoMode) {
+      return;
+    }
     fetchAdminCategoriesApi()
       .then(setCategories)
       .catch((e) => {
@@ -1261,13 +1304,16 @@ export function AdminProductsPage() {
           e instanceof Error ? e.message : "Помилка завантаження категорій",
         );
       });
-  }, [showToast]);
+  }, [isAdminDemoMode, showToast]);
 
   useEffect(() => {
     void loadProducts();
   }, [loadProducts]);
 
-  const paginated = products;
+  const productsOutsideHome = products.filter((product) => !product.isOnHome);
+  const paginated = isAdminDemoMode
+    ? productsOutsideHome.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+    : productsOutsideHome;
 
   const mainCount = homeProductIds.length;
   const isMainFull = mainCount >= MAX_MAIN_PRODUCTS;
@@ -1331,6 +1377,10 @@ export function AdminProductsPage() {
   function handleRemovePreview(idx: number) {
     setNewFiles((prev) => prev.filter((_, i) => i !== idx));
     setNewPreviews((prev) => prev.filter((_, i) => i !== idx));
+    setNewPrimaryIndex((current) => {
+      if (current === idx) return 0;
+      return current > idx ? current - 1 : current;
+    });
   }
 
   function handleReplacePreviewFile(idx: number, file: File) {
@@ -1371,6 +1421,7 @@ export function AdminProductsPage() {
       setNewDescription("");
       setNewFiles([]);
       setNewPreviews([]);
+      setNewPrimaryIndex(0);
       await loadProducts();
       showToast("Виріб додано");
     } catch (e) {
@@ -1388,6 +1439,20 @@ export function AdminProductsPage() {
     const nextHomeIds = willBeOn
       ? [...homeProductIds, product.id]
       : homeProductIds.filter((id) => id !== product.id);
+    if (isAdminDemoMode) {
+      const nextProducts = products.map((item) => item.id === product.id ? { ...item, isOnHome: willBeOn, homeOrder: null } : item);
+      const nextMainProducts = nextHomeIds.map((id, index) => {
+        const item = nextProducts.find((candidate) => candidate.id === id)!;
+        return { ...item, isOnHome: true, homeOrder: index + 1 };
+      });
+      setProducts(nextProducts.map((item) => {
+        const homeItem = nextMainProducts.find((candidate) => candidate.id === item.id);
+        return homeItem ?? { ...item, isOnHome: false, homeOrder: null };
+      }));
+      setHomeProductIds(nextHomeIds);
+      setMainProducts(nextMainProducts);
+      return;
+    }
     try {
       await replaceHomeProductsApi(nextHomeIds);
       await loadProducts();
@@ -1483,6 +1548,13 @@ export function AdminProductsPage() {
       deletedMediaIds: number[],
       mainMediaId: number | null,
     ) => {
+      if (isAdminDemoMode) {
+        const category = categories.find((item) => item.id === data.categoryId) ?? null;
+        setProducts((items) => items.map((item) => item.id === id ? { ...item, ...data, category } : item));
+        setMainProducts((items) => items.map((item) => item.id === id ? { ...item, ...data, category } : item));
+        showToast("Зміни збережено");
+        return;
+      }
       await updateAdminProductApi(id, data, homeProductIds);
 
       for (const mediaId of deletedMediaIds) {
@@ -1498,7 +1570,7 @@ export function AdminProductsPage() {
       await loadProducts();
       showToast("Зміни збережено");
     },
-    [homeProductIds, loadProducts, showToast],
+    [categories, homeProductIds, isAdminDemoMode, loadProducts, showToast],
   );
 
   function handleDragStart(e: DragEvent<HTMLTableRowElement>, id: number) {
@@ -1554,6 +1626,14 @@ export function AdminProductsPage() {
     reordered.splice(to, 0, moved);
 
     const nextIds = reordered.map((p) => p.id);
+
+    if (isAdminDemoMode) {
+      const numbered = reordered.map((product, index) => ({ ...product, homeOrder: index + 1 }));
+      setMainProducts(numbered);
+      setHomeProductIds(nextIds);
+      setProducts((items) => items.map((item) => numbered.find((product) => product.id === item.id) ?? item));
+      return;
+    }
 
     try {
       await reorderHomeProductsApi(nextIds);
@@ -1685,6 +1765,15 @@ export function AdminProductsPage() {
                   <div className="admin-products__media-img">
                     <img src={url} alt="" />
                   </div>
+                  <label className="admin-products__media-radio">
+                    <input
+                      type="radio"
+                      name="new-product-primary-media"
+                      checked={newPrimaryIndex === i}
+                      onChange={() => setNewPrimaryIndex(i)}
+                    />
+                    <span>Встановити головним</span>
+                  </label>
                   <div className="admin-products__media-actions">
                     <button
                       type="button"
@@ -1950,13 +2039,15 @@ export function AdminProductsPage() {
           <h2 className="admin-products__section-title">
             Вироби на головній сторінці
           </h2>
-          <div className="admin-products__table-wrap">
+          <div className="admin-products__table-wrap admin-products__table-wrap--home">
             <table className="admin-products__table">
               <thead>
                 <tr>
                   <th className="admin-products__th--drag" />
                   <th>№</th>
-                  <th className="admin-products__th--check" />
+                  <th className="admin-products__th--check">
+                    <span className="admin-products__select-all-label">Вибрати всі</span>
+                  </th>
                   <th>Фото</th>
                   <th>Назва</th>
                   <th>Категорія</th>
@@ -2067,7 +2158,7 @@ export function AdminProductsPage() {
           </div>
         ) : (
           <>
-            <div className="admin-products__table-wrap">
+            <div className="admin-products__table-wrap admin-products__table-wrap--all">
               <table className="admin-products__table">
                 <thead>
                   <tr>
@@ -2078,6 +2169,7 @@ export function AdminProductsPage() {
                         checked={allPageSelected}
                         onChange={toggleSelectAll}
                       />
+                      <span className="admin-products__select-all-label">Вибрати всі</span>
                     </th>
                     <th>Фото</th>
                     <th>Назва</th>
