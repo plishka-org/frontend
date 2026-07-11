@@ -32,6 +32,8 @@ import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute";
 import { AdminLayout } from "./components/layout/AdminLayout/AdminLayout";
 import { AdminPersonalDataPage } from "./components/pages/AdminPersonalDataPage/AdminPersonalDataPage";
 import { AdminProductsPage } from "./components/pages/AdminProductsPage/AdminProductsPage";
+import { AdminContentPage } from "./components/pages/AdminContentPage/AdminContentPage";
+import { AdminReviewsPage } from "./components/pages/AdminReviewsPage/AdminReviewsPage";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -94,6 +96,10 @@ function App() {
             <AdminPersonalDataPage />
           ) : adminKey === "products" ? (
             <AdminProductsPage />
+          ) : adminKey === "reviews" ? (
+            <AdminReviewsPage />
+          ) : adminKey === "more" ? (
+            <AdminContentPage />
           ) : (
             <div>
               Контент розділу «{adminKey}» (буде реалізовано в наступних

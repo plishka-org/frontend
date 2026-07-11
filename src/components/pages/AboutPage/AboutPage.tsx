@@ -29,7 +29,7 @@ const todayText =
 const fallbackImages = [aboutHeroImage, aboutTodayImage, aboutGalleryMainImage, aboutGalleryFrameImage, aboutGalleryYardImage, aboutGallerySummerImage, aboutGalleryWinterImage]
 
 export function AboutPage({ siteVariant }: AboutPageProps) {
-  const [content, setContent] = useState({ historyTitle: 'Plishka - це історія, що почалася з дерева', historyText: introParagraphs.join('\n\n'), currentTitle: 'Plishka - сьогодні', currentText: todayText })
+  const [content, setContent] = useState({ mainTitle: 'Plishka - це історія, що почалася з дерева', mainSubtitle: introParagraphs.join('\n\n'), secondaryTitle: 'Plishka - сьогодні', secondarySubtitle: todayText })
   const [images, setImages] = useState(fallbackImages)
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export function AboutPage({ siteVariant }: AboutPageProps) {
     }).catch(() => undefined)
   }, [])
 
-  const paragraphs = content.historyText.split(/\n\s*\n/).filter(Boolean)
+  const paragraphs = content.mainSubtitle.split(/\n\s*\n/).filter(Boolean)
   return (
     <main className="page-shell about-page">
       <Header activePage="about" siteVariant={siteVariant} />
@@ -47,7 +47,7 @@ export function AboutPage({ siteVariant }: AboutPageProps) {
         <div className="about-story__inner">
           <article className="about-story-block about-story-block--intro about-reveal">
             <div className="about-story-block__text">
-              <h1 id="about-page-title">{content.historyTitle}</h1>
+              <h1 id="about-page-title">{content.mainTitle}</h1>
               {paragraphs.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
@@ -69,8 +69,8 @@ export function AboutPage({ siteVariant }: AboutPageProps) {
               decoding="async"
             />
             <div className="about-story-block__text">
-              <h2>{content.currentTitle}</h2>
-              <p>{content.currentText}</p>
+              <h2>{content.secondaryTitle}</h2>
+              <p>{content.secondarySubtitle}</p>
             </div>
           </article>
 

@@ -21,7 +21,7 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { key: "clients", href: "#/admin/clients", label: "Клієнти", icon: clientsIcon },
   { key: "orders", href: "#/admin/orders", label: "Замовлення", icon: ordersIcon },
   { key: "settings", href: "#/admin/settings", label: "Особисті дані", icon: userIcon },
-  { key: "more", href: "#/admin/more", label: "Додатково", icon: editIcon },
+  { key: "more", href: "#/admin/more", label: "Контент сайту", icon: editIcon },
 ];
 
 type AdminSidebarProps = {
