@@ -46,6 +46,13 @@ export type PageResponse<T> = {
   size: number
 }
 
+type PresignUploadResponse = {
+  s3Key: string
+  uploadUrl: string
+  method: 'PUT'
+  requiredHeaders: Record<string, string>
+}
+
 export const getAdminHome = () => apiRequest<{ content: HomeContent }>('/api/admin/home-page')
 export const updateAdminHome = (body: HomeContent) => apiRequest<HomeContent>('/api/admin/home-page', { method: 'PUT', body })
 
@@ -74,6 +81,46 @@ export const setReviewFeatured = (id: number, featured: boolean) => apiRequest<A
 export const attachReviewMedia = (id: number, s3Key: string) => apiRequest<void>(`/api/admin/reviews/${id}/media/attach`, { method: 'POST', body: { s3Key } })
 export const setReviewPrimaryMedia = (reviewId: number, mediaId: number) => apiRequest<void>(`/api/admin/reviews/${reviewId}/media/${mediaId}/primary`, { method: 'PUT' })
 export const deleteReviewMedia = (reviewId: number, mediaId: number) => apiRequest<void>(`/api/admin/reviews/${reviewId}/media/${mediaId}`, { method: 'DELETE' })
+
+function reviewMediaType(file: File): ReviewMedia['mediaType'] {
+  return file.type.startsWith('video/') ? 'VIDEO' : 'IMAGE'
+}
+
+async function checksumSha256Base64(file: File) {
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer())
+  let binary = ''
+  new Uint8Array(digest).forEach((byte) => { binary += String.fromCharCode(byte) })
+  return btoa(binary)
+}
+
+export async function uploadAdminReviewMedia(reviewId: number, files: File[]) {
+  const uploadedKeys: string[] = []
+
+  for (const file of files) {
+    const presign = await apiRequest<PresignUploadResponse>('/api/admin/files/presign/upload', {
+      method: 'POST',
+      body: {
+        targetType: 'REVIEW',
+        targetId: reviewId,
+        mediaType: reviewMediaType(file),
+        contentType: file.type,
+        sizeBytes: file.size,
+        originalFilename: file.name,
+        checksumSha256Base64: await checksumSha256Base64(file),
+      },
+    })
+    const response = await fetch(presign.uploadUrl, {
+      method: presign.method,
+      headers: presign.requiredHeaders,
+      body: file,
+    })
+    if (!response.ok) throw new Error('Не вдалося завантажити медіа')
+    await attachReviewMedia(reviewId, presign.s3Key)
+    uploadedKeys.push(presign.s3Key)
+  }
+
+  return uploadedKeys
+}
 
 export const getAdminSettings = () => apiRequest<SettingsResponse>('/api/admin/settings')
 export const updateAdminSettings = (isShopModeEnabled: boolean) => apiRequest<SettingsResponse>('/api/admin/settings', { method: 'PUT', body: { isShopModeEnabled } })
