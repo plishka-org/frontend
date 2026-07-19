@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
-import { bulkDeleteAdminProductsApi, bulkUpdateAdminCategoriesApi, bulkUpdateAdminPricesApi } from "../../../services/api/adminProductsApi";
+import { bulkUpdateAdminPricesApi } from "../../../services/api/adminProductsApi";
 import {
   createAdminCategoryApi,
   deleteAdminCategoryApi,
   fetchAdminCategoryListApi,
-  reorderAdminCategoriesApi,
   updateAdminCategoryApi,
   type AdminCategory,
 } from "../../../services/api/adminCategoriesApi";
@@ -171,14 +170,15 @@ export function AdminCategoriesPage() {
     setBusy(true);
     try {
       if (!isDemo) {
-        const filters = { categoryIds: ids };
-        if (mode === "delete-products") {
-          await bulkDeleteAdminProductsApi({ selectionMode: "EXCEPT_SELECTED", productIds: [], filters });
-        }
-        if (mode === "move-products" && replacementCategoryId !== "") {
-          await bulkUpdateAdminCategoriesApi({ selectionMode: "EXCEPT_SELECTED", productIds: [], filters, categoryId: Number(replacementCategoryId) });
-        }
-        await Promise.all(ids.map(deleteAdminCategoryApi));
+        const strategy = mode === "delete-products"
+          ? "DELETE_PRODUCTS"
+          : mode === "move-products"
+            ? "MOVE_PRODUCTS"
+            : "KEEP_PRODUCTS";
+        const targetCategoryId = mode === "move-products" && replacementCategoryId !== ""
+          ? Number(replacementCategoryId)
+          : undefined;
+        await Promise.all(ids.map((id) => deleteAdminCategoryApi(id, strategy, targetCategoryId)));
       }
       setCategories((items) => items.filter((item) => !ids.includes(item.id)));
       setSelected((items) => items.filter((id) => !ids.includes(id)));
@@ -232,7 +232,7 @@ export function AdminCategoriesPage() {
 
   async function drop(targetId: number) {
     const sourceId = dragId.current;
-    if (!sourceId || sourceId === targetId || search) return;
+    if (!isDemo || !sourceId || sourceId === targetId || search) return;
     const next = [...categories];
     const from = next.findIndex((item) => item.id === sourceId);
     const to = next.findIndex((item) => item.id === targetId);
@@ -240,8 +240,6 @@ export function AdminCategoriesPage() {
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
     setCategories(next.map((item, index) => ({ ...item, displayOrder: index + 1 })));
-    try { if (!isDemo) await reorderAdminCategoriesApi(next.map((item) => item.id)); }
-    catch { showToast("Не вдалося зберегти порядок категорій"); await loadCategories(); }
   }
 
   const allVisibleSelected = visible.length > 0 && visible.every((item) => selected.includes(item.id));
@@ -275,7 +273,7 @@ export function AdminCategoriesPage() {
         {loading ? <div className="admin-categories__empty">Завантаження…</div> : categories.length === 0 ? <div className="admin-categories__empty-state"><span className="admin-categories__empty-icon"><EmptyCategoriesIcon /></span><p>Категорій поки немає. Додайте свою першу категорію</p><button type="button" onClick={goToAdding}>Додати категорію</button></div> : <>
           <div className="admin-categories__table-head"><span>Послідовність</span><label><input type="checkbox" checked={allVisibleSelected} onChange={() => setSelected(allVisibleSelected ? selected.filter((id) => !visible.some((item) => item.id === id)) : Array.from(new Set([...selected, ...visible.map((item) => item.id)])))} /><i /></label><span>Назва</span><span>Кількість товарів, шт</span><span>Дії</span></div>
           <div className="admin-categories__rows">
-            {visible.map((category) => <article key={category.id} draggable={!search} onDragStart={() => { dragId.current = category.id; }} onDragOver={(event: DragEvent<HTMLElement>) => event.preventDefault()} onDrop={() => void drop(category.id)} className="admin-categories__row">
+            {visible.map((category) => <article key={category.id} draggable={isDemo && !search} onDragStart={() => { dragId.current = category.id; }} onDragOver={(event: DragEvent<HTMLElement>) => event.preventDefault()} onDrop={() => void drop(category.id)} className="admin-categories__row">
               <div className="admin-categories__order"><GripIcon /><span>{category.displayOrder}</span></div>
               <label className="admin-categories__checkbox"><input type="checkbox" checked={selected.includes(category.id)} onChange={() => toggle(category.id)} /><i /></label>
               <button className="admin-categories__category-name" type="button" aria-label={`Редагувати категорію ${category.name}`} onClick={() => { setEditing(category); setEditName(category.name); }}>{category.name}</button>

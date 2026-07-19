@@ -157,8 +157,8 @@ function OrderDetailsModal({ order, onClose }: { order: AdminOrder; onClose: () 
       </div>
       <div className="order-details__total"><strong>Всього:</strong><span>{formatPrice(total)} грн</span></div>
       <dl className="order-details__info">
-        <div><dt>Ім’я та прізвище отримувача</dt><dd>{order.customerName === 'Ольга' ? 'Олексій Петренко' : order.customerName}</dd></div>
-        <div><dt>Номер отримувача</dt><dd>{order.id === 1 ? '+380606066060' : order.phone}</dd></div>
+        <div><dt>Ім’я та прізвище отримувача</dt><dd>{order.customerName}</dd></div>
+        <div><dt>Номер отримувача</dt><dd>{order.phone}</dd></div>
         <div><dt>Місто доставки</dt><dd>{order.deliveryCity}</dd></div>
         <div><dt>Дата оформлення замовлення</dt><dd>{formatDate(order.createdAt)}</dd></div>
         <div className="order-details__comment"><dt>Коментар до замовлення</dt><dd>{order.comment || '—'}</dd></div>

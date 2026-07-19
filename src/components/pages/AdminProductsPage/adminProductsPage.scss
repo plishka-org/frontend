@@ -282,7 +282,7 @@
     align-items: center;
     justify-content: center;
 
-    img { width: 100%; height: 100%; object-fit: cover; }
+    img, video { width: 100%; height: 100%; object-fit: cover; }
   }
 
   &__media-radio {
@@ -538,7 +538,7 @@
     justify-content: center;
     color: var(--color-muted);
 
-    img { width: 100%; height: 100%; object-fit: cover; }
+    img, video { width: 100%; height: 100%; object-fit: cover; }
   }
 
   &__actions {

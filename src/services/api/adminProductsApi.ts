@@ -284,7 +284,8 @@ async function attachUploadedMedia(productId: number, s3Key: string) {
 export async function uploadAdminProductMediaApi(
   productId: number,
   files: File[],
-): Promise<void> {
+): Promise<string[]> {
+  const uploadedKeys: string[] = [];
   for (const file of files) {
     const checksumSha256Base64Value = await checksumSha256Base64(file);
     const presign = await apiRequest<PresignUploadResponseDto>(
@@ -312,5 +313,7 @@ export async function uploadAdminProductMediaApi(
       throw new Error("Не вдалося завантажити медіа");
     }
     await attachUploadedMedia(productId, presign.s3Key);
+    uploadedKeys.push(presign.s3Key);
   }
+  return uploadedKeys;
 }

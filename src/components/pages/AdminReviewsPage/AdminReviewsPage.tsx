@@ -220,12 +220,12 @@ function ReviewEditModal({
         <div className="review-edit__media-grid">
           {media.map((item) => <div className="review-edit__media-item" key={item.reviewMediaId}>
             <div className="review-edit__preview">{item.mediaType === "VIDEO" ? <video src={item.url} muted /> : <img src={item.url} alt="" />}</div>
-            <label className="review-edit__radio"><input type="radio" name="review-primary" checked={primary === `existing:${item.reviewMediaId}`} onChange={() => setPrimary(`existing:${item.reviewMediaId}`)} /><i /><span>Встановити головним</span></label>
+            <label className="review-edit__radio"><input type="radio" name="review-primary" checked={primary === `existing:${item.reviewMediaId}`} disabled={item.mediaType !== "IMAGE"} onChange={() => item.mediaType === "IMAGE" && setPrimary(`existing:${item.reviewMediaId}`)} /><i /><span>Встановити головним</span></label>
             <div className="review-edit__media-actions"><button type="button" aria-label="Замінити медіа" onClick={() => { replaceTargetRef.current = item.reviewMediaId; replaceInputRef.current?.click(); }}><ReplaceIcon /></button><button type="button" className="review-edit__media-delete" aria-label="Видалити медіа" onClick={() => removeExisting(item.reviewMediaId)}><DeleteIcon /></button></div>
           </div>)}
           {newPreviews.map((url, index) => <div className="review-edit__media-item" key={url}>
             <div className="review-edit__preview">{newFiles[index]?.type.startsWith("video/") ? <video src={url} muted /> : <img src={url} alt="" />}</div>
-            <label className="review-edit__radio"><input type="radio" name="review-primary" checked={primary === `new:${index}`} onChange={() => setPrimary(`new:${index}`)} /><i /><span>Встановити головним</span></label>
+            <label className="review-edit__radio"><input type="radio" name="review-primary" checked={primary === `new:${index}`} disabled={!newFiles[index] || !newFiles[index].type.startsWith("image/")} onChange={() => newFiles[index]?.type.startsWith("image/") && setPrimary(`new:${index}`)} /><i /><span>Встановити головним</span></label>
             <div className="review-edit__media-actions"><button type="button" className="review-edit__media-delete" aria-label="Видалити медіа" onClick={() => removeNew(index)}><DeleteIcon /></button></div>
           </div>)}
         </div>
@@ -302,7 +302,7 @@ export function AdminReviewsPage() {
     const query = search.trim().toLocaleLowerCase("uk");
     return query ? reviews.filter((review) => `${review.authorName} ${review.content}`.toLocaleLowerCase("uk").includes(query)) : reviews;
   }, [reviews, search]);
-  const featured = filtered.filter((review) => review.isFeatured).slice(0, 4);
+  const featured = filtered.filter((review) => review.isFeatured).slice(0, 5);
   const regular = filtered.filter((review) => !review.isFeatured);
   const totalPages = Math.max(1, Math.ceil(regular.length / PAGE_SIZE));
   const visibleRegular = isMobile ? regular.slice(0, mobilePages * PAGE_SIZE) : regular.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -326,7 +326,7 @@ export function AdminReviewsPage() {
   }
 
   async function toggleFeatured(review: AdminReviewSummary) {
-    if (!review.isFeatured && reviews.filter((item) => item.isFeatured).length >= 4) { showToast("На головній може бути не більше 4 відгуків"); return; }
+    if (!review.isFeatured && reviews.filter((item) => item.isFeatured).length >= 5) { showToast("На головній може бути не більше 5 відгуків"); return; }
     const next = !review.isFeatured;
     setReviews((items) => items.map((item) => item.reviewId === review.reviewId ? { ...item, isFeatured: next } : item));
     try { if (!isDemo) await setReviewFeatured(review.reviewId, next); }
