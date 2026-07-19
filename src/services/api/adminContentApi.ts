@@ -40,10 +40,11 @@ export type AdminReviewSummary = Omit<AdminReview, 'media'> & {
 
 export type PageResponse<T> = {
   content: T[]
+  pageNumber: number
+  pageSize: number
   totalElements: number
   totalPages: number
-  number: number
-  size: number
+  last: boolean
 }
 
 type PresignUploadResponse = {

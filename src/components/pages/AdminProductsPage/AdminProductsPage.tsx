@@ -1192,8 +1192,14 @@ function EditModal({
       type: "existing" as const,
       id: m.id,
       url: m.url,
+      mediaType: m.mediaType,
     })),
-    ...newPreviews.map((url, i) => ({ type: "new" as const, id: i, url })),
+    ...newPreviews.map((url, i) => ({
+      type: "new" as const,
+      id: i,
+      url,
+      mediaType: newFiles[i]?.type.startsWith("video/") ? "VIDEO" as const : "IMAGE" as const,
+    })),
   ];
 
   return (
@@ -1266,7 +1272,7 @@ function EditModal({
           {allMedia.map((m) => (
             <div key={`${m.type}-${m.id}`} className="edit-modal__media-item">
               <div className="edit-modal__media-img">
-                <img src={m.url} alt="" />
+                {m.mediaType === "VIDEO" ? <video src={m.url} muted /> : <img src={m.url} alt="" />}
               </div>
               <label className="edit-modal__media-radio">
                 <input
@@ -1274,7 +1280,7 @@ function EditModal({
                   name="mainMedia"
                   checked={m.type === "existing" && mainMediaId === m.id}
                   onChange={() => m.type === "existing" && setMainMediaId(m.id)}
-                  disabled={m.type === "new"}
+                  disabled={m.type === "new" || m.mediaType !== "IMAGE"}
                 />
                 <span>Встановити головним</span>
               </label>
@@ -1641,7 +1647,16 @@ export function AdminProductsPage() {
         description: newDescription,
       });
       if (newFiles.length > 0) {
-        await uploadAdminProductMediaApi(product.id, newFiles);
+        const uploadedKeys = await uploadAdminProductMediaApi(product.id, newFiles);
+        const selectedPrimaryIndex = newFiles[newPrimaryIndex]?.type.startsWith("image/")
+          ? newPrimaryIndex
+          : newFiles.findIndex((file) => file.type.startsWith("image/"));
+        const selectedPrimaryKey = uploadedKeys[selectedPrimaryIndex];
+        if (selectedPrimaryKey) {
+          const savedProduct = await fetchAdminProductApi(product.id);
+          const primaryMedia = savedProduct.media.find((item) => item.s3Key === selectedPrimaryKey && item.mediaType === "IMAGE");
+          if (primaryMedia) await setPrimaryAdminMediaApi(product.id, primaryMedia.id);
+        }
       }
       setNewName("");
       setNewCategoryId("");
@@ -1972,14 +1987,15 @@ export function AdminProductsPage() {
               {newPreviews.map((url, i) => (
                 <div key={i} className="admin-products__media-item">
                   <div className="admin-products__media-img">
-                    <img src={url} alt="" />
+                    {newFiles[i]?.type.startsWith("video/") ? <video src={url} muted /> : <img src={url} alt="" />}
                   </div>
                   <label className="admin-products__media-radio">
                     <input
                       type="radio"
                       name="new-product-primary-media"
-                      checked={newPrimaryIndex === i}
-                      onChange={() => setNewPrimaryIndex(i)}
+                      checked={newFiles[i]?.type.startsWith("image/") && newPrimaryIndex === i}
+                      disabled={!newFiles[i]?.type.startsWith("image/")}
+                      onChange={() => newFiles[i]?.type.startsWith("image/") && setNewPrimaryIndex(i)}
                     />
                     <span>Встановити головним</span>
                   </label>

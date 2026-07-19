@@ -14,6 +14,11 @@ export type AdminCategory = Category & {
   displayOrder: number;
 };
 
+export type CategoryDeleteStrategy =
+  | "KEEP_PRODUCTS"
+  | "MOVE_PRODUCTS"
+  | "DELETE_PRODUCTS";
+
 function normalizeCategory(dto: CategoryDto, index = 0): AdminCategory {
   return {
     id: dto.categoryId,
@@ -64,13 +69,16 @@ export async function updateAdminCategoryApi(id: number, name: string): Promise<
   return normalizeCategory(category);
 }
 
-export function deleteAdminCategoryApi(id: number): Promise<void> {
-  return apiRequest<void>(`/api/admin/categories/${id}`, { method: "DELETE" });
-}
-
-export function reorderAdminCategoriesApi(categoryIds: number[]): Promise<void> {
-  return apiRequest<void>("/api/admin/categories/order", {
-    method: "PUT",
-    body: { categoryIds },
+export function deleteAdminCategoryApi(
+  id: number,
+  strategy: CategoryDeleteStrategy,
+  targetCategoryId?: number,
+): Promise<void> {
+  const params = new URLSearchParams({ strategy });
+  if (strategy === "MOVE_PRODUCTS" && targetCategoryId !== undefined) {
+    params.set("targetCategoryId", String(targetCategoryId));
+  }
+  return apiRequest<void>(`/api/admin/categories/${id}?${params.toString()}`, {
+    method: "DELETE",
   });
 }
