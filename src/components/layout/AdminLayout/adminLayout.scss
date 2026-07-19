@@ -1,158 +1,57 @@
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background-color: var(--color-surface-alt);
+  background: var(--color-surface);
 
-  &__content {
-    flex: 1;
-    padding: 32px 40px;
-  }
-
-  &__card {
-    background-color: var(--color-surface);
-    border-radius: 16px;
-    padding: 32px;
-    box-shadow: 0 1px 3px rgba(17, 25, 24, 0.06);
-  }
+  &__content { flex: 1; min-width: 0; padding: 40px 24px; }
+  &__card { width: 100%; max-width: 1176px; margin: 0 auto; }
 }
+
+.admin-mobile-header { display: none; }
 
 .admin-sidebar {
   display: flex;
   flex-direction: column;
-  width: 260px;
-  flex-shrink: 0;
-  padding: 28px 16px;
-  background-color: var(--color-surface-alt);
+  width: 264px;
+  flex: 0 0 264px;
+  padding: 24px 16px;
+  background: var(--color-surface-alt);
 
-  &__brand {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 32px;
-  }
-
-  &__logo {
-    width: 88px;
-    height: 88px;
-    object-fit: contain;
-  }
-
-  &__nav {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
-  }
-
+  &__brand { display: flex; justify-content: center; margin-bottom: 24px; }
+  &__logo { width: 72px; height: 72px; object-fit: contain; }
+  &__nav { display: flex; flex-direction: column; gap: 6px; }
   &__link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: var(--font-body);
-    font-weight: 500;
-    font-size: 15px;
-    color: var(--color-text);
-    padding: 12px 16px;
-    border-radius: 100px;
-    text-decoration: none;
-    transition: background-color 0.15s ease, color 0.15s ease;
-
-    &:hover {
-      background-color: rgba(17, 25, 24, 0.05);
-    }
-
-    &[data-active="true"] {
-      color: var(--color-surface);
-      background-color: var(--color-primary);
-    }
-
-    &[data-active="true"] &-icon,
-    &[data-active="true"] img {
-      filter: brightness(0) invert(1);
-    }
+    display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 16px;
+    border-radius: 999px; color: var(--color-text); text-decoration: none; font-size: 14px; font-weight: 500;
+    transition: background .15s, color .15s;
+    &:hover { background: rgba(47, 79, 62, .07); }
+    &[data-active="true"] { color: var(--color-surface); background: var(--color-primary); }
+    &[data-active="true"] img { filter: brightness(0) invert(1); }
   }
-
-  &__icon {
-    flex-shrink: 0;
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-  }
-
-  &__logout {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 16px;
-    padding: 12px 16px;
-    border: 1px solid var(--color-border);
-    border-radius: 100px;
-    background: transparent;
-    color: var(--color-text);
-    font-family: var(--font-body);
-    font-weight: 500;
-    font-size: 15px;
-    cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-
-    &:hover {
-      background-color: rgba(168, 5, 5, 0.06);
-      border-color: var(--color-error);
-      color: var(--color-error);
-    }
-  }
+  &__icon { width: 18px; height: 18px; object-fit: contain; flex: none; }
+  &__backdrop { display: none; }
 }
 
 @media (max-width: 1024px) {
-  .admin-layout {
-    flex-direction: column;
-
-    &__content {
-      padding: 20px;
-    }
-
-    &__card {
-      padding: 20px;
-    }
+  .admin-layout { display: block; padding-top: 72px; &__content { padding: 40px 24px; } }
+  .admin-mobile-header {
+    position: fixed; inset: 0 0 auto; z-index: 130; display: flex; align-items: center; justify-content: space-between;
+    height: 72px; padding: 8px 16px; background: var(--color-surface-alt); box-shadow: 0 2px 8px rgba(38,58,15,.12);
+    .admin-sidebar__logo { width: 56px; height: 56px; }
+    button { display: grid; place-content: center; gap: 4px; width: 40px; height: 40px; border: 1px solid var(--color-border); border-radius: 50%; background: transparent; color: var(--color-primary); cursor: pointer; }
+    i { display: block; width: 16px; height: 1px; background: currentColor; }
+    span { font-size: 28px; font-weight: 300; line-height: 1; }
   }
-
   .admin-sidebar {
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    padding: 16px;
-    overflow-x: auto;
-    scrollbar-width: none;
-
-    &::-webkit-scrollbar {
-      display: none;
-    }
-
-    &__brand {
-      margin-bottom: 0;
-      margin-right: 20px;
-      flex-shrink: 0;
-    }
-
-    &__logo {
-      width: 48px;
-      height: 48px;
-    }
-
-    &__nav {
-      flex-direction: row;
-      flex-shrink: 0;
-    }
-
-    &__link {
-      white-space: nowrap;
-    }
-
-    &__logout {
-      margin-top: 0;
-      margin-left: 12px;
-      flex-shrink: 0;
-      white-space: nowrap;
-    }
+    position: fixed; z-index: 120; top: 72px; right: 0; bottom: auto; width: 312px; min-height: 0; padding: 16px;
+    border-radius: 0 0 0 20px; box-shadow: 0 8px 20px rgba(38,58,15,.14); transform: translateX(105%); transition: transform .2s ease;
+    &[data-open="true"] { transform: translateX(0); }
+    &__brand { display: none; }
+    &__backdrop { position: fixed; z-index: 110; inset: 72px 0 0; display: block; border: 0; background: rgba(17,25,24,.12); }
   }
+}
+
+@media (max-width: 600px) {
+  .admin-layout { &__content { padding: 20px 12px 32px; } }
+  .admin-sidebar { left: 0; right: 0; width: 100%; border-radius: 0; }
 }

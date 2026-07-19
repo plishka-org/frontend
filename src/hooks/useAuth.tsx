@@ -7,6 +7,7 @@ import {
   deleteAccountApi,
   loginApi,
   logoutApi,
+  updateProfileApi,
   type AuthUser,
   type LoginCredentials,
 } from "../services/api/authApi";
@@ -21,23 +22,27 @@ interface AuthContextType {
   deleteAccount: (currentPassword: string) => Promise<void>;
   login: (credentials: LoginCredentials) => Promise<User>;
   logout: () => Promise<void>;
+  updateProfile: (profile: { name: string; phone?: string }) => Promise<User>;
   requestLogin: (onSuccess?: (user: User) => void) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const isAdminDemoMode = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEMO_MODE === "true";
+  const demoAdmin: User = { id: 0, name: "Demo Admin", email: "admin@demo.local", role: "admin", roles: ["ADMIN"] };
+  const [user, setUser] = useState<User | null>(isAdminDemoMode ? demoAdmin : null);
+  const [isAuthChecked, setIsAuthChecked] = useState(isAdminDemoMode);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const loginSuccessRef = useRef<((user: User) => void) | null>(null);
 
   useEffect(() => {
+    if (isAdminDemoMode) return;
     checkAuthStatus()
       .then((response) => setUser(response.user))
       .catch(() => setUser(null))
       .finally(() => setIsAuthChecked(true));
-  }, []);
+  }, [isAdminDemoMode]);
 
   useEffect(() => onAuthCleared(() => setUser(null)), [])
 
@@ -56,6 +61,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearClientAuthState();
       setUser(null);
     }
+  }
+
+  async function updateProfile(profile: { name: string; phone?: string }) {
+    const nextUser = await updateProfileApi(profile);
+    setUser(nextUser);
+    return nextUser;
   }
 
   async function deleteAccount(currentPassword: string) {
@@ -96,6 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         deleteAccount,
         login,
         logout,
+        updateProfile,
         requestLogin,
       }}
     >

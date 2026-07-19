@@ -34,6 +34,9 @@ import { AdminPersonalDataPage } from "./components/pages/AdminPersonalDataPage/
 import { AdminProductsPage } from "./components/pages/AdminProductsPage/AdminProductsPage";
 import { AdminContentPage } from "./components/pages/AdminContentPage/AdminContentPage";
 import { AdminReviewsPage } from "./components/pages/AdminReviewsPage/AdminReviewsPage";
+import { AdminClientsPage } from "./components/pages/AdminClientsPage/AdminClientsPage";
+import { AdminOrdersPage } from "./components/pages/AdminOrdersPage/AdminOrdersPage";
+import { AdminCategoriesPage } from "./components/pages/AdminCategoriesPage/AdminCategoriesPage";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -96,8 +99,14 @@ function App() {
             <AdminPersonalDataPage />
           ) : adminKey === "products" ? (
             <AdminProductsPage />
+          ) : adminKey === "categories" ? (
+            <AdminCategoriesPage />
           ) : adminKey === "reviews" ? (
             <AdminReviewsPage />
+          ) : adminKey === "clients" ? (
+            <AdminClientsPage />
+          ) : adminKey === "orders" ? (
+            <AdminOrdersPage />
           ) : adminKey === "more" ? (
             <AdminContentPage />
           ) : (

@@ -30,11 +30,58 @@ import trashIcon from "../../../icons/trash.png";
 import editIcon from "../../../icons/Type=Edit.png";
 import roundIcon from "../../../icons/Round.png";
 import packIcon from "../../../icons/Type=Pack.png";
+import demoProductImage1 from "../../../assets/best-products-block/product-1.webp";
+import demoProductImage2 from "../../../assets/best-products-block/product-2.webp";
+import demoProductImage3 from "../../../assets/best-products-block/product-3.webp";
 import "./adminProductsPage.scss";
 
 const MAX_MAIN_PRODUCTS = 10;
 const ITEMS_PER_PAGE = 10;
 const NO_CATEGORY_ID = -1;
+const DEMO_CATEGORIES: Category[] = [
+  { id: 1, name: "Альтанки" },
+  { id: 2, name: "Ворота, паркани" },
+  { id: 3, name: "Вуличні стільці" },
+  { id: 4, name: "Вироби для садочків" },
+  { id: 5, name: "Вироби під замовлення" },
+  { id: 6, name: "Дитячі майданчики" },
+  { id: 7, name: "Двері" },
+  { id: 8, name: "Качелі" },
+  { id: 9, name: "Ліжка" },
+  { id: 10, name: "Навіси" },
+  { id: 11, name: "Перголи/поки" },
+  { id: 12, name: "Полиці для писанок" },
+  { id: 13, name: "Полиці для спецій" },
+  { id: 14, name: "Перегородки/решітки" },
+  { id: 15, name: "Пісочниці" },
+  { id: 16, name: "Речі декору" },
+  { id: 17, name: "Сувенірна продукція" },
+  { id: 18, name: "Столики та лавочки" },
+  { id: 19, name: "Скрині" },
+  { id: 20, name: "Стійки для одягу" },
+  { id: 21, name: "Шезлонги" },
+  { id: 22, name: "Ящики" },
+];
+const DEMO_PRODUCT_IMAGES = [demoProductImage1, demoProductImage2, demoProductImage3];
+const DEMO_PRODUCTS: Product[] = Array.from({ length: 16 }, (_, index) => ({
+  id: index + 1,
+  name: "Альтанка",
+  categoryId: index === 4 || index === 15 ? null : 1,
+  category: index === 4 || index === 15 ? null : DEMO_CATEGORIES[0],
+  price: 1500,
+  description: "Дерев’яна альтанка",
+  media: Array.from({ length: 6 }, (_, mediaIndex) => ({
+    id: index * 10 + mediaIndex + 1,
+    s3Key: null,
+    url: DEMO_PRODUCT_IMAGES[(index + mediaIndex) % DEMO_PRODUCT_IMAGES.length],
+    mediaType: "IMAGE",
+    isPrimary: mediaIndex === 0,
+    displayOrder: mediaIndex + 1,
+  })),
+  isOnHome: index < 4,
+  homeOrder: index < 4 ? index + 1 : null,
+}));
+const DEMO_HOME_PRODUCTS = DEMO_PRODUCTS.filter((product) => product.isOnHome);
 
 const PRICE_ACTIONS: PriceActionType[] = ["+%", "-%", "+", "-"];
 const PRICE_OPERATION_BY_ACTION: Record<PriceActionType, BulkPriceOperation> = {
@@ -156,6 +203,7 @@ interface DeleteConfirmModalProps {
   onCancel: () => void;
   onConfirm: () => void;
   loading?: boolean;
+  entity?: "product" | "media";
 }
 
 function DeleteConfirmModal({
@@ -163,8 +211,18 @@ function DeleteConfirmModal({
   onCancel,
   onConfirm,
   loading,
+  entity = "product",
 }: DeleteConfirmModalProps) {
   const isMultiple = count > 1;
+  const isMedia = entity === "media";
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   return (
     <div
@@ -174,7 +232,11 @@ function DeleteConfirmModal({
       <div className="delete-confirm-modal__card">
         <div className="delete-confirm-modal__header">
           <h2 className="delete-confirm-modal__title">
-            {isMultiple ? "Видалення виробів" : "Видалення виробу"}
+            {isMedia
+              ? "Видалення медіа"
+              : isMultiple
+                ? "Видалення виробів"
+                : "Видалення виробу"}
           </h2>
           <button
             type="button"
@@ -187,14 +249,18 @@ function DeleteConfirmModal({
         </div>
 
         <p className="delete-confirm-modal__question">
-          {isMultiple
-            ? `Чи дійсно ви бажаєте видалити ${count} виробів?`
-            : "Чи дійсно ви бажаєте видалити виріб?"}
+          {isMedia
+            ? "Чи дійсно ви бажаєте видалити медіафайл?"
+            : isMultiple
+              ? `Чи дійсно ви бажаєте видалити ${count} виробів?`
+              : "Чи дійсно ви бажаєте видалити виріб?"}
         </p>
         <p className="delete-confirm-modal__hint">
-          {isMultiple
-            ? "Якщо видалити вироби, їх неможливо буде повернути"
-            : "Якщо видалити виріб, його неможливо буде повернути"}
+          {isMedia
+            ? "Якщо видалити медіафайл, його неможливо буде повернути"
+            : isMultiple
+              ? "Якщо видалити вироби, їх неможливо буде повернути"
+              : "Якщо видалити виріб, його неможливо буде повернути"}
         </p>
 
         <div className="delete-confirm-modal__actions">
@@ -213,7 +279,11 @@ function DeleteConfirmModal({
             disabled={loading}
           >
             <TrashIcon size={16} />
-            {isMultiple ? "Так, видалити вироби" : "Так, видалити виріб"}
+            {isMedia
+              ? "Так, видалити медіа"
+              : isMultiple
+                ? "Так, видалити вироби"
+                : "Так, видалити виріб"}
           </button>
         </div>
       </div>
@@ -271,11 +341,19 @@ function MultiSelect({
 
   useEffect(() => {
     if (!open || !dropdownRef.current || !ref.current) return;
-    const triggerRect = ref.current.getBoundingClientRect();
-    const viewportH = window.innerHeight;
-    const spaceBelow = viewportH - triggerRect.bottom - 12;
-    const maxH = Math.max(spaceBelow, 180);
-    dropdownRef.current.style.maxHeight = `${maxH}px`;
+    const isMobile = window.matchMedia("(max-width: 600px)").matches;
+    dropdownRef.current.style.maxHeight = isMobile
+      ? "calc(100dvh - 132px)"
+      : "none";
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !window.matchMedia("(max-width: 600px)").matches) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
   }, [open]);
 
   const allSelected = selected.length === 0;
@@ -316,34 +394,55 @@ function MultiSelect({
         <ChevronIcon direction={open ? "up" : "down"} />
       </button>
       {open && (
-        <div className="multi-select__dropdown" ref={dropdownRef}>
-          <label className="multi-select__option">
-            <input type="checkbox" checked={allSelected} onChange={toggleAll} />
-            <span>Усі категорії</span>
-          </label>
-
-          <label className="multi-select__option multi-select__option--special">
-            <input
-              type="checkbox"
-              checked={selected.includes(NO_CATEGORY_ID)}
-              onChange={() => toggle(NO_CATEGORY_ID)}
-            />
-            <span>Без категорії</span>
-          </label>
-
-          <div className="multi-select__divider" />
-
-          {options.map((opt) => (
-            <label key={opt.id} className="multi-select__option">
+        <>
+          <button
+            type="button"
+            className="multi-select__backdrop"
+            aria-label="Закрити список категорій"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className="multi-select__dropdown"
+            ref={dropdownRef}
+            role="dialog"
+            aria-label="Фільтр категорій"
+          >
+            <div className="multi-select__mobile-header">
+              <strong>Відфільтрувати і показати:</strong>
+              <button
+                type="button"
+                className="multi-select__close"
+                aria-label="Закрити список категорій"
+                onClick={() => setOpen(false)}
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            <label className="multi-select__option">
+              <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+              <span>Усі категорії</span>
+            </label>
+            <label className="multi-select__option multi-select__option--special">
               <input
                 type="checkbox"
-                checked={selected.includes(opt.id)}
-                onChange={() => toggle(opt.id)}
+                checked={selected.includes(NO_CATEGORY_ID)}
+                onChange={() => toggle(NO_CATEGORY_ID)}
               />
-              <span>{opt.name}</span>
+              <span>Без категорії</span>
             </label>
-          ))}
-        </div>
+            <div className="multi-select__divider" />
+            {options.map((opt) => (
+              <label key={opt.id} className="multi-select__option">
+                <input
+                  type="checkbox"
+                  checked={selected.includes(opt.id)}
+                  onChange={() => toggle(opt.id)}
+                />
+                <span>{opt.name}</span>
+              </label>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -383,6 +482,15 @@ function DeleteTargetDropdown({
     dropdownRef.current.style.maxHeight = `${maxH}px`;
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !window.matchMedia("(max-width: 499px)").matches) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
   const currentLabel = options.find((o) => o.value === value)?.label || value;
 
   return (
@@ -396,25 +504,47 @@ function DeleteTargetDropdown({
         <ChevronIcon direction={open ? "up" : "down"} />
       </button>
       {open && (
-        <div className="delete-target-dropdown__dropdown" ref={dropdownRef}>
-          {options.map((opt) => (
-            <label key={opt.value} className="delete-target-dropdown__option">
-              <input
-                type="radio"
-                name="deleteTarget"
-                value={opt.value}
-                checked={value === opt.value}
-                onChange={() => {
-                  onChange(
-                    opt.value as BulkTargetType,
-                  );
-                  setOpen(false);
-                }}
-              />
-              <span>{opt.label}</span>
-            </label>
-          ))}
-        </div>
+        <>
+          <button
+            type="button"
+            className="delete-target-dropdown__backdrop"
+            aria-label="Закрити список видалення"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className="delete-target-dropdown__dropdown"
+            ref={dropdownRef}
+            role="dialog"
+            aria-label="Вибір виробів для видалення"
+          >
+            <div className="delete-target-dropdown__mobile-header">
+              <strong>Видалити:</strong>
+              <button
+                type="button"
+                className="delete-target-dropdown__close"
+                aria-label="Закрити список видалення"
+                onClick={() => setOpen(false)}
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            {options.map((opt) => (
+              <label key={opt.value} className="delete-target-dropdown__option">
+                <input
+                  type="radio"
+                  name="deleteTarget"
+                  value={opt.value}
+                  checked={value === opt.value}
+                  onChange={() => {
+                    onChange(opt.value as BulkTargetType);
+                    setOpen(false);
+                  }}
+                />
+                <span>{opt.label}</span>
+              </label>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -532,11 +662,19 @@ function CategoryRadioDropdown({
 
   useEffect(() => {
     if (!open || !dropdownRef.current || !ref.current) return;
-    const triggerRect = ref.current.getBoundingClientRect();
-    const viewportH = window.innerHeight;
-    const spaceBelow = viewportH - triggerRect.bottom - 12;
-    const maxH = Math.max(spaceBelow, 220);
-    dropdownRef.current.style.maxHeight = `${maxH}px`;
+    const isMobile = window.matchMedia("(max-width: 499px)").matches;
+    dropdownRef.current.style.maxHeight = isMobile
+      ? "calc(100dvh - 116px)"
+      : "none";
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !window.matchMedia("(max-width: 499px)").matches) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
   }, [open]);
 
   const currentLabel =
@@ -561,23 +699,47 @@ function CategoryRadioDropdown({
         <ChevronIcon direction={open ? "up" : "down"} />
       </button>
       {open && (
-        <div className="category-radio-dropdown__dropdown" ref={dropdownRef}>
-          {options.map((opt) => (
-            <label key={opt.id} className="category-radio-dropdown__option">
-              <input
-                type="radio"
-                name="categoryRadio"
-                checked={value === opt.id}
-                onChange={() => {
-                  onChange(opt.id);
-                  setOpen(false);
-                }}
-              />
-              <span className="category-radio-dropdown__radio" />
-              <span>{opt.name}</span>
-            </label>
-          ))}
-        </div>
+        <>
+          <button
+            type="button"
+            className="category-radio-dropdown__backdrop"
+            aria-label="Закрити список нової категорії"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className="category-radio-dropdown__dropdown"
+            ref={dropdownRef}
+            role="dialog"
+            aria-label="Вибір нової категорії"
+          >
+            <div className="category-radio-dropdown__mobile-header">
+              <strong>Змінити на категорію:</strong>
+              <button
+                type="button"
+                className="category-radio-dropdown__close"
+                aria-label="Закрити список нової категорії"
+                onClick={() => setOpen(false)}
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            {options.map((opt) => (
+              <label key={opt.id} className="category-radio-dropdown__option">
+                <input
+                  type="radio"
+                  name="categoryRadio"
+                  checked={value === opt.id}
+                  onChange={() => {
+                    onChange(opt.id);
+                    setOpen(false);
+                  }}
+                />
+                <span className="category-radio-dropdown__radio" />
+                <span>{opt.name}</span>
+              </label>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -612,6 +774,15 @@ function PriceActionDropdown({ value, onChange }: PriceActionDropdownProps) {
     dropdownRef.current.style.maxHeight = `${maxH}px`;
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !window.matchMedia("(max-width: 499px)").matches) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
   const LABELS: Record<PriceActionType, string> = {
     "+%": "+ %",
     "-%": "- %",
@@ -630,23 +801,47 @@ function PriceActionDropdown({ value, onChange }: PriceActionDropdownProps) {
         <ChevronIcon direction={open ? "up" : "down"} />
       </button>
       {open && (
-        <div className="price-action-dropdown__dropdown" ref={dropdownRef}>
-          {PRICE_ACTIONS.map((a) => (
-            <label key={a} className="price-action-dropdown__option">
-              <input
-                type="radio"
-                name="priceAction"
-                value={a}
-                checked={value === a}
-                onChange={() => {
-                  onChange(a);
-                  setOpen(false);
-                }}
-              />
-              <span>{LABELS[a]}</span>
-            </label>
-          ))}
-        </div>
+        <>
+          <button
+            type="button"
+            className="price-action-dropdown__backdrop"
+            aria-label="Закрити список зміни ціни"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className="price-action-dropdown__dropdown"
+            ref={dropdownRef}
+            role="dialog"
+            aria-label="Вибір способу зміни ціни"
+          >
+            <div className="price-action-dropdown__mobile-header">
+              <strong>Змінити ціну на:</strong>
+              <button
+                type="button"
+                className="price-action-dropdown__close"
+                aria-label="Закрити список зміни ціни"
+                onClick={() => setOpen(false)}
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            {PRICE_ACTIONS.map((a) => (
+              <label key={a} className="price-action-dropdown__option">
+                <input
+                  type="radio"
+                  name="priceAction"
+                  value={a}
+                  checked={value === a}
+                  onChange={() => {
+                    onChange(a);
+                    setOpen(false);
+                  }}
+                />
+                <span>{LABELS[a]}</span>
+              </label>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -681,14 +876,23 @@ function PriceTargetDropdown({ value, onChange }: PriceTargetDropdownProps) {
     dropdownRef.current.style.maxHeight = `${maxH}px`;
   }, [open]);
 
+  useEffect(() => {
+    if (!open || !window.matchMedia("(max-width: 499px)").matches) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
   const LABELS: Record<PriceTargetType, string> = {
-    all: "Усі",
+    all: "Усіх товарів",
     category: "За категорією",
     selected: "Обрані",
     unselected: "Не обрані",
   };
 
-  const OPTIONS: PriceTargetType[] = ["all", "selected", "unselected", "category"];
+  const OPTIONS: PriceTargetType[] = ["selected", "unselected", "all", "category"];
 
   const currentLabel = LABELS[value];
 
@@ -703,23 +907,47 @@ function PriceTargetDropdown({ value, onChange }: PriceTargetDropdownProps) {
         <ChevronIcon direction={open ? "up" : "down"} />
       </button>
       {open && (
-        <div className="price-target-dropdown__dropdown" ref={dropdownRef}>
-          {OPTIONS.map((opt) => (
-            <label key={opt} className="price-target-dropdown__option">
-              <input
-                type="radio"
-                name="priceTarget"
-                value={opt}
-                checked={value === opt}
-                onChange={() => {
-                  onChange(opt);
-                  setOpen(false);
-                }}
-              />
-              <span>{LABELS[opt]}</span>
-            </label>
-          ))}
-        </div>
+        <>
+          <button
+            type="button"
+            className="price-target-dropdown__backdrop"
+            aria-label="Закрити список товарів для зміни ціни"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className="price-target-dropdown__dropdown"
+            ref={dropdownRef}
+            role="dialog"
+            aria-label="Вибір товарів для зміни ціни"
+          >
+            <div className="price-target-dropdown__mobile-header">
+              <strong>Змінити ціну:</strong>
+              <button
+                type="button"
+                className="price-target-dropdown__close"
+                aria-label="Закрити список товарів для зміни ціни"
+                onClick={() => setOpen(false)}
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            {OPTIONS.map((opt) => (
+              <label key={opt} className="price-target-dropdown__option">
+                <input
+                  type="radio"
+                  name="priceTarget"
+                  value={opt}
+                  checked={value === opt}
+                  onChange={() => {
+                    onChange(opt);
+                    setOpen(false);
+                  }}
+                />
+                <span>{LABELS[opt]}</span>
+              </label>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -869,6 +1097,10 @@ function EditModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const replaceFileRef = useRef<HTMLInputElement>(null);
   const [replaceTarget, setReplaceTarget] = useState<{
+    type: "existing" | "new";
+    id: number;
+  } | null>(null);
+  const [pendingMediaDelete, setPendingMediaDelete] = useState<{
     type: "existing" | "new";
     id: number;
   } | null>(null);
@@ -1068,11 +1300,7 @@ function EditModal({
                   type="button"
                   aria-label="Видалити"
                   className="edit-modal__media-btn edit-modal__media-btn--delete"
-                  onClick={() =>
-                    m.type === "existing"
-                      ? handleDeleteExisting(m.id)
-                      : handleDeleteNew(m.id)
-                  }
+                  onClick={() => setPendingMediaDelete({ type: m.type, id: m.id })}
                 >
                   <TrashIcon />
                 </button>
@@ -1152,21 +1380,37 @@ function EditModal({
           )}
         </div>
       </div>
+      {pendingMediaDelete && (
+        <DeleteConfirmModal
+          count={1}
+          entity="media"
+          onCancel={() => setPendingMediaDelete(null)}
+          onConfirm={() => {
+            if (pendingMediaDelete.type === "existing") {
+              handleDeleteExisting(pendingMediaDelete.id);
+            } else {
+              handleDeleteNew(pendingMediaDelete.id);
+            }
+            setPendingMediaDelete(null);
+          }}
+        />
+      )}
     </div>
   );
 }
 
 export function AdminProductsPage() {
   const { showToast } = useToast();
+  const isAdminDemoMode = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEMO_MODE === "true";
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<Product[]>(isAdminDemoMode ? DEMO_PRODUCTS : []);
+  const [categories, setCategories] = useState<Category[]>(isAdminDemoMode ? DEMO_CATEGORIES : []);
   const [loading, setLoading] = useState(true);
   const [totalPages, setTotalPages] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
   const [noCategoryCount, setNoCategoryCount] = useState(0);
-  const [homeProductIds, setHomeProductIds] = useState<number[]>([]);
-  const [mainProducts, setMainProducts] = useState<Product[]>([]);
+  const [homeProductIds, setHomeProductIds] = useState<number[]>(isAdminDemoMode ? DEMO_HOME_PRODUCTS.map((product) => product.id) : []);
+  const [mainProducts, setMainProducts] = useState<Product[]>(isAdminDemoMode ? DEMO_HOME_PRODUCTS : []);
 
   const addFormRef = useRef<HTMLDivElement>(null);
   const allProductsSectionRef = useRef<HTMLDivElement>(null);
@@ -1175,18 +1419,20 @@ export function AdminProductsPage() {
   const [newPrice, setNewPrice] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
-  const [newPreviews, setNewPreviews] = useState<string[]>([]);
+  const [newPreviews, setNewPreviews] = useState<string[]>(isAdminDemoMode ? DEMO_PRODUCT_IMAGES : []);
+  const [newPrimaryIndex, setNewPrimaryIndex] = useState(0);
   const [addLoading, setAddLoading] = useState(false);
   const addFileRef = useRef<HTMLInputElement>(null);
   const replaceFileRef = useRef<HTMLInputElement>(null);
   const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
+  const [pendingPreviewDelete, setPendingPreviewDelete] = useState<number | null>(null);
 
   const [filterCategoryIds, setFilterCategoryIds] = useState<number[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<BulkTargetType>("selected");
   const [deleteCategoryId, setDeleteCategoryId] = useState<number | "">("");
   const [priceAction, setPriceAction] = useState<PriceActionType>("+%");
   const [priceValue, setPriceValue] = useState("");
-  const [priceTarget, setPriceTarget] = useState<PriceTargetType>("all");
+  const [priceTarget, setPriceTarget] = useState<PriceTargetType>("selected");
   const [priceCategoryId, setPriceCategoryId] = useState<number | "">("");
   const [priceLoading, setPriceLoading] = useState(false);
   const [changeCategoryFrom, setChangeCategoryFrom] =
@@ -1218,6 +1464,28 @@ export function AdminProductsPage() {
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
+    if (isAdminDemoMode) {
+      const demoCatalog = DEMO_PRODUCTS.filter((product) => !product.isOnHome);
+      const filteredDemoCatalog = demoCatalog.filter((product) => {
+        if (filterCategoryIds.includes(NO_CATEGORY_ID) && product.categoryId) return false;
+        const categoryFilters = filterCategoryIds.filter((id) => id !== NO_CATEGORY_ID);
+        if (categoryFilters.length > 0 && (!product.categoryId || !categoryFilters.includes(product.categoryId))) return false;
+        if (search.trim()) {
+          const query = search.trim().toLocaleLowerCase("uk");
+          return [product.name, product.category?.name ?? "Без категорії", String(product.price)]
+            .some((value) => value.toLocaleLowerCase("uk").includes(query));
+        }
+        return true;
+      });
+      setHomeProductIds(DEMO_HOME_PRODUCTS.map((product) => product.id));
+      setProducts(filteredDemoCatalog);
+      setMainProducts(DEMO_HOME_PRODUCTS);
+      setTotalPages(Math.ceil(filteredDemoCatalog.length / ITEMS_PER_PAGE));
+      setTotalProducts(filteredDemoCatalog.length);
+      setNoCategoryCount(DEMO_PRODUCTS.filter((product) => !product.categoryId).length);
+      setLoading(false);
+      return;
+    }
     try {
       const filters = buildCurrentFilters();
       const homeIds = await fetchHomeProductIdsApi();
@@ -1251,9 +1519,12 @@ export function AdminProductsPage() {
     } finally {
       setLoading(false);
     }
-  }, [buildCurrentFilters, currentPage, showToast]);
+  }, [buildCurrentFilters, currentPage, filterCategoryIds, isAdminDemoMode, search, showToast]);
 
   useEffect(() => {
+    if (isAdminDemoMode) {
+      return;
+    }
     fetchAdminCategoriesApi()
       .then(setCategories)
       .catch((e) => {
@@ -1261,13 +1532,16 @@ export function AdminProductsPage() {
           e instanceof Error ? e.message : "Помилка завантаження категорій",
         );
       });
-  }, [showToast]);
+  }, [isAdminDemoMode, showToast]);
 
   useEffect(() => {
     void loadProducts();
   }, [loadProducts]);
 
-  const paginated = products;
+  const productsOutsideHome = products.filter((product) => !product.isOnHome);
+  const paginated = isAdminDemoMode
+    ? productsOutsideHome.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+    : productsOutsideHome;
 
   const mainCount = homeProductIds.length;
   const isMainFull = mainCount >= MAX_MAIN_PRODUCTS;
@@ -1331,6 +1605,10 @@ export function AdminProductsPage() {
   function handleRemovePreview(idx: number) {
     setNewFiles((prev) => prev.filter((_, i) => i !== idx));
     setNewPreviews((prev) => prev.filter((_, i) => i !== idx));
+    setNewPrimaryIndex((current) => {
+      if (current === idx) return 0;
+      return current > idx ? current - 1 : current;
+    });
   }
 
   function handleReplacePreviewFile(idx: number, file: File) {
@@ -1371,6 +1649,7 @@ export function AdminProductsPage() {
       setNewDescription("");
       setNewFiles([]);
       setNewPreviews([]);
+      setNewPrimaryIndex(0);
       await loadProducts();
       showToast("Виріб додано");
     } catch (e) {
@@ -1388,6 +1667,20 @@ export function AdminProductsPage() {
     const nextHomeIds = willBeOn
       ? [...homeProductIds, product.id]
       : homeProductIds.filter((id) => id !== product.id);
+    if (isAdminDemoMode) {
+      const nextProducts = products.map((item) => item.id === product.id ? { ...item, isOnHome: willBeOn, homeOrder: null } : item);
+      const nextMainProducts = nextHomeIds.map((id, index) => {
+        const item = nextProducts.find((candidate) => candidate.id === id)!;
+        return { ...item, isOnHome: true, homeOrder: index + 1 };
+      });
+      setProducts(nextProducts.map((item) => {
+        const homeItem = nextMainProducts.find((candidate) => candidate.id === item.id);
+        return homeItem ?? { ...item, isOnHome: false, homeOrder: null };
+      }));
+      setHomeProductIds(nextHomeIds);
+      setMainProducts(nextMainProducts);
+      return;
+    }
     try {
       await replaceHomeProductsApi(nextHomeIds);
       await loadProducts();
@@ -1483,6 +1776,13 @@ export function AdminProductsPage() {
       deletedMediaIds: number[],
       mainMediaId: number | null,
     ) => {
+      if (isAdminDemoMode) {
+        const category = categories.find((item) => item.id === data.categoryId) ?? null;
+        setProducts((items) => items.map((item) => item.id === id ? { ...item, ...data, category } : item));
+        setMainProducts((items) => items.map((item) => item.id === id ? { ...item, ...data, category } : item));
+        showToast("Зміни збережено");
+        return;
+      }
       await updateAdminProductApi(id, data, homeProductIds);
 
       for (const mediaId of deletedMediaIds) {
@@ -1498,7 +1798,7 @@ export function AdminProductsPage() {
       await loadProducts();
       showToast("Зміни збережено");
     },
-    [homeProductIds, loadProducts, showToast],
+    [categories, homeProductIds, isAdminDemoMode, loadProducts, showToast],
   );
 
   function handleDragStart(e: DragEvent<HTMLTableRowElement>, id: number) {
@@ -1555,6 +1855,14 @@ export function AdminProductsPage() {
 
     const nextIds = reordered.map((p) => p.id);
 
+    if (isAdminDemoMode) {
+      const numbered = reordered.map((product, index) => ({ ...product, homeOrder: index + 1 }));
+      setMainProducts(numbered);
+      setHomeProductIds(nextIds);
+      setProducts((items) => items.map((item) => numbered.find((product) => product.id === item.id) ?? item));
+      return;
+    }
+
     try {
       await reorderHomeProductsApi(nextIds);
       await loadProducts();
@@ -1601,25 +1909,6 @@ export function AdminProductsPage() {
   return (
     <div className="admin-products">
       <h1 className="admin-products__title">Вироби</h1>
-
-      {noCategoryCount > 0 && (
-        <div className="admin-products__no-category-banner">
-          <p className="admin-products__no-category-text">
-            У вас є {noCategoryCount} {pluralizeProductWord(noCategoryCount)}{" "}
-            без категорії. Вироби не відображаються на сайті для покупців.
-            <br />
-            Змініть це зараз, щоб товари стали доступні для ваших клієнтів.
-          </p>
-          <button
-            type="button"
-            className="admin-products__no-category-btn"
-            onClick={handleGoToNoCategoryProducts}
-          >
-            Перейти до виробів без категорії
-            <ChevronIcon direction="right" />
-          </button>
-        </div>
-      )}
 
       <section className="admin-products__section" ref={addFormRef}>
         <h2 className="admin-products__section-title">Додати новий виріб</h2>
@@ -1685,6 +1974,15 @@ export function AdminProductsPage() {
                   <div className="admin-products__media-img">
                     <img src={url} alt="" />
                   </div>
+                  <label className="admin-products__media-radio">
+                    <input
+                      type="radio"
+                      name="new-product-primary-media"
+                      checked={newPrimaryIndex === i}
+                      onChange={() => setNewPrimaryIndex(i)}
+                    />
+                    <span>Встановити головним</span>
+                  </label>
                   <div className="admin-products__media-actions">
                     <button
                       type="button"
@@ -1707,7 +2005,7 @@ export function AdminProductsPage() {
                       type="button"
                       aria-label="Видалити"
                       className="admin-products__media-btn admin-products__media-btn--delete"
-                      onClick={() => handleRemovePreview(i)}
+                      onClick={() => setPendingPreviewDelete(i)}
                     >
                       <TrashIcon />
                     </button>
@@ -1950,13 +2248,15 @@ export function AdminProductsPage() {
           <h2 className="admin-products__section-title">
             Вироби на головній сторінці
           </h2>
-          <div className="admin-products__table-wrap">
+          <div className="admin-products__table-wrap admin-products__table-wrap--home">
             <table className="admin-products__table">
               <thead>
                 <tr>
                   <th className="admin-products__th--drag" />
                   <th>№</th>
-                  <th className="admin-products__th--check" />
+                  <th className="admin-products__th--check">
+                    <span className="admin-products__select-all-label">Вибрати всі</span>
+                  </th>
                   <th>Фото</th>
                   <th>Назва</th>
                   <th>Категорія</th>
@@ -2043,6 +2343,25 @@ export function AdminProductsPage() {
         </section>
       )}
 
+      {noCategoryCount > 0 && (
+        <div className="admin-products__no-category-banner">
+          <p className="admin-products__no-category-text">
+            У вас є {noCategoryCount} {pluralizeProductWord(noCategoryCount)}{" "}
+            без категорії. Вироби не відображаються на сайті для покупців.
+            <br />
+            Змініть це зараз, щоб товари стали доступні для ваших клієнтів.
+          </p>
+          <button
+            type="button"
+            className="admin-products__no-category-btn"
+            onClick={handleGoToNoCategoryProducts}
+          >
+            Перейти до виробів без категорії
+            <ChevronIcon direction="right" />
+          </button>
+        </div>
+      )}
+
       <section className="admin-products__section" ref={allProductsSectionRef}>
         <h2 className="admin-products__section-title">Усі вироби</h2>
         {products.length === 0 ? (
@@ -2067,7 +2386,7 @@ export function AdminProductsPage() {
           </div>
         ) : (
           <>
-            <div className="admin-products__table-wrap">
+            <div className="admin-products__table-wrap admin-products__table-wrap--all">
               <table className="admin-products__table">
                 <thead>
                   <tr>
@@ -2078,6 +2397,7 @@ export function AdminProductsPage() {
                         checked={allPageSelected}
                         onChange={toggleSelectAll}
                       />
+                      <span className="admin-products__select-all-label">Вибрати всі</span>
                     </th>
                     <th>Фото</th>
                     <th>Назва</th>
@@ -2214,6 +2534,18 @@ export function AdminProductsPage() {
           onCancel={() => setDeleteConfirm(null)}
           onConfirm={handleConfirmDelete}
           loading={deleteConfirmLoading}
+        />
+      )}
+
+      {pendingPreviewDelete !== null && (
+        <DeleteConfirmModal
+          count={1}
+          entity="media"
+          onCancel={() => setPendingPreviewDelete(null)}
+          onConfirm={() => {
+            handleRemovePreview(pendingPreviewDelete);
+            setPendingPreviewDelete(null);
+          }}
         />
       )}
     </div>

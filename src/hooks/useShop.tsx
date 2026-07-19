@@ -71,6 +71,7 @@ function normalizeCartQuantity(quantity: number) {
 
 export function ShopProvider({ children }: { children: ReactNode }) {
   const { user, isAuthChecked, requestLogin } = useAuth()
+  const isAdminDemoMode = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEMO_MODE === 'true'
   const [favoriteProductIds, setFavoriteProductIds] = useState<string[]>(() =>
     initFavoritesFromStorage(),
   )
@@ -142,15 +143,17 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   }, [user])
 
 useEffect(() => {
+    if (isAdminDemoMode) return
     if (!isAuthChecked) return
     if (!user) return
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     const cancel = loadFavorites()
     return cancel
-  }, [isAuthChecked, user, loadFavorites])
+  }, [isAdminDemoMode, isAuthChecked, user, loadFavorites])
 
   useEffect(() => {
+    if (isAdminDemoMode) return
     if (!isAuthChecked || !user) return
 
     const numericCartItems = cartItems.filter((item) => Number.isFinite(Number(item.productId)))
@@ -172,7 +175,7 @@ useEffect(() => {
     }
 
     return cancel
-  }, [cartItems, isAuthChecked, loadServerCart, user])
+  }, [cartItems, isAdminDemoMode, isAuthChecked, loadServerCart, user])
 
   function enrichServerCartLine(line: ApiCartLine): CartLine {
     const localProduct = getProductById(line.productId)
