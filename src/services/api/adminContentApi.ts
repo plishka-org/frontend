@@ -62,6 +62,30 @@ export const attachAboutMedia = (s3Key: string) => apiRequest<void>('/api/admin/
 export const reorderAboutMedia = (mediaIds: number[]) => apiRequest<void>('/api/admin/about/media/order', { method: 'PUT', body: { mediaIds } })
 export const deleteAboutMedia = (mediaId: number) => apiRequest<void>(`/api/admin/about/media/${mediaId}`, { method: 'DELETE' })
 
+export async function uploadAdminAboutMedia(files: File[]) {
+  for (const file of files) {
+    const presign = await apiRequest<PresignUploadResponse>('/api/admin/files/presign/upload', {
+      method: 'POST',
+      body: {
+        targetType: 'ABOUT',
+        targetId: 1,
+        mediaType: reviewMediaType(file),
+        contentType: file.type,
+        sizeBytes: file.size,
+        originalFilename: file.name,
+        checksumSha256Base64: await checksumSha256Base64(file),
+      },
+    })
+    const response = await fetch(presign.uploadUrl, {
+      method: presign.method,
+      headers: presign.requiredHeaders,
+      body: file,
+    })
+    if (!response.ok) throw new Error('Не вдалося завантажити медіа')
+    await attachAboutMedia(presign.s3Key)
+  }
+}
+
 export const getAdminContacts = () => apiRequest<{ content: ContactContent; socialLinks: SocialLink[] }>('/api/admin/contacts-page')
 export const updateAdminContacts = (body: ContactContent) => apiRequest<ContactContent>('/api/admin/contacts-page', { method: 'PUT', body })
 export const createSocialLink = (body: Omit<SocialLink, 'socialLinkId'>) => apiRequest<SocialLink>('/api/admin/contacts-page/social-links', { method: 'POST', body })

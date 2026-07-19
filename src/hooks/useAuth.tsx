@@ -7,6 +7,7 @@ import {
   deleteAccountApi,
   loginApi,
   logoutApi,
+  updateProfileApi,
   type AuthUser,
   type LoginCredentials,
 } from "../services/api/authApi";
@@ -21,6 +22,7 @@ interface AuthContextType {
   deleteAccount: (currentPassword: string) => Promise<void>;
   login: (credentials: LoginCredentials) => Promise<User>;
   logout: () => Promise<void>;
+  updateProfile: (profile: { name: string; phone?: string }) => Promise<User>;
   requestLogin: (onSuccess?: (user: User) => void) => void;
 }
 
@@ -61,6 +63,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  async function updateProfile(profile: { name: string; phone?: string }) {
+    const nextUser = await updateProfileApi(profile);
+    setUser(nextUser);
+    return nextUser;
+  }
+
   async function deleteAccount(currentPassword: string) {
     await deleteAccountApi({ currentPassword });
     clearClientAuthState();
@@ -99,6 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         deleteAccount,
         login,
         logout,
+        updateProfile,
         requestLogin,
       }}
     >

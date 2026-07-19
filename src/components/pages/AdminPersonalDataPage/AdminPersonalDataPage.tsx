@@ -1,381 +1,260 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { useAuth } from "../../../hooks/useAuth";
 import { changePasswordApi, requestEmailChangeApi } from "../../../services/api/authApi";
 import "./adminPersonalDataPage.scss";
 
-function EyeIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
+type FieldName = "name" | "phone" | "email" | "newPassword" | "repeatPassword";
+type Errors = Record<FieldName, string>;
+type Touched = Record<FieldName, boolean>;
 
-function EyeOffIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-      <line x1="1" y1="1" x2="23" y2="23" />
-    </svg>
+const EMPTY_ERRORS: Errors = { name: "", phone: "", email: "", newPassword: "", repeatPassword: "" };
+const EMPTY_TOUCHED: Touched = { name: false, phone: false, email: false, newPassword: false, repeatPassword: false };
+const NAME_PATTERN = /^[a-zA-Zа-яА-ЯіїєґІЇЄҐ]+(?:[- '][a-zA-Zа-яА-ЯіїєґІЇЄҐ]+)*$/;
+const EMAIL_PATTERN = /^[^\s@[\]]+@[^\s@[\].]+(?:\.[^\s@[\].]+)+$/;
+
+function EyeIcon({ crossed = false }: { crossed?: boolean }) {
+  return crossed ? (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" /></svg>
+  ) : (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
   );
 }
 
 function AlertIcon() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="12" />
-      <line x1="12" y1="16" x2="12.01" y2="16" />
-    </svg>
-  );
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 8v4m0 4h.01" /></svg>;
 }
 
-function LogoutArrowIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H9" />
-      <path d="M16 17L21 12L16 7" />
-      <path d="M21 12H9" />
-    </svg>
-  );
+function LogoutIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9" /></svg>;
 }
 
-function validateName(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return "Поле обов'язкове";
-  if (trimmed.length < 2) return "Мінімум 2 символи";
-  if (trimmed.length > 64) return "Максимум 64 символи";
+function localPhone(phone?: string) {
+  const digits = phone?.replace(/\D/g, "") ?? "";
+  return digits.startsWith("38") ? digits.slice(2, 12) : digits.slice(0, 10);
+}
+
+function validateName(value: string) {
+  const normalized = value.trim();
+  if (!normalized) return "Поле обов'язкове";
+  if (normalized.length < 2) return "Мінімум 2 символи";
+  if (normalized.length > 50) return "Максимум 50 символів";
+  if (!NAME_PATTERN.test(normalized)) return "Лише літери, пробіли, дефіс та апостроф";
   return "";
 }
 
-function validateEmail(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return "Поле обов'язкове";
-  if (trimmed.length < 6) return "Мінімум 6 символів";
-  if (trimmed.length > 128) return "Максимум 128 символів";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return "Невірний формат email";
-  return "";
-}
-
-function validatePhone(value: string): string {
-  if (!value) return "Поле обов'язкове";
-  if (!value.startsWith("0")) return 'Номер повинен починатися з "0"';
-  if (!/^\d+$/.test(value)) return "Тільки цифри";
+function validatePhone(value: string) {
+  if (!value) return "";
+  if (!value.startsWith("0")) return "Номер повинен починатися з 0";
   if (value.length !== 10) return "Номер має бути із 10 цифр";
   return "";
 }
 
-function validatePassword(value: string): string {
+function validateEmail(value: string) {
+  const normalized = value.trim();
+  if (!normalized) return "Поле обов'язкове";
+  if (normalized.length < 6) return "Мінімум 6 символів";
+  if (normalized.length > 128) return "Максимум 128 символів";
+  if (!EMAIL_PATTERN.test(normalized)) return "Невірний формат email";
+  return "";
+}
+
+function validatePassword(value: string) {
   if (!value) return "";
   if (value.length < 8) return "Мінімум 8 символів";
   if (value.length > 64) return "Максимум 64 символи";
-  if (!/[A-ZА-ЯЇІЄҐ]/.test(value)) return "Потрібна хоча б одна велика літера";
-  if (!/[a-zа-яїієґ]/.test(value)) return "Потрібна хоча б одна мала літера";
-  if (!/[0-9]/.test(value)) return "Потрібна хоча б одна цифра";
-  if (!/[^A-Za-zА-Яа-яЇїІіЄєҐґ0-9]/.test(value)) return "Потрібен хоча б один спецсимвол";
+  if (/\s/.test(value)) return "Пароль не може містити пробіли";
+  if (!/[A-Z]/.test(value)) return "Додайте щонайменше одну велику латинську літеру";
+  if (!/[a-z]/.test(value)) return "Додайте щонайменше одну малу латинську літеру";
+  if (!/\d/.test(value)) return "Додайте щонайменше одну цифру";
   return "";
 }
 
-function validateConfirm(value: string, pw: string): string {
-  if (!pw) return "";
-  if (!value) return "Поле обов'язкове";
-  if (value !== pw) return "Паролі не збігаються";
-  return "";
+function validateAll(name: string, phone: string, email: string, password: string, repeat: string, validatePasswordFields = false): Errors {
+  return {
+    name: validateName(name),
+    phone: validatePhone(phone),
+    email: validateEmail(email),
+    newPassword: validatePassword(password) || (validatePasswordFields && !password ? "Щоб змінити пароль, введіть новий пароль" : ""),
+    repeatPassword: validatePasswordFields && (!password || password !== repeat) ? "Паролі мають збігатися, повторіть новий пароль" : "",
+  };
 }
 
 export function AdminPersonalDataPage() {
-  const { user, logout } = useAuth();
-
+  const { user, logout, updateProfile } = useAuth();
   const [name, setName] = useState(user?.name ?? "");
-  const [nameTouched, setNameTouched] = useState(false);
-  const [nameError, setNameError] = useState("");
-
-  const [phone, setPhone] = useState("");
-  const [phoneTouched, setPhoneTouched] = useState(false);
-  const [phoneError, setPhoneError] = useState("");
-
+  const [phone, setPhone] = useState(() => localPhone(user?.phone));
   const [email, setEmail] = useState(user?.email ?? "");
-  const [emailTouched, setEmailTouched] = useState(false);
-  const [emailError, setEmailError] = useState("");
-
   const [newPassword, setNewPassword] = useState("");
-  const [newPasswordTouched, setNewPasswordTouched] = useState(false);
-  const [newPasswordError, setNewPasswordError] = useState("");
-  const [showNewPassword, setShowNewPassword] = useState(false);
-
   const [repeatPassword, setRepeatPassword] = useState("");
-  const [repeatPasswordTouched, setRepeatPasswordTouched] = useState(false);
-  const [repeatPasswordError, setRepeatPasswordError] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
-
+  const [touched, setTouched] = useState<Touched>(EMPTY_TOUCHED);
+  const [errors, setErrors] = useState<Errors>(EMPTY_ERRORS);
+  const [message, setMessage] = useState<{ kind: "error" | "success"; text: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [emailConfirmation, setEmailConfirmation] = useState<string | null>(null);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [globalError, setGlobalError] = useState<string | null>(null);
-  const [globalSuccess, setGlobalSuccess] = useState<string | null>(null);
+  const initialName = user?.name ?? "";
+  const initialPhone = localPhone(user?.phone);
+  const initialEmail = user?.email ?? "";
+  const hasChanges = name.trim() !== initialName || phone !== initialPhone || email.trim() !== initialEmail || Boolean(newPassword || repeatPassword);
+  const needsConfirmation = email.trim() !== initialEmail || Boolean(newPassword);
 
-  const hasChanges =
-    name !== (user?.name ?? "") ||
-    email !== (user?.email ?? "") ||
-    phone !== "" ||
-    newPassword !== "" ||
-    repeatPassword !== "" ||
-    currentPassword !== "";
+  useEffect(() => {
+    setName(user?.name ?? "");
+    setPhone(localPhone(user?.phone));
+    setEmail(user?.email ?? "");
+  }, [user]);
+
+  function changeField(field: FieldName, value: string) {
+    if (field === "name") setName(value);
+    if (field === "phone") setPhone(value.replace(/\D/g, "").slice(0, 10));
+    if (field === "email") setEmail(value);
+    if (field === "newPassword") setNewPassword(value);
+    if (field === "repeatPassword") setRepeatPassword(value);
+    setMessage(null);
+
+    if (touched[field] || (field === "newPassword" && touched.repeatPassword)) {
+      const nextName = field === "name" ? value : name;
+      const nextPhone = field === "phone" ? value.replace(/\D/g, "").slice(0, 10) : phone;
+      const nextEmail = field === "email" ? value : email;
+      const nextPassword = field === "newPassword" ? value : newPassword;
+      const nextRepeat = field === "repeatPassword" ? value : repeatPassword;
+      setErrors(validateAll(nextName, nextPhone, nextEmail, nextPassword, nextRepeat, touched.newPassword || touched.repeatPassword));
+    }
+  }
+
+  function blurField(field: FieldName) {
+    setTouched((state) => ({ ...state, [field]: true }));
+    setErrors(validateAll(name, phone, email, newPassword, repeatPassword, field === "newPassword" || field === "repeatPassword" || touched.newPassword || touched.repeatPassword));
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextErrors = validateAll(name, phone, email, newPassword, repeatPassword, Boolean(newPassword || repeatPassword));
+    setTouched({ name: true, phone: true, email: true, newPassword: Boolean(newPassword), repeatPassword: Boolean(newPassword || repeatPassword) });
+    setErrors(nextErrors);
+    if (Object.values(nextErrors).some(Boolean) || !hasChanges) return;
+    if (needsConfirmation) {
+      setCurrentPassword("");
+      setIsPasswordDialogOpen(true);
+      return;
+    }
+    void saveChanges("");
+  }
+
+  async function saveChanges(password: string) {
+    const profileChanged = name.trim() !== initialName || phone !== initialPhone;
+    const emailChanged = email.trim() !== initialEmail;
+    const passwordChanged = Boolean(newPassword);
+    setIsSubmitting(true);
+    setMessage(null);
+
+    try {
+      if (profileChanged) await updateProfile({ name: name.trim(), phone: phone ? `+38${phone}` : undefined });
+      if (emailChanged) await requestEmailChangeApi({ newEmail: email.trim(), currentPassword: password });
+      if (passwordChanged) {
+        await changePasswordApi({ currentPassword: password, newPassword, confirmPassword: repeatPassword });
+        setIsPasswordDialogOpen(false);
+        window.location.hash = "#/login";
+        return;
+      }
+      setIsPasswordDialogOpen(false);
+      if (emailChanged) {
+        setEmailConfirmation(email.trim());
+        setEmail(initialEmail);
+      }
+      setCurrentPassword("");
+      setNewPassword("");
+      setRepeatPassword("");
+      setTouched(EMPTY_TOUCHED);
+      if (!emailChanged) setMessage({ kind: "success", text: "Зміни збережено." });
+    } catch (error) {
+      setMessage({ kind: "error", text: error instanceof Error ? error.message : "Не вдалося зберегти зміни." });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   async function handleLogout() {
     await logout();
     window.location.hash = "#/login";
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    const nErr = validateName(name);
-    const eErr = validateEmail(email);
-    const phErr = phone ? validatePhone(phone) : "";
-    const pwErr = validatePassword(newPassword);
-    const cErr = validateConfirm(repeatPassword, newPassword);
-    const needsCurrentPassword = email !== (user?.email ?? "") || Boolean(newPassword);
-
-    setNameTouched(true);
-    setEmailTouched(true);
-    setPhoneTouched(Boolean(phone));
-    setNewPasswordTouched(Boolean(newPassword));
-    setRepeatPasswordTouched(Boolean(newPassword));
-
-    setNameError(nErr);
-    setEmailError(eErr);
-    setPhoneError(phErr);
-    setNewPasswordError(pwErr);
-    setRepeatPasswordError(cErr);
-
-    if (nErr || eErr || phErr || pwErr || cErr || (needsCurrentPassword && !currentPassword)) {
-      if (needsCurrentPassword && !currentPassword) setGlobalError("Введіть поточний пароль для підтвердження змін.");
-      return
-    }
-
-    setGlobalError(null);
-    setGlobalSuccess(null);
-    setIsSubmitting(true);
-
-    try {
-      if (email !== (user?.email ?? "")) {
-        await requestEmailChangeApi({ newEmail: email.trim(), currentPassword });
-      }
-      if (newPassword) {
-        await changePasswordApi({ currentPassword, newPassword, confirmPassword: repeatPassword });
-      }
-      setGlobalSuccess("Зміни збережено.");
-      setNewPassword("");
-      setRepeatPassword("");
-      setCurrentPassword("");
-    } catch (err) {
-      setGlobalError(err instanceof Error ? err.message : "Сталася помилка. Спробуйте ще раз.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+  const fieldError = (field: FieldName) => touched[field] ? errors[field] : "";
 
   return (
-    <div className="admin-personal-data">
+    <section className="admin-personal-data">
       <h1 className="admin-personal-data__title">Особисті дані</h1>
-
       <form className="admin-personal-data__card" onSubmit={handleSubmit} noValidate>
         <h2 className="admin-personal-data__subtitle">Мої дані</h2>
+        {message && <div className={`admin-personal-data__notice admin-personal-data__notice--${message.kind}`} role={message.kind === "error" ? "alert" : "status"}>{message.text}</div>}
 
-        {globalError && (
-          <div className="admin-personal-data__global-error" role="alert">{globalError}</div>
-        )}
-        {globalSuccess && (
-          <div className="admin-personal-data__global-success" role="status">{globalSuccess}</div>
-        )}
-
-        <div className="admin-personal-data__row">
-          <label className="admin-personal-data__field">
-            <span>Поточний пароль</span>
-            <div className="admin-personal-data__password">
-              <input
-                type={showCurrentPassword ? "text" : "password"}
-                placeholder="Потрібен для зміни email або пароля"
-                value={currentPassword}
-                disabled={isSubmitting}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-              />
-              <button type="button" onClick={() => setShowCurrentPassword((value) => !value)} aria-label="Показати пароль" tabIndex={-1}>
-                {showCurrentPassword ? <EyeOffIcon /> : <EyeIcon />}
-              </button>
+        <div className="admin-personal-data__profile-grid">
+          <Field id="admin-name" label="Ім’я" error={fieldError("name")}>
+            <input id="admin-name" autoComplete="name" value={name} disabled={isSubmitting} onChange={(event) => changeField("name", event.target.value)} onBlur={() => blurField("name")} />
+          </Field>
+          <Field id="admin-phone" label="Телефон" error={fieldError("phone")}>
+            <div className={`admin-personal-data__phone${fieldError("phone") ? " is-error" : ""}`}>
+              <span>+38</span>
+              <input id="admin-phone" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="0506767677" value={phone} disabled={isSubmitting} onChange={(event) => changeField("phone", event.target.value)} onBlur={() => blurField("phone")} />
             </div>
-          </label>
-
-          <label className="admin-personal-data__field">
-            <span>Ім'я</span>
-            <input
-              type="text"
-              value={name}
-              disabled={isSubmitting}
-              className={nameTouched && nameError ? "is-error" : ""}
-              aria-invalid={Boolean(nameTouched && nameError)}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (nameTouched) setNameError(validateName(e.target.value));
-              }}
-              onBlur={() => {
-                setNameTouched(true);
-                setNameError(validateName(name));
-              }}
-            />
-            {nameTouched && nameError && (
-              <span className="admin-personal-data__field-error" role="alert">
-                <AlertIcon />{nameError}
-              </span>
-            )}
-          </label>
-
-          <label className="admin-personal-data__field">
-            <span>Телефон</span>
-            <div className={`admin-personal-data__phone${phoneTouched && phoneError ? " is-error" : ""}`}>
-              <span className="admin-personal-data__phone-prefix">+38</span>
-              <input
-                type="tel"
-                value={phone}
-                disabled={isSubmitting}
-                placeholder="  0ХХХХХХХХХ"
-                onChange={(e) => {
-                  const next = e.target.value.replace(/\D/g, "").slice(0, 10);
-                  setPhone(next);
-                  if (phoneTouched) setPhoneError(validatePhone(next));
-                }}
-                onBlur={() => {
-                  if (!phone) return;
-                  setPhoneTouched(true);
-                  setPhoneError(validatePhone(phone));
-                }}
-              />
-            </div>
-            {phoneTouched && phoneError && (
-              <span className="admin-personal-data__field-error" role="alert">
-                <AlertIcon />{phoneError}
-              </span>
-            )}
-          </label>
-
-          <label className="admin-personal-data__field">
-            <span>Email</span>
-            <input
-              type="email"
-              value={email}
-              disabled={isSubmitting}
-              className={emailTouched && emailError ? "is-error" : ""}
-              aria-invalid={Boolean(emailTouched && emailError)}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (emailTouched) setEmailError(validateEmail(e.target.value));
-              }}
-              onBlur={() => {
-                setEmailTouched(true);
-                setEmailError(validateEmail(email));
-              }}
-            />
-            {emailTouched && emailError && (
-              <span className="admin-personal-data__field-error" role="alert">
-                <AlertIcon />{emailError}
-              </span>
-            )}
-          </label>
+          </Field>
+          <Field id="admin-email" label="Email" error={fieldError("email")}>
+            <input id="admin-email" type="email" autoComplete="email" value={email} disabled={isSubmitting} onChange={(event) => changeField("email", event.target.value)} onBlur={() => blurField("email")} />
+          </Field>
         </div>
 
-        <div className="admin-personal-data__row">
-          <label className="admin-personal-data__field">
-            <span>Новий пароль</span>
-            <div className="admin-personal-data__password">
-              <input
-                type={showNewPassword ? "text" : "password"}
-                placeholder="Введіть новий пароль"
-                value={newPassword}
-                disabled={isSubmitting}
-                className={newPasswordTouched && newPasswordError ? "is-error" : ""}
-                onChange={(e) => {
-                  setNewPassword(e.target.value);
-                  if (newPasswordTouched) setNewPasswordError(validatePassword(e.target.value));
-                  if (repeatPasswordTouched) setRepeatPasswordError(validateConfirm(repeatPassword, e.target.value));
-                }}
-                onBlur={() => {
-                  if (!newPassword) return;
-                  setNewPasswordTouched(true);
-                  setNewPasswordError(validatePassword(newPassword));
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword((v) => !v)}
-                aria-label="Показати пароль"
-                tabIndex={-1}
-              >
-                {showNewPassword ? <EyeOffIcon /> : <EyeIcon />}
-              </button>
-            </div>
-            {newPasswordTouched && newPasswordError && (
-              <span className="admin-personal-data__field-error" role="alert">
-                <AlertIcon />{newPasswordError}
-              </span>
-            )}
-          </label>
-
-          <label className="admin-personal-data__field">
-            <span>Повторити пароль</span>
-            <div className="admin-personal-data__password">
-              <input
-                type={showRepeatPassword ? "text" : "password"}
-                placeholder="Повторіть новий пароль"
-                value={repeatPassword}
-                disabled={isSubmitting}
-                className={repeatPasswordTouched && repeatPasswordError ? "is-error" : ""}
-                onChange={(e) => {
-                  setRepeatPassword(e.target.value);
-                  if (repeatPasswordTouched) setRepeatPasswordError(validateConfirm(e.target.value, newPassword));
-                }}
-                onBlur={() => {
-                  if (!newPassword) return;
-                  setRepeatPasswordTouched(true);
-                  setRepeatPasswordError(validateConfirm(repeatPassword, newPassword));
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowRepeatPassword((v) => !v)}
-                aria-label="Показати пароль"
-                tabIndex={-1}
-              >
-                {showRepeatPassword ? <EyeOffIcon /> : <EyeIcon />}
-              </button>
-            </div>
-            {repeatPasswordTouched && repeatPasswordError && (
-              <span className="admin-personal-data__field-error" role="alert">
-                <AlertIcon />{repeatPasswordError}
-              </span>
-            )}
-          </label>
+        <div className="admin-personal-data__password-grid">
+          <Field id="admin-new-password" label="Новий пароль" error={fieldError("newPassword")}>
+            <PasswordInput id="admin-new-password" placeholder="Введіть новий пароль" value={newPassword} show={showNewPassword} disabled={isSubmitting} hasError={Boolean(fieldError("newPassword"))} onToggle={() => setShowNewPassword((value) => !value)} onChange={(value) => changeField("newPassword", value)} onBlur={() => blurField("newPassword")} />
+          </Field>
+          <Field id="admin-repeat-password" label="Повторити пароль" error={fieldError("repeatPassword")}>
+            <PasswordInput id="admin-repeat-password" placeholder="Повторіть новий пароль" value={repeatPassword} show={showRepeatPassword} disabled={isSubmitting} hasError={Boolean(fieldError("repeatPassword"))} onToggle={() => setShowRepeatPassword((value) => !value)} onChange={(value) => changeField("repeatPassword", value)} onBlur={() => blurField("repeatPassword")} />
+          </Field>
         </div>
 
-        <button
-          type="submit"
-          className="admin-personal-data__submit"
-          disabled={!hasChanges || isSubmitting}
-        >
-          {isSubmitting ? "Збереження..." : "Підтвердити зміни"}
-        </button>
-
-        <button
-          type="button"
-          className="admin-personal-data__logout"
-          onClick={handleLogout}
-        >
-          <LogoutArrowIcon />
-          <span>Вийти з акаунта</span>
-        </button>
+        <div className="admin-personal-data__actions">
+          <button className="admin-personal-data__submit" type="submit" disabled={!hasChanges || isSubmitting}>{isSubmitting ? "Збереження…" : "Підтвердити зміни"}</button>
+          <button className="admin-personal-data__logout" type="button" disabled={isSubmitting} onClick={() => void handleLogout()}><LogoutIcon />Вийти з акаунта</button>
+        </div>
       </form>
-    </div>
+
+      {isPasswordDialogOpen && (
+        <div className="admin-personal-data__dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setIsPasswordDialogOpen(false)}>
+          <div className="admin-personal-data__dialog" role="dialog" aria-modal="true" aria-labelledby="admin-confirm-title">
+            <button className="admin-personal-data__dialog-close" type="button" aria-label="Закрити" onClick={() => setIsPasswordDialogOpen(false)}>×</button>
+            <h2 id="admin-confirm-title">Підтвердіть зміни</h2>
+            <p>Введіть поточний пароль для зміни email або пароля.</p>
+            <label htmlFor="admin-current-password">Поточний пароль</label>
+            <PasswordInput id="admin-current-password" placeholder="Введіть поточний пароль" value={currentPassword} show={showCurrentPassword} disabled={isSubmitting} hasError={Boolean(message?.kind === "error")} onToggle={() => setShowCurrentPassword((value) => !value)} onChange={(value) => { setCurrentPassword(value); setMessage(null); }} />
+            {message?.kind === "error" && <span className="admin-personal-data__dialog-error" role="alert">{message.text}</span>}
+            <button className="admin-personal-data__dialog-submit" type="button" disabled={!currentPassword || isSubmitting} onClick={() => void saveChanges(currentPassword)}>{isSubmitting ? "Збереження…" : "Підтвердити"}</button>
+          </div>
+        </div>
+      )}
+
+      {emailConfirmation && (
+        <div className="admin-personal-data__dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setEmailConfirmation(null)}>
+          <div className="admin-personal-data__dialog admin-personal-data__dialog--email" role="dialog" aria-modal="true" aria-labelledby="admin-email-confirmation-title">
+            <button className="admin-personal-data__dialog-close" type="button" aria-label="Закрити" onClick={() => setEmailConfirmation(null)}>×</button>
+            <h2 id="admin-email-confirmation-title">Зміна пошти</h2>
+            <p>На вказану електронну пошту <strong>{emailConfirmation}</strong> відправлено посилання для підтвердження. Перейдіть за посиланням, щоб підтвердити електронну пошту.</p>
+          </div>
+        </div>
+      )}
+    </section>
   );
+}
+
+function Field({ id, label, error, children }: { id: string; label: string; error: string; children: React.ReactNode }) {
+  return <div className={`admin-personal-data__field${error ? " is-error" : ""}`}><label htmlFor={id}>{label}</label>{children}{error && <span className="admin-personal-data__field-error" role="alert"><AlertIcon />{error}</span>}</div>;
+}
+
+function PasswordInput({ id, placeholder, value, show, disabled, hasError, onToggle, onChange, onBlur }: { id: string; placeholder: string; value: string; show: boolean; disabled: boolean; hasError: boolean; onToggle: () => void; onChange: (value: string) => void; onBlur?: () => void }) {
+  return <div className={`admin-personal-data__password${hasError ? " is-error" : ""}`}><input id={id} type={show ? "text" : "password"} autoComplete={id.includes("current") ? "current-password" : "new-password"} placeholder={placeholder} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} /><button type="button" aria-label={show ? "Приховати пароль" : "Показати пароль"} onClick={onToggle}><EyeIcon crossed={show} /></button></div>;
 }
