@@ -5,6 +5,7 @@ import categoriesIcon from "../../../icons/Type=Categories.png";
 import reviewsIcon from "../../../icons/Type=Reviews.png";
 import clientsIcon from "../../../icons/Type=People.png";
 import ordersIcon from "../../../icons/Type=Orders.png";
+import callRequestsIcon from "../../../assets/block-contacts-icons/telefon.svg";
 import userIcon from "../../../icons/Type=User.png";
 import editIcon from "../../../icons/Type=Edit.png";
 
@@ -21,6 +22,7 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { key: "reviews", href: "#/admin/reviews", label: "Відгуки", icon: reviewsIcon },
   { key: "clients", href: "#/admin/clients", label: "Клієнти", icon: clientsIcon },
   { key: "orders", href: "#/admin/orders", label: "Замовлення", icon: ordersIcon },
+  { key: "call-requests", href: "#/admin/call-requests", label: "Заявки на дзвінки", icon: callRequestsIcon },
   { key: "settings", href: "#/admin/settings", label: "Особисті дані", icon: userIcon },
   { key: "more", href: "#/admin/more", label: "Додатково", icon: editIcon },
 ];
