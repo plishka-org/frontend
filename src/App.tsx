@@ -37,6 +37,7 @@ import { AdminReviewsPage } from "./components/pages/AdminReviewsPage/AdminRevie
 import { AdminClientsPage } from "./components/pages/AdminClientsPage/AdminClientsPage";
 import { AdminOrdersPage } from "./components/pages/AdminOrdersPage/AdminOrdersPage";
 import { AdminCategoriesPage } from "./components/pages/AdminCategoriesPage/AdminCategoriesPage";
+import { AdminCallbackRequestsPage } from "./components/pages/AdminCallbackRequestsPage/AdminCallbackRequestsPage";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -107,6 +108,8 @@ function App() {
             <AdminClientsPage />
           ) : adminKey === "orders" ? (
             <AdminOrdersPage />
+          ) : adminKey === "call-requests" ? (
+            <AdminCallbackRequestsPage />
           ) : adminKey === "more" ? (
             <AdminContentPage />
           ) : (
