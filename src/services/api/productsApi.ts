@@ -11,6 +11,7 @@ export type CategoryDto = {
 
 export type ProductMediaPreviewDto = MediaPreviewDto & {
   productMediaId?: number;
+  thumbnailS3Key?: string | null;
 };
 
 export type ProductMediaDto = ProductMediaPreviewDto & {
@@ -52,7 +53,19 @@ export type ProductUi = {
   description: string;
   image: string;
   gallery: string[];
+  media?: ProductMediaUi[];
   price: number;
+};
+
+export type ProductMediaUi = {
+  id?: number;
+  s3Key?: string | null;
+  thumbnailS3Key?: string | null;
+  url: string;
+  thumbnailUrl?: string;
+  mediaType: "IMAGE" | "VIDEO";
+  isPrimary: boolean;
+  displayOrder: number;
 };
 
 export type ProductListParams = {
@@ -81,7 +94,7 @@ export async function normalizeProductSummary(
   dto: ProductSummaryDto,
 ): Promise<ProductUi> {
   const image = await resolveMediaUrl(
-    dto.primaryMedia?.s3Key,
+    dto.primaryMedia?.thumbnailS3Key ?? dto.primaryMedia?.s3Key,
     fallbackProductImage,
   );
 
@@ -92,27 +105,95 @@ export async function normalizeProductSummary(
     description: "",
     image,
     gallery: [image],
+    media: dto.primaryMedia
+      ? [
+          {
+            id: dto.primaryMedia.productMediaId,
+            s3Key: dto.primaryMedia.s3Key,
+            thumbnailS3Key: dto.primaryMedia.thumbnailS3Key,
+            url: image,
+            thumbnailUrl: image,
+            mediaType: dto.primaryMedia.mediaType ?? "IMAGE",
+            isPrimary: true,
+            displayOrder: 0,
+          },
+        ]
+      : undefined,
     price: Number(dto.price),
   };
 }
 
-export async function normalizeProductDetail(
+export function normalizeProductDetailBase(
   dto: ProductDetailDto,
-): Promise<ProductUi> {
-  const gallery = await Promise.all(
-    (dto.media.length ? dto.media : [{ s3Key: null }]).map((media) =>
-      resolveMediaUrl(media.s3Key, fallbackProductImage),
-    ),
-  );
+): ProductUi {
+  const media: ProductMediaUi[] = dto.media.length
+    ? [...dto.media]
+        .sort((first, second) => first.displayOrder - second.displayOrder)
+        .map((item) => ({
+          id: item.productMediaId,
+          s3Key: item.s3Key,
+          thumbnailS3Key: item.thumbnailS3Key,
+          url: item.mediaType === "VIDEO" ? "" : fallbackProductImage,
+          thumbnailUrl: item.mediaType === "VIDEO" ? undefined : fallbackProductImage,
+          mediaType: item.mediaType ?? "IMAGE",
+          isPrimary: item.isPrimary,
+          displayOrder: item.displayOrder,
+        }))
+    : [
+        {
+          url: fallbackProductImage,
+          thumbnailUrl: fallbackProductImage,
+          mediaType: "IMAGE",
+          isPrimary: true,
+          displayOrder: 0,
+        },
+      ];
+
+  const primaryImage =
+    media.find((item) => item.isPrimary && item.mediaType === "IMAGE") ??
+    media.find((item) => item.mediaType === "IMAGE");
 
   return {
     id: String(dto.productId),
     category: dto.category.name,
     name: dto.name,
     description: dto.description,
-    image: gallery[0] ?? fallbackProductImage,
-    gallery,
+    image: primaryImage?.url ?? fallbackProductImage,
+    gallery: media.map((item) => item.url).filter(Boolean),
+    media,
     price: Number(dto.price),
+  };
+}
+
+export async function resolveProductMediaItem(
+  media: ProductMediaUi,
+): Promise<ProductMediaUi> {
+  const fallbackUrl =
+    media.mediaType === "IMAGE" ? media.url || fallbackProductImage : "";
+  const url = await resolveMediaUrl(media.s3Key, fallbackUrl);
+  const thumbnailUrl = media.thumbnailS3Key
+    ? await resolveMediaUrl(media.thumbnailS3Key, media.mediaType === "IMAGE" ? url : "")
+    : media.mediaType === "IMAGE"
+      ? url
+      : undefined;
+
+  return { ...media, url, thumbnailUrl };
+}
+
+export async function normalizeProductDetail(
+  dto: ProductDetailDto,
+): Promise<ProductUi> {
+  const product = normalizeProductDetailBase(dto);
+  const media = await Promise.all((product.media ?? []).map(resolveProductMediaItem));
+  const primaryImage =
+    media.find((item) => item.isPrimary && item.mediaType === "IMAGE") ??
+    media.find((item) => item.mediaType === "IMAGE");
+
+  return {
+    ...product,
+    image: primaryImage?.url ?? fallbackProductImage,
+    gallery: media.map((item) => item.url).filter(Boolean),
+    media,
   };
 }
 
@@ -135,6 +216,14 @@ export async function getProductApi(productId: string) {
     { auth: false },
   );
   return normalizeProductDetail(product);
+}
+
+export async function getProductDetailApi(productId: string) {
+  const product = await apiRequest<ProductDetailDto>(
+    `/api/products/${encodeURIComponent(productId)}`,
+    { auth: false },
+  );
+  return normalizeProductDetailBase(product);
 }
 
 export async function getRelatedProductsApi(productId: string, size = 4) {

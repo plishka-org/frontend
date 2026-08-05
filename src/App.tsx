@@ -8,6 +8,7 @@ import { AboutPage } from "./components/pages/AboutPage/AboutPage";
 import { GalleryPage } from "./components/pages/GalleryPage/GalleryPage";
 import { NotFoundPage } from "./components/pages/NotFoundPage/NotFoundPage";
 import { ProductPage } from "./components/pages/ProductPage/ProductPage";
+import { ProductPageSkeleton } from "./components/pages/ProductPage/ProductPageSkeleton";
 import { ReviewsPage } from "./components/pages/ReviewsPage/ReviewsPage";
 import { AccountPage } from "./components/pages/AccountPage/AccountPage";
 import { LoginPage } from "./components/pages/LoginPage/LoginPage";
@@ -15,7 +16,7 @@ import { ForgotPasswordPage } from "./components/pages/ForgotPasswordPage/Forgot
 import { RegisterPage } from "./components/pages/RegisterPage/RegisterPage";
 import { FavoritesPage } from "./components/pages/FavoriteProductPage/FavoritesPage";
 import { getProductById } from "./data/bestProducts";
-import { getProductApi, type ProductUi } from "./services/api/productsApi";
+import { getProductDetailApi, type ProductUi } from "./services/api/productsApi";
 import { hasApiBaseUrl } from "./services/api/client";
 import { getSettingsApi } from './services/api/contentApi'
 import { getAppPath } from "./utils/productUrl";
@@ -167,7 +168,13 @@ function ProductRoute({
 }) {
   const localProduct = useMemo(() => getProductById(productId), [productId]);
   const [product, setProduct] = useState<ProductUi | undefined>(localProduct);
-  const [isNotFound, setIsNotFound] = useState(!localProduct);
+  const [status, setStatus] = useState<"loading" | "loaded" | "not-found">(
+    localProduct
+      ? "loaded"
+      : hasApiBaseUrl() && Number.isFinite(Number(productId))
+        ? "loading"
+        : "not-found",
+  );
 
   useEffect(() => {
     if (!hasApiBaseUrl() || !Number.isFinite(Number(productId))) {
@@ -176,17 +183,17 @@ function ProductRoute({
 
     let isCancelled = false;
 
-    getProductApi(productId)
+    getProductDetailApi(productId)
       .then((nextProduct) => {
         if (!isCancelled) {
           setProduct(nextProduct);
-          setIsNotFound(false);
+          setStatus("loaded");
         }
       })
       .catch(() => {
         if (!isCancelled) {
           setProduct(localProduct);
-          setIsNotFound(!localProduct);
+          setStatus(localProduct ? "loaded" : "not-found");
         }
       });
 
@@ -195,7 +202,11 @@ function ProductRoute({
     };
   }, [localProduct, productId]);
 
-  if (isNotFound || !product) {
+  if (status === "loading") {
+    return <ProductPageSkeleton siteVariant={siteVariant} />;
+  }
+
+  if (status === "not-found" || !product) {
     return (
       <NotFoundPage
         description="Можливо, посилання застаріле або товар більше недоступний."

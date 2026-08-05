@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useToast } from '../../../hooks/useToast'
 import {
   getAdminCallbackRequests,
@@ -8,6 +8,8 @@ import {
 import './adminCallbackRequestsPage.scss'
 
 const PAGE_SIZE = 10
+const MAX_PAGE_INDEX = 50
+const MAX_SEARCH_LENGTH = 100
 
 const DEMO_REQUESTS: AdminCallbackRequest[] = Array.from({ length: 100 }, (_, index) => ({
   id: 23456 + index,
@@ -140,24 +142,41 @@ export function AdminCallbackRequestsPage() {
   const [totalElements, setTotalElements] = useState(isDemo ? DEMO_REQUESTS.length : 0)
   const [loading, setLoading] = useState(!isDemo)
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 600px)').matches)
+  const requestIdRef = useRef(0)
 
   const load = useCallback(async () => {
     if (isDemo) return
+    const requestId = requestIdRef.current + 1
+    requestIdRef.current = requestId
     setLoading(true)
     try {
       const result = await getAdminCallbackRequests(
         search,
         sort,
-        isMobile ? 0 : page - 1,
-        isMobile ? mobilePages * PAGE_SIZE : PAGE_SIZE,
+        isMobile ? mobilePages - 1 : page - 1,
+        PAGE_SIZE,
       )
-      setRequests(result.content)
-      setTotalPages(Math.max(1, result.totalPages))
+      if (requestId !== requestIdRef.current) return
+
+      setRequests((current) => {
+        if (!isMobile || mobilePages === 1) return result.content
+
+        const existingIds = new Set(current.map((request) => request.id))
+        return [
+          ...current,
+          ...result.content.filter((request) => !existingIds.has(request.id)),
+        ]
+      })
+      setTotalPages(Math.max(1, Math.min(result.totalPages, MAX_PAGE_INDEX + 1)))
       setTotalElements(result.totalElements)
     } catch {
-      showToast('Не вдалося завантажити заявки на дзвінки')
+      if (requestId === requestIdRef.current) {
+        showToast('Не вдалося завантажити заявки на дзвінки')
+      }
     } finally {
-      setLoading(false)
+      if (requestId === requestIdRef.current) {
+        setLoading(false)
+      }
     }
   }, [isDemo, isMobile, mobilePages, page, search, showToast, sort])
 
@@ -168,11 +187,6 @@ export function AdminCallbackRequestsPage() {
     media.addEventListener('change', update)
     return () => media.removeEventListener('change', update)
   }, [])
-  useEffect(() => {
-    setPage(1)
-    setMobilePages(1)
-  }, [search, sort])
-
   const filteredRequests = useMemo(() => {
     if (!isDemo) return requests
     const query = search.trim().toLocaleLowerCase('uk')
@@ -199,14 +213,26 @@ export function AdminCallbackRequestsPage() {
 
     <section className="admin-callbacks__card admin-callbacks__panel">
       <h2>Панель</h2>
-      <RequestSortPicker value={sort} onChange={setSort} />
+      <RequestSortPicker
+        value={sort}
+        onChange={(nextSort) => {
+          setSort(nextSort)
+          setPage(1)
+          setMobilePages(1)
+        }}
+      />
       <label className="admin-callbacks__search">
         <span>Пошук заявки</span>
         <span className="admin-callbacks__search-wrap">
           <input
             value={search}
+            maxLength={MAX_SEARCH_LENGTH}
             placeholder="Введіть номер телефону, ім’я клієнта"
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value.slice(0, MAX_SEARCH_LENGTH))
+              setPage(1)
+              setMobilePages(1)
+            }}
           />
           <SearchIcon />
         </span>
@@ -239,7 +265,7 @@ export function AdminCallbackRequestsPage() {
         <button type="button" aria-label="Наступна сторінка" disabled={page === effectiveTotalPages} onClick={() => setPage((value) => value + 1)}>→</button>
       </nav>}
 
-      {!loading && isMobile && visibleRequests.length < effectiveTotalElements && <button type="button" className="admin-callbacks__show-more" onClick={() => setMobilePages((value) => value + 1)}>
+      {!loading && isMobile && visibleRequests.length < effectiveTotalElements && mobilePages < effectiveTotalPages && <button type="button" className="admin-callbacks__show-more" onClick={() => setMobilePages((value) => Math.min(value + 1, MAX_PAGE_INDEX + 1))}>
         Показати ще <ChevronIcon />
       </button>}
     </section>
