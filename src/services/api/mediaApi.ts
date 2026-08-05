@@ -13,6 +13,7 @@ type CachedMediaUrl = {
 }
 
 const mediaUrlCache = new Map<string, CachedMediaUrl>()
+const pendingMediaUrlRequests = new Map<string, Promise<string>>()
 
 export type MediaPreviewDto = {
   s3Key?: string | null
@@ -28,19 +29,25 @@ export async function resolveMediaUrl(s3Key: string | null | undefined, fallback
     return cached.url
   }
 
-  try {
-    const response = await apiRequest<PresignDownloadResponseDto>('/api/files/presign/download', {
+  const pendingRequest = pendingMediaUrlRequests.get(s3Key)
+  if (pendingRequest) return pendingRequest
+
+  const request = apiRequest<PresignDownloadResponseDto>('/api/files/presign/download', {
       method: 'POST',
       auth: false,
       body: { s3Key },
     })
-    const expiresAt = Date.parse(response.expiresAt)
-    mediaUrlCache.set(s3Key, {
-      url: response.downloadUrl,
-      expiresAt: Number.isFinite(expiresAt) ? expiresAt : now + 5 * 60_000,
+    .then((response) => {
+      const expiresAt = Date.parse(response.expiresAt)
+      mediaUrlCache.set(s3Key, {
+        url: response.downloadUrl,
+        expiresAt: Number.isFinite(expiresAt) ? expiresAt : now + 5 * 60_000,
+      })
+      return response.downloadUrl
     })
-    return response.downloadUrl
-  } catch {
-    return fallbackUrl
-  }
+    .catch(() => fallbackUrl)
+    .finally(() => pendingMediaUrlRequests.delete(s3Key))
+
+  pendingMediaUrlRequests.set(s3Key, request)
+  return request
 }
