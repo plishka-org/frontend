@@ -1,13 +1,16 @@
 import { useState, type ReactNode } from 'react'
 import { useAuth } from '../../../hooks/useAuth'
+import { getHomeUrl } from '../../../utils/productUrl'
+import type { SiteVariant } from '../../../utils/siteVariant'
 import { AccountNav } from './AccountNav'
 import { DeleteAccountModal } from './DeleteAccountModal'
 
 type AccountLayoutProps = {
   children: ReactNode
+  siteVariant: SiteVariant
 }
 
-export function AccountLayout({ children }: AccountLayoutProps) {
+export function AccountLayout({ children, siteVariant }: AccountLayoutProps) {
   const { deleteAccount, logout } = useAuth()
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -15,7 +18,7 @@ export function AccountLayout({ children }: AccountLayoutProps) {
 
   async function handleLogout() {
     await logout()
-    window.location.href = '/'
+    window.location.assign(getHomeUrl(siteVariant))
   }
 
   function openDeleteModal() {
@@ -36,7 +39,7 @@ export function AccountLayout({ children }: AccountLayoutProps) {
 
     try {
       await deleteAccount(currentPassword)
-      window.location.href = '/'
+      window.location.assign(getHomeUrl(siteVariant))
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Не вдалося видалити акаунт. Спробуйте ще раз.')
     } finally {

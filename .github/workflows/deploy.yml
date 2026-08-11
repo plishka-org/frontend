@@ -38,6 +38,9 @@ jobs:
           VITE_API_URL: https://plishka-backend-dev.up.railway.app
           VITE_BASE_PATH: /frontend/
 
+      - name: Add SPA fallback
+        run: cp dist/index.html dist/404.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v6
 

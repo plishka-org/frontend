@@ -226,6 +226,22 @@ export async function getProductDetailApi(productId: string) {
   return normalizeProductDetailBase(product);
 }
 
+export async function getProductPrimaryImageApi(productId: string) {
+  const product = await getProductDetailApi(productId);
+  const primaryImage =
+    product.media?.find((item) => item.isPrimary && item.mediaType === "IMAGE") ??
+    product.media?.find((item) => item.mediaType === "IMAGE");
+
+  if (!primaryImage) {
+    return product.image;
+  }
+
+  return resolveMediaUrl(
+    primaryImage.thumbnailS3Key ?? primaryImage.s3Key,
+    product.image,
+  );
+}
+
 export async function getRelatedProductsApi(productId: string, size = 4) {
   const page = await apiRequest<PageResponse<ProductSummaryDto>>(
     `/api/products/${encodeURIComponent(productId)}/related?size=${size}`,

@@ -15,7 +15,7 @@ function withSiteVariant(path: string, siteVariant: SiteVariant, useHashRoute = 
 
 export function getAppPath(pathname: string, hash = '') {
   if (hash.startsWith('#/')) {
-    return hash.slice(1) || '/'
+    return hash.slice(1).split('?')[0] || '/'
   }
 
   const basePath = getBasePath()

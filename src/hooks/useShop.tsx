@@ -27,19 +27,16 @@ import {
   selectCartBadgeCount,
   selectCartLines,
   selectCartTotal,
+  type CartItem,
+  type CartProductSnapshot,
 } from '../store/cartSelectors'
 import { getProductById } from '../data/bestProducts'
 import type { ProductUi } from '../services/api/productsApi'
 
-type CartItem = {
-  productId: string
-  quantity: number
-}
-
 type CartLine = ReturnType<typeof selectCartLines>[number]
 
 type ShopContextType = {
-  addToCart: (productId: string, quantity?: number) => void
+  addToCart: (product: CartProductSnapshot, quantity?: number) => void
   cartLines: CartLine[]
   cartCount: number
   cartItems: CartItem[]
@@ -162,7 +159,9 @@ useEffect(() => {
       : loadServerCart()
 
     if (numericCartItems.length) {
-      mergeCartApi(numericCartItems)
+      mergeCartApi(
+        numericCartItems.map(({ productId, quantity }) => ({ productId, quantity })),
+      )
         .then((lines) => {
           setServerCartLines(lines)
           setCartItems([])
@@ -208,7 +207,15 @@ useEffect(() => {
       ? serverCartLines.reduce((total, line) => total + line.quantity, 0)
       : cartCount
 
-    function addToCart(productId: string, quantity = 1) {
+    function addToCart(product: CartProductSnapshot, quantity = 1) {
+      const productId = product.id
+      const productSnapshot: CartProductSnapshot = {
+        id: product.id,
+        category: product.category,
+        name: product.name,
+        image: product.image,
+        price: product.price,
+      }
       const quantityToAdd = normalizeCartQuantity(quantity)
       if (user && Number.isFinite(Number(productId))) {
         addCartItemApi(productId, quantityToAdd)
@@ -222,11 +229,15 @@ useEffect(() => {
         if (existingItem) {
           return currentItems.map((item) =>
             item.productId === productId
-              ? { ...item, quantity: normalizeCartQuantity(item.quantity + quantityToAdd) }
+              ? {
+                  ...item,
+                  quantity: normalizeCartQuantity(item.quantity + quantityToAdd),
+                  product: productSnapshot,
+                }
               : item,
           )
         }
-        return [...currentItems, { productId, quantity: quantityToAdd }]
+        return [...currentItems, { productId, quantity: quantityToAdd, product: productSnapshot }]
       })
     }
 

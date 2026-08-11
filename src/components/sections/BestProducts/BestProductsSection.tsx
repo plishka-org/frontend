@@ -82,7 +82,7 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
       return
     }
 
-    addToCart(product.id)
+    addToCart(product)
   }
 
   return (
