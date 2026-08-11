@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { forgotPasswordApi, resetPasswordApi } from '../../../services/api/authApi'
 import './ForgotPasswordPage.scss'
 
@@ -79,7 +79,7 @@ function StepEmail({ onClose, onSuccess }: { onClose: () => void; onSuccess: () 
   return (
     <>
       <CloseButton onClick={onClose} />
-      <h1 className="forgot-page__title">Відновлення паролю</h1>
+      <h1 className="forgot-page__title" id="forgot-page-title">Відновлення паролю</h1>
       {globalError && (
         <div className="forgot-page__global-error" role="alert">{globalError}</div>
       )}
@@ -125,12 +125,12 @@ function StepSuccess({ onClose }: { onClose: () => void }) {
   return (
     <>
       <CloseButton onClick={onClose} />
-      <h1 className="forgot-page__title">Відновлення паролю</h1>
+      <h1 className="forgot-page__title" id="forgot-page-title">Відновлення паролю</h1>
       <p className="forgot-page__success-text">
         Якщо акаунт існує, інструкції для відновлення паролю надіслані на вказану пошту.
       </p>
       <button
-        className="forgot-page__submit"
+        className="forgot-page__submit forgot-page__submit--compact"
         type="button"
         onClick={onClose}
       >
@@ -192,7 +192,7 @@ function StepNewPassword({ token, onClose }: { token: string; onClose: () => voi
   return (
     <>
       <CloseButton onClick={onClose} />
-      <h1 className="forgot-page__title">Відновлення паролю</h1>
+      <h1 className="forgot-page__title" id="forgot-page-title">Відновлення паролю</h1>
       {globalError && (
         <div className="forgot-page__global-error" role="alert">{globalError}</div>
       )}
@@ -264,7 +264,7 @@ function StepNewPassword({ token, onClose }: { token: string; onClose: () => voi
           )}
         </div>
 
-        <button className="forgot-page__submit" type="submit" disabled={isLoading}>
+        <button className="forgot-page__submit forgot-page__submit--compact" type="submit" disabled={isLoading}>
           {isLoading ? 'Збереження...' : 'ЗМІНИТИ ПАРОЛЬ'}
         </button>
       </form>
@@ -293,17 +293,33 @@ export function ForgotPasswordPage({ onClose }: ForgotPasswordPageProps) {
   const [step, setStep] = useState<'email' | 'success'>('email')
   const resetToken = getResetToken()
 
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [])
+
   function handleClose() {
     if (onClose) {
       onClose()
     } else {
-      window.history.back()
+      window.location.hash = '#/'
     }
   }
 
+  const cardState = resetToken ? 'password' : step
+
   return (
     <div className="forgot-page">
-      <div className="forgot-page__card">
+      <div
+        className={`forgot-page__card forgot-page__card--${cardState}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="forgot-page-title"
+      >
         {resetToken ? (
           <StepNewPassword token={resetToken} onClose={handleClose} />
         ) : step === 'email' ? (

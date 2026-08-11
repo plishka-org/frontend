@@ -89,7 +89,12 @@ function App() {
   if (appPath.match(/^\/login\/?$/)) {
     pageContent = <LoginPage />;
   } else if (appPath.match(/^\/(forgot-password|reset-password)\/?$/)) {
-    pageContent = <ForgotPasswordPage />;
+    pageContent = (
+      <>
+        <HomePage siteVariant={activeSiteVariant} />
+        <ForgotPasswordPage />
+      </>
+    );
   } else if (appPath.match(/^\/register\/?$/)) {
     pageContent = <RegisterPage />;
   } else if (adminMatch) {
