@@ -276,13 +276,22 @@ type ForgotPasswordPageProps = {
   onClose?: () => void
 }
 
+function getResetToken() {
+  const hash = window.location.hash.replace(/^#/, '')
+
+  if (hash.includes('?')) {
+    const hashQuery = hash.split('?')[1]
+    const token = new URLSearchParams(hashQuery).get('token')
+    if (token) return token
+  }
+
+  return new URLSearchParams(hash).get('token')
+    ?? new URLSearchParams(window.location.search).get('token')
+}
+
 export function ForgotPasswordPage({ onClose }: ForgotPasswordPageProps) {
   const [step, setStep] = useState<'email' | 'success'>('email')
-
-  const hashSearch = window.location.hash.includes('?')
-    ? window.location.hash.split('?')[1]
-    : ''
-  const resetToken = new URLSearchParams(hashSearch).get('token')
+  const resetToken = getResetToken()
 
   function handleClose() {
     if (onClose) {

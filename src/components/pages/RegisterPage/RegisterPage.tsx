@@ -388,7 +388,7 @@ function StepSuccess({ email, onClose }: { email: string; onClose: () => void })
 }
 
 function StepVerify({ token }: { token: string }) {
-  const [status, setStatus] = useState<'pending' | 'error'>('pending')
+  const [status, setStatus] = useState<'pending' | 'success' | 'error'>('pending')
 
   useEffect(() => {
     let cancelled = false
@@ -396,7 +396,7 @@ function StepVerify({ token }: { token: string }) {
     verifyEmailApi(token)
       .then(() => {
         if (cancelled) return
-        window.location.hash = '#/account'
+        setStatus('success')
       })
       .catch(() => {
         if (cancelled) return
@@ -411,6 +411,13 @@ function StepVerify({ token }: { token: string }) {
       <h1 className="register-page__title">Реєстрація</h1>
       {status === 'pending' ? (
         <p className="register-page__success-text">Підтверджуємо вашу електронну пошту...</p>
+      ) : status === 'success' ? (
+        <>
+          <p className="register-page__success-text">Ваш аккаунт успішно верифіковано</p>
+          <a href="#/login" className="register-page__submit register-page__submit--link">
+            УВІЙТИ
+          </a>
+        </>
       ) : (
         <>
           <p className="register-page__success-text">
