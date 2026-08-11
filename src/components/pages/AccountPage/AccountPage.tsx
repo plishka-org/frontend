@@ -68,7 +68,7 @@ export function AccountPage({ siteVariant }: AccountPageProps) {
     <main className="page-shell">
       <Header siteVariant={siteVariant} />
       <div className="account-page">
-        <AccountLayout>
+        <AccountLayout siteVariant={siteVariant}>
           {section}
         </AccountLayout>
       </div>
