@@ -28,7 +28,7 @@ export function GalleryProductCard({ product, siteVariant }: GalleryProductCardP
       return
     }
 
-    addToCart(product.id)
+    addToCart(product)
   }
 
   function handleFavoriteClick(event: MouseEvent<HTMLButtonElement>) {

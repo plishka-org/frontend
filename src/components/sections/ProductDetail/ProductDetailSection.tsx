@@ -192,7 +192,7 @@ export function ProductDetailSection({
                 disabled={productIsInCart}
                 onClick={() => {
                   if (!productIsInCart) {
-                    addToCart(product.id);
+                    addToCart(product);
                   }
                 }}
                 aria-pressed={productIsInCart}
