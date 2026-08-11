@@ -1,4 +1,5 @@
 import { apiRequest, hasApiBaseUrl } from './client'
+import { getProductPrimaryImageApi } from './productsApi'
 
 export type CartItemDto = {
   cartItemId: number
@@ -33,19 +34,34 @@ export type CartLine = {
   lineTotal: number
 }
 
-export function mapCartSummary(dto: CartSummaryDto): CartLine[] {
-  return dto.items.map((item) => ({
+const cartProductImageCache = new Map<string, Promise<string>>()
+
+async function resolveCartProductImage(productId: string) {
+  const cachedImage = cartProductImageCache.get(productId)
+  if (cachedImage) return cachedImage
+
+  const imageRequest = getProductPrimaryImageApi(productId).catch(() => {
+    cartProductImageCache.delete(productId)
+    return ''
+  })
+
+  cartProductImageCache.set(productId, imageRequest)
+  return imageRequest
+}
+
+export async function mapCartSummary(dto: CartSummaryDto): Promise<CartLine[]> {
+  return Promise.all(dto.items.map(async (item) => ({
     productId: String(item.productId),
     quantity: item.quantity,
     product: {
       id: String(item.productId),
       name: item.productName,
       category: item.categoryName,
-      image: '',
+      image: await resolveCartProductImage(String(item.productId)),
       price: Number(item.unitPrice),
     },
     lineTotal: Number(item.subtotal),
-  }))
+  })))
 }
 
 export async function getCartApi() {
