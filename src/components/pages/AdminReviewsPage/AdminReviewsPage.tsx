@@ -273,11 +273,13 @@ export function AdminReviewsPage() {
   const [mobilePages, setMobilePages] = useState(1);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 600px)").matches);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [newReviewFiles, setNewReviewFiles] = useState<File[]>([]);
   const [editingReview, setEditingReview] = useState<AdminReviewSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<number[]>([]);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const addFormRef = useRef<HTMLElement>(null);
+  const createMediaInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     if (isDemo) return;
@@ -311,15 +313,47 @@ export function AdminReviewsPage() {
   useEffect(() => { setPage(1); setMobilePages(1); }, [search]);
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
+  function selectNewReviewFiles(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []).filter((file) => file.type.startsWith("image/") || file.type.startsWith("video/"));
+    if (files.length) setNewReviewFiles((items) => [...items, ...files]);
+    event.target.value = "";
+  }
+
+  function removeNewReviewFile(index: number) {
+    setNewReviewFiles((items) => items.filter((_, itemIndex) => itemIndex !== index));
+  }
+
   async function saveReview() {
     const authorName = form.authorName.trim();
     const content = form.content.trim();
     if (!authorName || !content) return;
+    const firstImageIndex = newReviewFiles.findIndex((file) => file.type.startsWith("image/"));
+    if (newReviewFiles.length && firstImageIndex === -1) {
+      showToast("Першим медіа має бути фото");
+      return;
+    }
+    const orderedFiles = firstImageIndex > 0
+      ? [newReviewFiles[firstImageIndex], ...newReviewFiles.filter((_, index) => index !== firstImageIndex)]
+      : newReviewFiles;
     setBusy(true);
     try {
       if (isDemo) setReviews((items) => [{ reviewId: Date.now(), authorName, content, createdAt: new Date().toISOString(), isFeatured: false, primaryMedia: null }, ...items]);
-      else { await createAdminReview({ authorName, content }); await load(); }
+      else {
+        const created = await createAdminReview({ authorName, content });
+        if (orderedFiles.length) {
+          try { await uploadAdminReviewMedia(created.reviewId, orderedFiles); }
+          catch {
+            await load();
+            setForm(EMPTY_FORM);
+            setNewReviewFiles([]);
+            showToast("Відгук створено, але медіа не завантажено");
+            return;
+          }
+        }
+        await load();
+      }
       setForm(EMPTY_FORM);
+      setNewReviewFiles([]);
       showToast("Відгук додано");
     } catch { showToast("Не вдалося зберегти відгук"); }
     finally { setBusy(false); }
@@ -329,7 +363,13 @@ export function AdminReviewsPage() {
     if (!review.isFeatured && reviews.filter((item) => item.isFeatured).length >= 5) { showToast("На головній може бути не більше 5 відгуків"); return; }
     const next = !review.isFeatured;
     setReviews((items) => items.map((item) => item.reviewId === review.reviewId ? { ...item, isFeatured: next } : item));
-    try { if (!isDemo) await setReviewFeatured(review.reviewId, next); }
+    try {
+      if (!isDemo) {
+        const updated = await setReviewFeatured(review.reviewId, next);
+        setReviews((items) => items.map((item) => item.reviewId === review.reviewId ? { ...item, isFeatured: updated.isFeatured } : item));
+        await load();
+      }
+    }
     catch { await load(); showToast("Не вдалося змінити статус відгуку"); }
   }
 
@@ -377,7 +417,14 @@ export function AdminReviewsPage() {
       <h2>Додати новий відгук</h2>
       <label><span>Ім’я клієнта</span><input maxLength={100} value={form.authorName} placeholder="Сергій" onChange={(event) => setForm({ ...form, authorName: event.target.value })} /></label>
       <label><span>Опис відгуку</span><div className="admin-reviews__textarea"><textarea maxLength={300} value={form.content} placeholder="Опис" onChange={(event) => setForm({ ...form, content: event.target.value })} /><small>{form.content.length}/300</small></div></label>
-      <div className="admin-reviews__media"><span>Медіа</span><button type="button">＋&nbsp; ДОДАТИ ФОТО/ВІДЕО</button></div>
+      <div className="admin-reviews__media">
+        <span>Медіа</span>
+        <input ref={createMediaInputRef} type="file" accept="image/*,video/*" multiple hidden onChange={selectNewReviewFiles} />
+        <button type="button" onClick={() => createMediaInputRef.current?.click()}>＋&nbsp; ДОДАТИ ФОТО/ВІДЕО</button>
+        {newReviewFiles.length > 0 && <ul className="admin-reviews__media-files">
+          {newReviewFiles.map((file, index) => <li key={`${file.name}-${file.lastModified}-${index}`}><span title={file.name}>{file.name}</span><button type="button" aria-label={`Видалити ${file.name}`} onClick={() => removeNewReviewFile(index)}>×</button></li>)}
+        </ul>}
+      </div>
       <div className="admin-reviews__form-actions"><button className="admin-reviews__primary" type="button" disabled={busy || !form.authorName.trim() || !form.content.trim()} onClick={() => void saveReview()}>ДОДАТИ ВІДГУК</button></div>
     </section>
 

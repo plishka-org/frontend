@@ -43,7 +43,7 @@ export function FavoriteProductCard({ product, siteVariant }: FavoriteProductCar
                 ? 'Прибрати з обраного'
                 : `Додати ${product.name} до обраного`
             }
-            onClick={() => toggleFavorite(product.id)}
+            onClick={() => toggleFavorite(product)}
           >
             <HeartIcon />
           </button>

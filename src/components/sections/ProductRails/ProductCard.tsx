@@ -21,7 +21,7 @@ export function ProductCard({ product, siteVariant }: ProductCardProps) {
       event.currentTarget.blur()
     }
 
-    toggleFavorite(product.id)
+    toggleFavorite(product)
   }
 
   return (

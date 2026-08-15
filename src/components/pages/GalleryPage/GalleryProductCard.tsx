@@ -39,7 +39,7 @@ export function GalleryProductCard({ product, siteVariant }: GalleryProductCardP
       event.currentTarget.blur()
     }
 
-    toggleFavorite(product.id)
+    toggleFavorite(product)
   }
 
   return (

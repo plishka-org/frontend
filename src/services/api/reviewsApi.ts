@@ -1,6 +1,7 @@
 import { testimonials } from '../../data/testimonials'
 import type { Testimonial } from '../../data/testimonials'
 import { apiRequest, hasApiBaseUrl } from './client'
+import { getHomeApi, type HomeReview } from './contentApi'
 import { resolveMediaUrl, type MediaPreviewDto } from './mediaApi'
 
 type PageResponse<T> = {
@@ -70,6 +71,24 @@ async function normalizeReviewDto(summary: ReviewSummaryDto): Promise<Testimonia
   })
 }
 
+async function normalizeFeaturedReviewDto(review: HomeReview): Promise<Testimonial> {
+  const fallback = testimonials[review.reviewId % testimonials.length] ?? testimonials[0]
+  const orderedMedia = [...review.media].sort((first, second) => first.displayOrder - second.displayOrder)
+  const images = await Promise.all(
+    orderedMedia.map((item) => resolveMediaUrl(item.s3Key, fallback.cardImage)),
+  )
+  const safeImages = images.length ? images : fallback.images
+
+  return normalizeReview({
+    id: review.reviewId,
+    author: review.authorName,
+    text: review.content,
+    images: safeImages,
+    cardImage: safeImages[0] ?? fallback.cardImage,
+    createdAt: fallback.createdAt,
+  })
+}
+
 export function getReviews(): Testimonial[] {
   return cloneDefaultReviews().map(normalizeReview)
 }
@@ -93,4 +112,12 @@ export async function getReviewsApi(limit?: number): Promise<Testimonial[]> {
   )
   const reviews = await Promise.all(page.content.map(normalizeReviewDto))
   return limit ? reviews.slice(0, limit) : reviews
+}
+
+export async function getFeaturedReviewsApi(limit = 3): Promise<Testimonial[]> {
+  if (!hasApiBaseUrl()) return getTopReviews(limit)
+
+  const home = await getHomeApi()
+  const reviews = await Promise.all(home.featuredReviews.map(normalizeFeaturedReviewDto))
+  return reviews.slice(0, limit)
 }

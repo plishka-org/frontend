@@ -34,6 +34,7 @@ import { getProductById } from '../data/bestProducts'
 import type { ProductUi } from '../services/api/productsApi'
 
 type CartLine = ReturnType<typeof selectCartLines>[number]
+type FavoriteProduct = CartProductSnapshot
 
 type ShopContextType = {
   addToCart: (product: CartProductSnapshot, quantity?: number) => void
@@ -50,7 +51,7 @@ type ShopContextType = {
   isFavorite: (productId: string) => boolean
   isInCart: (productId: string) => boolean
   removeFromCart: (productId: string) => void
-  toggleFavorite: (productId: string) => void
+  toggleFavorite: (product: FavoriteProduct) => void
   updateCartQuantity: (productId: string, quantity: number) => void
 }
 
@@ -290,30 +291,39 @@ useEffect(() => {
       setCartItems([])
     }
 
-    function addFavorite(productId: string) {
-      setFavoriteProductIds((currentIds) => {
-        if (currentIds.includes(productId)) return currentIds
-        addToFavoritesApi(productId).catch(console.error)
-        return [...currentIds, productId]
-      })
+    function reloadFavoritesAfterFailure() {
+      loadFavorites()
     }
 
-    function toggleFavorite(productId: string) {
+    function addFavorite(product: FavoriteProduct) {
+      if (favoriteProductIds.includes(product.id)) return
+
+      const favoriteProduct: ProductUi = {
+        ...product,
+        description: product.description ?? '',
+        gallery: product.gallery ?? [],
+      }
+      setFavoriteProductIds((currentIds) => [...currentIds, product.id])
+      setFavoriteProducts((currentProducts) => [...currentProducts, favoriteProduct])
+      addToFavoritesApi(product.id).catch(reloadFavoritesAfterFailure)
+    }
+
+    function toggleFavorite(product: FavoriteProduct) {
       if (!isAuthChecked) return
 
       if (!user) {
-        requestLogin(() => addFavorite(productId))
+        requestLogin(() => addFavorite(product))
         return
       }
 
-      setFavoriteProductIds((currentIds) => {
-        if (currentIds.includes(productId)) {
-          removeFromFavoritesApi(productId).catch(console.error)
-          return currentIds.filter((item) => item !== productId)
-        }
-        addToFavoritesApi(productId).catch(console.error)
-        return [...currentIds, productId]
-      })
+      if (favoriteProductIds.includes(product.id)) {
+        setFavoriteProductIds((currentIds) => currentIds.filter((item) => item !== product.id))
+        setFavoriteProducts((currentProducts) => currentProducts.filter((item) => item.id !== product.id))
+        removeFromFavoritesApi(product.id).catch(reloadFavoritesAfterFailure)
+        return
+      }
+
+      addFavorite(product)
     }
 
     return {
