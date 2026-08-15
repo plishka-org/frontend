@@ -8,8 +8,14 @@ export type Testimonial = {
   author: string
   text: string
   images: string[]
+  media?: TestimonialMedia[]
   cardImage: string
   createdAt: string
+}
+
+export type TestimonialMedia = {
+  url: string
+  mediaType: 'IMAGE' | 'VIDEO'
 }
 
 export const testimonials: Testimonial[] = [

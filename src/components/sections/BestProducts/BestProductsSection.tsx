@@ -70,7 +70,7 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
       event.currentTarget.blur()
     }
 
-    toggleFavorite(product.id)
+    toggleFavorite(product)
   }
 
   function handleCartClick(event: MouseEvent<HTMLButtonElement>) {

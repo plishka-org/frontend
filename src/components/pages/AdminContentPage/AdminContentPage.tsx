@@ -90,6 +90,7 @@ export function AdminContentPage() {
   const [savedContacts, setSavedContacts] = useState<ContactForm>(EMPTY_CONTACTS);
   const [links, setLinks] = useState<SocialLink[]>([]);
   const [shopMode, setShopMode] = useState(false);
+  const [adminEmail, setAdminEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -101,7 +102,7 @@ export function AdminContentPage() {
   useEffect(() => {
     if (demoMode) {
       const demoMedia = FALLBACK_MEDIA.map((url, index) => ({ mediaId: index + 1, s3Key: `demo/about-${index + 1}.webp`, mediaType: "IMAGE" as const, displayOrder: index + 1, url }));
-      setAbout(DEMO_ABOUT); setSavedAbout(DEMO_ABOUT); setContacts(DEMO_CONTACTS); setSavedContacts(DEMO_CONTACTS); setMedia(demoMedia); setShopMode(true); setLoading(false);
+      setAbout(DEMO_ABOUT); setSavedAbout(DEMO_ABOUT); setContacts(DEMO_CONTACTS); setSavedContacts(DEMO_CONTACTS); setMedia(demoMedia); setShopMode(true); setAdminEmail(DEMO_CONTACTS.email); setLoading(false);
       return;
     }
     Promise.all([getAdminAbout(), getAdminContacts(), getAdminSettings()])
@@ -109,7 +110,7 @@ export function AdminContentPage() {
         setAbout(aboutDto.content); setSavedAbout(aboutDto.content);
         setMedia(await resolveAboutMedia(aboutDto.media));
         const nextContacts = contactsFromApi(contactsDto.content, contactsDto.socialLinks);
-        setContacts(nextContacts); setSavedContacts(nextContacts); setLinks(contactsDto.socialLinks); setShopMode(settings.isShopModeEnabled);
+        setContacts(nextContacts); setSavedContacts(nextContacts); setLinks(contactsDto.socialLinks); setShopMode(settings.isShopModeEnabled); setAdminEmail(settings.adminEmail);
       })
       .catch(() => setNotice({ type: "error", text: "Не вдалося завантажити налаштування контенту." }))
       .finally(() => setLoading(false));
@@ -182,7 +183,7 @@ export function AdminContentPage() {
   async function toggleShopMode(next: boolean) {
     const previous = shopMode; setShopMode(next); setNotice(null);
     if (demoMode) return;
-    try { const saved = await updateAdminSettings(next); setShopMode(saved.isShopModeEnabled); }
+    try { const saved = await updateAdminSettings({ isShopModeEnabled: next, adminEmail }); setShopMode(saved.isShopModeEnabled); setAdminEmail(saved.adminEmail); }
     catch { setShopMode(previous); setNotice({ type: "error", text: "Не вдалося змінити режим прийому замовлень." }); }
   }
 

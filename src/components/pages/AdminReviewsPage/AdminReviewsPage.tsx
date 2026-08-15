@@ -36,7 +36,12 @@ const CONTENT = [
 ];
 const DEMO_MEDIA = [demoReview1, demoReview2, demoReview3, demoReview4, demoReview2, demoReview3];
 
-const DEMO_REVIEWS: AdminReviewSummary[] = Array.from({ length: 30 }, (_, index) => ({
+type ReviewListItem = AdminReviewSummary & {
+  imageCount: number | null;
+  videoCount: number | null;
+};
+
+const DEMO_REVIEWS: ReviewListItem[] = Array.from({ length: 30 }, (_, index) => ({
   reviewId: index + 1,
   authorName: AUTHORS[index % AUTHORS.length],
   content: CONTENT[index % CONTENT.length],
@@ -47,6 +52,8 @@ const DEMO_REVIEWS: AdminReviewSummary[] = Array.from({ length: 30 }, (_, index)
     s3Key: `demo/review-${index + 1}.jpg`,
     mediaType: index % 4 === 0 ? "VIDEO" : "IMAGE",
   },
+  imageCount: index % 3 === 2 ? 0 : index % 4 === 0 ? 4 : 3,
+  videoCount: index % 4 === 0 ? 1 : 0,
 }));
 
 function SearchIcon() {
@@ -265,7 +272,7 @@ function DeleteReviewConfirm({ count, busy, onCancel, onConfirm }: { count: numb
 export function AdminReviewsPage() {
   const { showToast } = useToast();
   const isDemo = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEMO_MODE === "true";
-  const [reviews, setReviews] = useState<AdminReviewSummary[]>(isDemo ? DEMO_REVIEWS : []);
+  const [reviews, setReviews] = useState<ReviewListItem[]>(isDemo ? DEMO_REVIEWS : []);
   const [loading, setLoading] = useState(!isDemo);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<number[]>([]);
@@ -273,11 +280,13 @@ export function AdminReviewsPage() {
   const [mobilePages, setMobilePages] = useState(1);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 600px)").matches);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [newReviewFiles, setNewReviewFiles] = useState<File[]>([]);
   const [editingReview, setEditingReview] = useState<AdminReviewSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<number[]>([]);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const addFormRef = useRef<HTMLElement>(null);
+  const createMediaInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     if (isDemo) return;
@@ -285,7 +294,20 @@ export function AdminReviewsPage() {
     try {
       const first = await getAdminReviews("", 0);
       const pages = await Promise.all(Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, i) => getAdminReviews("", i + 1)));
-      setReviews([first, ...pages].flatMap((result) => result.content));
+      const summaries = [first, ...pages].flatMap((result) => result.content);
+      const reviewsWithCounts = await Promise.all(summaries.map(async (review): Promise<ReviewListItem> => {
+        try {
+          const detail = await getAdminReview(review.reviewId);
+          return {
+            ...review,
+            imageCount: detail.media.filter((item) => item.mediaType === "IMAGE").length,
+            videoCount: detail.media.filter((item) => item.mediaType === "VIDEO").length,
+          };
+        } catch {
+          return { ...review, imageCount: null, videoCount: null };
+        }
+      }));
+      setReviews(reviewsWithCounts);
     } catch { showToast("Не вдалося завантажити відгуки"); }
     finally { setLoading(false); }
   }, [isDemo, showToast]);
@@ -311,15 +333,47 @@ export function AdminReviewsPage() {
   useEffect(() => { setPage(1); setMobilePages(1); }, [search]);
   useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
 
+  function selectNewReviewFiles(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []).filter((file) => file.type.startsWith("image/") || file.type.startsWith("video/"));
+    if (files.length) setNewReviewFiles((items) => [...items, ...files]);
+    event.target.value = "";
+  }
+
+  function removeNewReviewFile(index: number) {
+    setNewReviewFiles((items) => items.filter((_, itemIndex) => itemIndex !== index));
+  }
+
   async function saveReview() {
     const authorName = form.authorName.trim();
     const content = form.content.trim();
     if (!authorName || !content) return;
+    const firstImageIndex = newReviewFiles.findIndex((file) => file.type.startsWith("image/"));
+    if (newReviewFiles.length && firstImageIndex === -1) {
+      showToast("Першим медіа має бути фото");
+      return;
+    }
+    const orderedFiles = firstImageIndex > 0
+      ? [newReviewFiles[firstImageIndex], ...newReviewFiles.filter((_, index) => index !== firstImageIndex)]
+      : newReviewFiles;
     setBusy(true);
     try {
-      if (isDemo) setReviews((items) => [{ reviewId: Date.now(), authorName, content, createdAt: new Date().toISOString(), isFeatured: false, primaryMedia: null }, ...items]);
-      else { await createAdminReview({ authorName, content }); await load(); }
+      if (isDemo) setReviews((items) => [{ reviewId: Date.now(), authorName, content, createdAt: new Date().toISOString(), isFeatured: false, primaryMedia: null, imageCount: orderedFiles.filter((file) => file.type.startsWith("image/")).length, videoCount: orderedFiles.filter((file) => file.type.startsWith("video/")).length }, ...items]);
+      else {
+        const created = await createAdminReview({ authorName, content });
+        if (orderedFiles.length) {
+          try { await uploadAdminReviewMedia(created.reviewId, orderedFiles); }
+          catch {
+            await load();
+            setForm(EMPTY_FORM);
+            setNewReviewFiles([]);
+            showToast("Відгук створено, але медіа не завантажено");
+            return;
+          }
+        }
+        await load();
+      }
       setForm(EMPTY_FORM);
+      setNewReviewFiles([]);
       showToast("Відгук додано");
     } catch { showToast("Не вдалося зберегти відгук"); }
     finally { setBusy(false); }
@@ -329,7 +383,13 @@ export function AdminReviewsPage() {
     if (!review.isFeatured && reviews.filter((item) => item.isFeatured).length >= 5) { showToast("На головній може бути не більше 5 відгуків"); return; }
     const next = !review.isFeatured;
     setReviews((items) => items.map((item) => item.reviewId === review.reviewId ? { ...item, isFeatured: next } : item));
-    try { if (!isDemo) await setReviewFeatured(review.reviewId, next); }
+    try {
+      if (!isDemo) {
+        const updated = await setReviewFeatured(review.reviewId, next);
+        setReviews((items) => items.map((item) => item.reviewId === review.reviewId ? { ...item, isFeatured: updated.isFeatured } : item));
+        await load();
+      }
+    }
     catch { await load(); showToast("Не вдалося змінити статус відгуку"); }
   }
 
@@ -358,8 +418,8 @@ export function AdminReviewsPage() {
   const allFeaturedSelected = featured.length > 0 && featured.every((item) => selected.includes(item.reviewId));
   const allRegularSelected = visibleRegular.length > 0 && visibleRegular.every((item) => selected.includes(item.reviewId));
 
-  function ReviewRow({ review, order, featuredRow = false }: { review: AdminReviewSummary; order?: number; featuredRow?: boolean }) {
-    const mediaCount = review.primaryMedia ? (review.primaryMedia.mediaType === "VIDEO" ? "4 фото, 1 відео" : "3 фото, 0 відео") : "0 фото, 0 відео";
+  function ReviewRow({ review, order, featuredRow = false }: { review: ReviewListItem; order?: number; featuredRow?: boolean }) {
+    const mediaCount = review.imageCount === null || review.videoCount === null ? "—" : `${review.imageCount} фото, ${review.videoCount} відео`;
     return <article className="admin-reviews__row" data-featured={featuredRow}>
       <div className="admin-reviews__order">{featuredRow && <><GripIcon /><span>{order}</span></>}</div>
       <CheckBox checked={selected.includes(review.reviewId)} onChange={() => toggleSelected(review.reviewId)} />
@@ -377,7 +437,14 @@ export function AdminReviewsPage() {
       <h2>Додати новий відгук</h2>
       <label><span>Ім’я клієнта</span><input maxLength={100} value={form.authorName} placeholder="Сергій" onChange={(event) => setForm({ ...form, authorName: event.target.value })} /></label>
       <label><span>Опис відгуку</span><div className="admin-reviews__textarea"><textarea maxLength={300} value={form.content} placeholder="Опис" onChange={(event) => setForm({ ...form, content: event.target.value })} /><small>{form.content.length}/300</small></div></label>
-      <div className="admin-reviews__media"><span>Медіа</span><button type="button">＋&nbsp; ДОДАТИ ФОТО/ВІДЕО</button></div>
+      <div className="admin-reviews__media">
+        <span>Медіа</span>
+        <input ref={createMediaInputRef} type="file" accept="image/*,video/*" multiple hidden onChange={selectNewReviewFiles} />
+        <button type="button" onClick={() => createMediaInputRef.current?.click()}>＋&nbsp; ДОДАТИ ФОТО/ВІДЕО</button>
+        {newReviewFiles.length > 0 && <ul className="admin-reviews__media-files">
+          {newReviewFiles.map((file, index) => <li key={`${file.name}-${file.lastModified}-${index}`}><span title={file.name}>{file.name}</span><button type="button" aria-label={`Видалити ${file.name}`} onClick={() => removeNewReviewFile(index)}>×</button></li>)}
+        </ul>}
+      </div>
       <div className="admin-reviews__form-actions"><button className="admin-reviews__primary" type="button" disabled={busy || !form.authorName.trim() || !form.content.trim()} onClick={() => void saveReview()}>ДОДАТИ ВІДГУК</button></div>
     </section>
 
@@ -391,7 +458,7 @@ export function AdminReviewsPage() {
         {isMobile && visibleRegular.length < regular.length && <button className="admin-reviews__show-more" type="button" onClick={() => setMobilePages((value) => value + 1)}>ПОКАЗАТИ ЩЕ <ChevronIcon /></button>}
       </section>
     </>}
-    {editingReview && <ReviewEditModal review={editingReview} isDemo={isDemo} onClose={() => setEditingReview(null)} onSaved={(updated) => { setReviews((items) => items.map((item) => item.reviewId === updated.reviewId ? updated : item)); if (!isDemo) void load(); }} onRequestDelete={(id) => { setEditingReview(null); setPendingDelete([id]); }} />}
+    {editingReview && <ReviewEditModal review={editingReview} isDemo={isDemo} onClose={() => setEditingReview(null)} onSaved={(updated) => { setReviews((items) => items.map((item) => item.reviewId === updated.reviewId ? { ...item, ...updated } : item)); if (!isDemo) void load(); }} onRequestDelete={(id) => { setEditingReview(null); setPendingDelete([id]); }} />}
     {pendingDelete.length > 0 && <DeleteReviewConfirm count={pendingDelete.length} busy={deleteBusy} onCancel={() => setPendingDelete([])} onConfirm={() => void confirmRemove()} />}
   </div>;
 }

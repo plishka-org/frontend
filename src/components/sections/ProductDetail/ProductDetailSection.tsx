@@ -167,7 +167,7 @@ export function ProductDetailSection({
             className="product-detail__favorite"
             data-active={productIsFavorite}
             type="button"
-            onClick={() => toggleFavorite(product.id)}
+            onClick={() => toggleFavorite(product)}
             aria-pressed={productIsFavorite}
             aria-label={
               productIsFavorite ? "Прибрати з обраного" : "Додати до обраного"

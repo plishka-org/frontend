@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  getAdminOrder,
   getAdminOrders,
-  type AdminOrder,
+  type AdminOrderDetail,
+  type AdminOrderSummary,
   type AdminOrdersSort,
 } from '../../../services/api/adminOrdersApi'
 import { useToast } from '../../../hooks/useToast'
@@ -11,24 +13,23 @@ import './adminOrdersPage.scss'
 
 const PAGE_SIZE = 10
 
-const DEMO_ORDERS: AdminOrder[] = Array.from({ length: 100 }, (_, index) => ({
-  id: index + 1,
+const DEMO_ORDERS: AdminOrderDetail[] = Array.from({ length: 100 }, (_, index) => ({
+  orderId: index + 1,
   orderNumber: String(23456 + index),
   createdAt: new Date(2026, 4, 22 - index, 12, 0).toISOString(),
   customerName: index % 4 === 0 ? 'Ольга' : index % 4 === 1 ? 'Марія' : index % 4 === 2 ? 'Олексій' : 'Ірина',
   phone: '+380505050500',
   items: Array.from({ length: index === 0 ? 2 : index % 5 === 1 ? 3 : 1 }, (_, itemIndex) => ({
-    id: index * 10 + itemIndex + 1,
     productId: itemIndex + 1,
-    name: itemIndex === 0 ? 'Альтанка' : 'Гойдалка',
-    categoryName: itemIndex === 0 ? 'Альтанки' : 'Гойдалки',
+    productName: itemIndex === 0 ? 'Альтанка' : 'Гойдалка',
     imageUrl: itemIndex === 0 ? gazeboImage : swingImage,
     quantity: 1,
     unitPrice: itemIndex === 0 ? 1500 : 2500,
+    subtotal: itemIndex === 0 ? 1500 : 2500,
   })),
   totalPrice: index === 0 ? 4000 : 5000 + (index % 5) * 1000,
   deliveryCity: index % 3 === 0 ? 'Київ' : index % 3 === 1 ? 'Львів' : 'Одеса',
-  comment: index === 0 ? 'Пошвидше телефонуйте' : undefined,
+  notes: index === 0 ? 'Пошвидше телефонуйте' : null,
 }))
 
 function SearchIcon() {
@@ -112,16 +113,16 @@ function formatPrice(value: number) {
   return new Intl.NumberFormat('uk-UA', { maximumFractionDigits: 0 }).format(value)
 }
 
-function ProductList({ order }: { order: AdminOrder }) {
-  return <div className="admin-orders__products">{order.items.map((item) => <div key={item.id} className="admin-orders__product">
+function ProductList({ order }: { order: AdminOrderSummary }) {
+  return <div className="admin-orders__products">{order.items.map((item) => <div key={item.productId} className="admin-orders__product">
     <span className="admin-orders__thumb">{item.imageUrl && <img src={item.imageUrl} alt="" />}</span>
-    <span>{item.name}{item.quantity > 1 ? ` × ${item.quantity}` : ''}</span>
+    <span>{item.productName}</span>
   </div>)}</div>
 }
 
-function OrderRow({ order, onOpen }: { order: AdminOrder; onOpen: (order: AdminOrder) => void }) {
+function OrderRow({ order, onOpen }: { order: AdminOrderSummary; onOpen: (order: AdminOrderSummary) => void }) {
   return <article className="admin-orders__row">
-    <a href={`#/admin/orders/${order.id}`} onClick={(event) => { event.preventDefault(); onOpen(order) }}>{order.orderNumber}</a>
+    <a href={`#/admin/orders/${order.orderId}`} onClick={(event) => { event.preventDefault(); onOpen(order) }}>{order.orderNumber}</a>
     <time dateTime={order.createdAt}>{formatDate(order.createdAt)}</time>
     <strong>{order.customerName}</strong>
     <b>{order.phone}</b>
@@ -131,8 +132,7 @@ function OrderRow({ order, onOpen }: { order: AdminOrder; onOpen: (order: AdminO
   </article>
 }
 
-function OrderDetailsModal({ order, onClose }: { order: AdminOrder; onClose: () => void }) {
-  const total = order.items.reduce((sum, item) => sum + (item.unitPrice ?? 0) * item.quantity, 0) || order.totalPrice
+function OrderDetailsModal({ order, onClose }: { order: AdminOrderDetail; onClose: () => void }) {
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -148,20 +148,20 @@ function OrderDetailsModal({ order, onClose }: { order: AdminOrder; onClose: () 
       <h2 id="order-details-title"><span className="order-details__desktop-title">Деталі замовлення № {order.orderNumber}</span><span className="order-details__mobile-title">Замовлення № {order.orderNumber}</span></h2>
       <div className="order-details__order">
         <h3>Замовлення</h3>
-        <div className="order-details__products">{order.items.map((item) => <article key={item.id}>
+        <div className="order-details__products">{order.items.map((item) => <article key={item.productId}>
           <span className="order-details__image">{item.imageUrl && <img src={item.imageUrl} alt="" />}</span>
-          <div><strong>{item.name}</strong><small>{item.categoryName ?? item.name}</small></div>
+          <div><strong>{item.productName}</strong></div>
           <span className="order-details__quantity">x{item.quantity}</span>
-          <b>{formatPrice(item.unitPrice ?? Math.round(order.totalPrice / Math.max(1, order.items.length)))} грн</b>
+          <b>{formatPrice(item.unitPrice)} грн</b>
         </article>)}</div>
       </div>
-      <div className="order-details__total"><strong>Всього:</strong><span>{formatPrice(total)} грн</span></div>
+      <div className="order-details__total"><strong>Всього:</strong><span>{formatPrice(order.totalPrice)} грн</span></div>
       <dl className="order-details__info">
         <div><dt>Ім’я та прізвище отримувача</dt><dd>{order.customerName}</dd></div>
         <div><dt>Номер отримувача</dt><dd>{order.phone}</dd></div>
         <div><dt>Місто доставки</dt><dd>{order.deliveryCity}</dd></div>
         <div><dt>Дата оформлення замовлення</dt><dd>{formatDate(order.createdAt)}</dd></div>
-        <div className="order-details__comment"><dt>Коментар до замовлення</dt><dd>{order.comment || '—'}</dd></div>
+        <div className="order-details__comment"><dt>Коментар до замовлення</dt><dd>{order.notes || '—'}</dd></div>
       </dl>
     </section>
   </div>
@@ -170,14 +170,14 @@ function OrderDetailsModal({ order, onClose }: { order: AdminOrder; onClose: () 
 export function AdminOrdersPage() {
   const { showToast } = useToast()
   const isDemo = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEMO_MODE === 'true'
-  const [orders, setOrders] = useState<AdminOrder[]>(isDemo ? DEMO_ORDERS : [])
+  const [orders, setOrders] = useState<AdminOrderSummary[]>(isDemo ? DEMO_ORDERS : [])
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<AdminOrdersSort>('newest')
   const [page, setPage] = useState(1)
   const [mobilePages, setMobilePages] = useState(1)
   const [totalPages, setTotalPages] = useState(isDemo ? 10 : 1)
   const [loading, setLoading] = useState(!isDemo)
-  const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrderDetail | null>(null)
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 600px)').matches)
 
   const load = useCallback(async () => {
@@ -221,6 +221,18 @@ export function AdminOrdersPage() {
     ? isMobile ? filteredOrders.slice(0, mobilePages * PAGE_SIZE) : filteredOrders.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
     : orders
 
+  async function openOrder(order: AdminOrderSummary) {
+    if (isDemo) {
+      setSelectedOrder(order as AdminOrderDetail)
+      return
+    }
+    try {
+      setSelectedOrder(await getAdminOrder(order.orderId))
+    } catch {
+      showToast('Не вдалося завантажити деталі замовлення')
+    }
+  }
+
   return <div className="admin-orders">
     <h1>Замовлення</h1>
     <section className="admin-orders__card admin-orders__panel">
@@ -231,7 +243,7 @@ export function AdminOrdersPage() {
     <section className="admin-orders__card admin-orders__list">
       <h2>Замовлення</h2>
       {visibleOrders.length > 0 && <div className="admin-orders__head"><span>№ замовлення</span><span>Дата</span><span>Ім’я клієнта</span><span>Номер телефону</span><span>Товари</span><span>Сума, грн</span><span>Місто доставки</span></div>}
-      {loading ? <p className="admin-orders__empty">Завантаження…</p> : visibleOrders.length > 0 ? visibleOrders.map((order) => <OrderRow key={order.id} order={order} onOpen={setSelectedOrder} />) : <EmptyOrdersState />}
+      {loading ? <p className="admin-orders__empty">Завантаження…</p> : visibleOrders.length > 0 ? visibleOrders.map((order) => <OrderRow key={order.orderId} order={order} onOpen={(selected) => void openOrder(selected)} />) : <EmptyOrdersState />}
       {!loading && visibleOrders.length > 0 && !isMobile && effectiveTotalPages > 1 && <nav className="admin-orders__pagination" aria-label="Сторінки замовлень"><button type="button" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>←</button>{pageNumbers(page, effectiveTotalPages).map((item, index) => item === 'ellipsis' ? <span key={`ellipsis-${index}`}>…</span> : <button type="button" key={item} data-active={page === item} onClick={() => setPage(item)}>{item}</button>)}<button type="button" disabled={page === effectiveTotalPages} onClick={() => setPage((value) => value + 1)}>→</button></nav>}
       {isMobile && visibleOrders.length < filteredOrders.length && <button type="button" className="admin-orders__show-more" onClick={() => setMobilePages((value) => value + 1)}>Показати ще <ChevronIcon /></button>}
     </section>
