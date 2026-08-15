@@ -31,13 +31,20 @@ type ReviewDetailDto = {
 }
 
 function cloneDefaultReviews() {
-  return testimonials.map((review) => ({ ...review, images: [...review.images] }))
+  return testimonials.map((review) => ({
+    ...review,
+    images: [...review.images],
+    media: review.media?.map((item) => ({ ...item })),
+  }))
 }
 
 function normalizeReview(review: Testimonial): Testimonial {
   return {
     ...review,
     images: review.images?.length ? review.images : testimonials[0].images,
+    media: review.media?.length
+      ? review.media
+      : (review.images?.length ? review.images : testimonials[0].images).map((url) => ({ url, mediaType: 'IMAGE' as const })),
     cardImage: review.cardImage || testimonials[0].cardImage,
     createdAt: review.createdAt || new Date().toISOString(),
   }
@@ -58,7 +65,14 @@ async function normalizeReviewDto(summary: ReviewSummaryDto): Promise<Testimonia
     : summary.primaryMedia
       ? [summary.primaryMedia]
       : []
-  const images = await Promise.all(media.map((item) => resolveMediaUrl(item.s3Key, fallback.cardImage)))
+  const resolvedMedia = await Promise.all(media.map(async (item) => ({
+    url: await resolveMediaUrl(item.s3Key, fallback.cardImage),
+    mediaType: item.mediaType ?? 'IMAGE',
+  })))
+  const safeMedia = resolvedMedia.length
+    ? resolvedMedia
+    : fallback.images.map((url) => ({ url, mediaType: 'IMAGE' as const }))
+  const images = safeMedia.filter((item) => item.mediaType === 'IMAGE').map((item) => item.url)
   const safeImages = images.length ? images : fallback.images
 
   return normalizeReview({
@@ -66,6 +80,7 @@ async function normalizeReviewDto(summary: ReviewSummaryDto): Promise<Testimonia
     author: summary.authorName,
     text: summary.content,
     images: safeImages,
+    media: safeMedia,
     cardImage: safeImages[0] ?? fallback.cardImage,
     createdAt: summary.createdAt,
   })
@@ -74,9 +89,14 @@ async function normalizeReviewDto(summary: ReviewSummaryDto): Promise<Testimonia
 async function normalizeFeaturedReviewDto(review: HomeReview): Promise<Testimonial> {
   const fallback = testimonials[review.reviewId % testimonials.length] ?? testimonials[0]
   const orderedMedia = [...review.media].sort((first, second) => first.displayOrder - second.displayOrder)
-  const images = await Promise.all(
-    orderedMedia.map((item) => resolveMediaUrl(item.s3Key, fallback.cardImage)),
-  )
+  const resolvedMedia = await Promise.all(orderedMedia.map(async (item) => ({
+    url: await resolveMediaUrl(item.s3Key, fallback.cardImage),
+    mediaType: item.mediaType,
+  })))
+  const safeMedia = resolvedMedia.length
+    ? resolvedMedia
+    : fallback.images.map((url) => ({ url, mediaType: 'IMAGE' as const }))
+  const images = safeMedia.filter((item) => item.mediaType === 'IMAGE').map((item) => item.url)
   const safeImages = images.length ? images : fallback.images
 
   return normalizeReview({
@@ -84,6 +104,7 @@ async function normalizeFeaturedReviewDto(review: HomeReview): Promise<Testimoni
     author: review.authorName,
     text: review.content,
     images: safeImages,
+    media: safeMedia,
     cardImage: safeImages[0] ?? fallback.cardImage,
     createdAt: fallback.createdAt,
   })

@@ -15,19 +15,20 @@ type ReviewsPageProps = {
 export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
   const { reviews } = useReviews()
   const [activeReviewIndex, setActiveReviewIndex] = useState(0)
-  const [activeImageIndex, setActiveImageIndex] = useState(1)
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
   const activeReview = reviews[Math.min(activeReviewIndex, reviews.length - 1)]
+  const activeMedia = activeReview.media ?? activeReview.images.map((url) => ({ url, mediaType: 'IMAGE' as const }))
 
   function selectReview(reviewIndex: number) {
     setActiveReviewIndex(reviewIndex)
-    setActiveImageIndex(1)
+    setActiveImageIndex(0)
   }
 
   function showPreviousImage() {
     if (!activeReview) return
 
     setActiveImageIndex((currentIndex) =>
-      currentIndex === 0 ? activeReview.images.length - 1 : currentIndex - 1,
+      currentIndex === 0 ? activeMedia.length - 1 : currentIndex - 1,
     )
   }
 
@@ -35,7 +36,7 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
     if (!activeReview) return
 
     setActiveImageIndex((currentIndex) =>
-      currentIndex === activeReview.images.length - 1 ? 0 : currentIndex + 1,
+      currentIndex === activeMedia.length - 1 ? 0 : currentIndex + 1,
     )
   }
 
@@ -61,27 +62,25 @@ export function ReviewsPage({ siteVariant }: ReviewsPageProps) {
           <div className="reviews-feature">
             <div className="reviews-feature-gallery" aria-label="Фото відгуку">
               <div className="reviews-feature-gallery__thumbs">
-                {activeReview.images.map((image, imageIndex) => (
+                {activeMedia.map((media, imageIndex) => (
                   <button
                     className={imageIndex === activeImageIndex ? 'is-active' : undefined}
                     type="button"
                     key={`${activeReview.id}-${imageIndex}`}
-                    aria-label={`Показати фото ${imageIndex + 1}`}
+                    aria-label={`Показати медіа ${imageIndex + 1}`}
                     aria-pressed={imageIndex === activeImageIndex}
                     onClick={() => setActiveImageIndex(imageIndex)}
                   >
-                    <img src={image} alt="" loading="lazy" decoding="async" />
+                    {media.mediaType === 'VIDEO'
+                      ? <span className="reviews-feature-gallery__video-thumb" aria-hidden="true">▶</span>
+                      : <img src={media.url} alt="" loading="lazy" decoding="async" />}
                   </button>
                 ))}
               </div>
 
-              <img
-                className="reviews-feature-gallery__main"
-                src={activeReview.images[activeImageIndex]}
-                alt={`Виріб з відгуку ${activeReview.author}`}
-                loading="lazy"
-                decoding="async"
-              />
+              {activeMedia[activeImageIndex]?.mediaType === 'VIDEO'
+                ? <video className="reviews-feature-gallery__main" src={activeMedia[activeImageIndex].url} controls preload="metadata" />
+                : <img className="reviews-feature-gallery__main" src={activeMedia[activeImageIndex]?.url} alt={`Виріб з відгуку ${activeReview.author}`} loading="lazy" decoding="async" />}
 
               <div className="reviews-feature-gallery__controls" aria-label="Перемикання фото">
                 <button type="button" aria-label="Попереднє фото" onClick={showPreviousImage}>

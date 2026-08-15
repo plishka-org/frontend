@@ -36,7 +36,12 @@ const CONTENT = [
 ];
 const DEMO_MEDIA = [demoReview1, demoReview2, demoReview3, demoReview4, demoReview2, demoReview3];
 
-const DEMO_REVIEWS: AdminReviewSummary[] = Array.from({ length: 30 }, (_, index) => ({
+type ReviewListItem = AdminReviewSummary & {
+  imageCount: number | null;
+  videoCount: number | null;
+};
+
+const DEMO_REVIEWS: ReviewListItem[] = Array.from({ length: 30 }, (_, index) => ({
   reviewId: index + 1,
   authorName: AUTHORS[index % AUTHORS.length],
   content: CONTENT[index % CONTENT.length],
@@ -47,6 +52,8 @@ const DEMO_REVIEWS: AdminReviewSummary[] = Array.from({ length: 30 }, (_, index)
     s3Key: `demo/review-${index + 1}.jpg`,
     mediaType: index % 4 === 0 ? "VIDEO" : "IMAGE",
   },
+  imageCount: index % 3 === 2 ? 0 : index % 4 === 0 ? 4 : 3,
+  videoCount: index % 4 === 0 ? 1 : 0,
 }));
 
 function SearchIcon() {
@@ -265,7 +272,7 @@ function DeleteReviewConfirm({ count, busy, onCancel, onConfirm }: { count: numb
 export function AdminReviewsPage() {
   const { showToast } = useToast();
   const isDemo = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEMO_MODE === "true";
-  const [reviews, setReviews] = useState<AdminReviewSummary[]>(isDemo ? DEMO_REVIEWS : []);
+  const [reviews, setReviews] = useState<ReviewListItem[]>(isDemo ? DEMO_REVIEWS : []);
   const [loading, setLoading] = useState(!isDemo);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<number[]>([]);
@@ -287,7 +294,20 @@ export function AdminReviewsPage() {
     try {
       const first = await getAdminReviews("", 0);
       const pages = await Promise.all(Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, i) => getAdminReviews("", i + 1)));
-      setReviews([first, ...pages].flatMap((result) => result.content));
+      const summaries = [first, ...pages].flatMap((result) => result.content);
+      const reviewsWithCounts = await Promise.all(summaries.map(async (review): Promise<ReviewListItem> => {
+        try {
+          const detail = await getAdminReview(review.reviewId);
+          return {
+            ...review,
+            imageCount: detail.media.filter((item) => item.mediaType === "IMAGE").length,
+            videoCount: detail.media.filter((item) => item.mediaType === "VIDEO").length,
+          };
+        } catch {
+          return { ...review, imageCount: null, videoCount: null };
+        }
+      }));
+      setReviews(reviewsWithCounts);
     } catch { showToast("Не вдалося завантажити відгуки"); }
     finally { setLoading(false); }
   }, [isDemo, showToast]);
@@ -337,7 +357,7 @@ export function AdminReviewsPage() {
       : newReviewFiles;
     setBusy(true);
     try {
-      if (isDemo) setReviews((items) => [{ reviewId: Date.now(), authorName, content, createdAt: new Date().toISOString(), isFeatured: false, primaryMedia: null }, ...items]);
+      if (isDemo) setReviews((items) => [{ reviewId: Date.now(), authorName, content, createdAt: new Date().toISOString(), isFeatured: false, primaryMedia: null, imageCount: orderedFiles.filter((file) => file.type.startsWith("image/")).length, videoCount: orderedFiles.filter((file) => file.type.startsWith("video/")).length }, ...items]);
       else {
         const created = await createAdminReview({ authorName, content });
         if (orderedFiles.length) {
@@ -398,8 +418,8 @@ export function AdminReviewsPage() {
   const allFeaturedSelected = featured.length > 0 && featured.every((item) => selected.includes(item.reviewId));
   const allRegularSelected = visibleRegular.length > 0 && visibleRegular.every((item) => selected.includes(item.reviewId));
 
-  function ReviewRow({ review, order, featuredRow = false }: { review: AdminReviewSummary; order?: number; featuredRow?: boolean }) {
-    const mediaCount = review.primaryMedia ? (review.primaryMedia.mediaType === "VIDEO" ? "4 фото, 1 відео" : "3 фото, 0 відео") : "0 фото, 0 відео";
+  function ReviewRow({ review, order, featuredRow = false }: { review: ReviewListItem; order?: number; featuredRow?: boolean }) {
+    const mediaCount = review.imageCount === null || review.videoCount === null ? "—" : `${review.imageCount} фото, ${review.videoCount} відео`;
     return <article className="admin-reviews__row" data-featured={featuredRow}>
       <div className="admin-reviews__order">{featuredRow && <><GripIcon /><span>{order}</span></>}</div>
       <CheckBox checked={selected.includes(review.reviewId)} onChange={() => toggleSelected(review.reviewId)} />
@@ -438,7 +458,7 @@ export function AdminReviewsPage() {
         {isMobile && visibleRegular.length < regular.length && <button className="admin-reviews__show-more" type="button" onClick={() => setMobilePages((value) => value + 1)}>ПОКАЗАТИ ЩЕ <ChevronIcon /></button>}
       </section>
     </>}
-    {editingReview && <ReviewEditModal review={editingReview} isDemo={isDemo} onClose={() => setEditingReview(null)} onSaved={(updated) => { setReviews((items) => items.map((item) => item.reviewId === updated.reviewId ? updated : item)); if (!isDemo) void load(); }} onRequestDelete={(id) => { setEditingReview(null); setPendingDelete([id]); }} />}
+    {editingReview && <ReviewEditModal review={editingReview} isDemo={isDemo} onClose={() => setEditingReview(null)} onSaved={(updated) => { setReviews((items) => items.map((item) => item.reviewId === updated.reviewId ? { ...item, ...updated } : item)); if (!isDemo) void load(); }} onRequestDelete={(id) => { setEditingReview(null); setPendingDelete([id]); }} />}
     {pendingDelete.length > 0 && <DeleteReviewConfirm count={pendingDelete.length} busy={deleteBusy} onCancel={() => setPendingDelete([])} onConfirm={() => void confirmRemove()} />}
   </div>;
 }
