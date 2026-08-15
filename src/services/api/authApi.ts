@@ -201,3 +201,11 @@ export async function verifyEmailApi(token: string): Promise<void> {
     auth: false,
   })
 }
+
+export async function verifyEmailChangeApi(token: string): Promise<void> {
+  await apiRequest<MessageResponseDto>('/api/auth/verify-email-change', {
+    method: 'POST',
+    auth: false,
+    body: { token },
+  })
+}

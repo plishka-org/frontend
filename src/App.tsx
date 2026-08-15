@@ -39,6 +39,7 @@ import { AdminClientsPage } from "./components/pages/AdminClientsPage/AdminClien
 import { AdminOrdersPage } from "./components/pages/AdminOrdersPage/AdminOrdersPage";
 import { AdminCategoriesPage } from "./components/pages/AdminCategoriesPage/AdminCategoriesPage";
 import { AdminCallbackRequestsPage } from "./components/pages/AdminCallbackRequestsPage/AdminCallbackRequestsPage";
+import { EmailChangeVerificationPage } from "./components/pages/EmailChangeVerificationPage/EmailChangeVerificationPage";
 
 function App() {
   const [, setLocationKey] = useState(() => window.location.href);
@@ -86,7 +87,9 @@ function App() {
 
   let pageContent;
 
-  if (appPath.match(/^\/login\/?$/)) {
+  if (appPath.match(/^\/verify-email-change\/?$/)) {
+    pageContent = <EmailChangeVerificationPage />;
+  } else if (appPath.match(/^\/login\/?$/)) {
     pageContent = <LoginPage />;
   } else if (appPath.match(/^\/(forgot-password|reset-password)\/?$/)) {
     pageContent = (

@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { contacts } from '../../../data/contacts'
 import { getContactsApi } from '../../../services/api/contentApi'
 import {
-  FacebookIcon,
   MailIcon,
   PhoneIcon,
   PinIcon,
+  SocialIcon,
 } from '../../icons/ContactIcons'
 
 export function ContactsSection() {
@@ -15,12 +15,11 @@ export function ContactsSection() {
     address: 'Село Город, Косівський район, Івано-Франківська обл., вул. Незалежності, 55',
     mapEmbedUrl: contacts.mapEmbedUrl,
     mapLinkUrl: contacts.mapUrl,
-    facebookUrl: contacts.facebookUrl,
+    socialLinks: [{ socialLinkId: 0, name: 'Facebook', url: contacts.facebookUrl }],
   })
 
   useEffect(() => {
     getContactsApi().then((response) => {
-      const facebookUrl = response.socialLinks.find((link) => link.name.toLowerCase().includes('facebook'))?.url ?? contacts.facebookUrl
       const phoneNumber = response.phoneNumber?.trim()
       const email = response.email?.trim()
       const address = response.address?.trim()
@@ -32,7 +31,7 @@ export function ContactsSection() {
         address: address && address !== 'Косівщина, Україна' ? address : contacts.address,
         mapEmbedUrl: googleMapsUrl || contacts.mapEmbedUrl,
         mapLinkUrl: googleMapsUrl || contacts.mapUrl,
-        facebookUrl,
+        socialLinks: response.socialLinks.filter((link) => link.url.trim()),
       })
     }).catch(() => undefined)
   }, [])
@@ -58,15 +57,17 @@ export function ContactsSection() {
 
             <article className="contact-card contact-card--compact">
               <h2>Соцмережі</h2>
-              <a
-                href={content.facebookUrl}
-                className="social-link"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Відкрити Facebook Plishka"
-              >
-                <FacebookIcon />
-              </a>
+              <div className="social-links">
+                {content.socialLinks.map((link) => <a
+                  href={link.url}
+                  className="social-link"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Відкрити ${link.name}`}
+                  title={link.name}
+                  key={link.socialLinkId || `${link.name}-${link.url}`}
+                ><SocialIcon name={link.name} /></a>)}
+              </div>
             </article>
 
             <article className="contact-card contact-card--wide">

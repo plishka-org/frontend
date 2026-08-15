@@ -1,5 +1,5 @@
 import { apiRequest } from './client'
-import type { AboutContent, HomeContent, SettingsResponse } from './contentApi'
+import type { AboutContent, HomeContent } from './contentApi'
 
 export type AdminAboutMedia = {
   mediaId: number
@@ -16,6 +16,11 @@ export type ContactContent = {
 }
 
 export type SocialLink = { socialLinkId: number; name: string; url: string }
+
+export type AdminSettings = {
+  isShopModeEnabled: boolean
+  adminEmail: string
+}
 
 export type ReviewMedia = {
   reviewMediaId: number
@@ -147,5 +152,5 @@ export async function uploadAdminReviewMedia(reviewId: number, files: File[]) {
   return uploadedKeys
 }
 
-export const getAdminSettings = () => apiRequest<SettingsResponse>('/api/admin/settings')
-export const updateAdminSettings = (isShopModeEnabled: boolean) => apiRequest<SettingsResponse>('/api/admin/settings', { method: 'PUT', body: { isShopModeEnabled } })
+export const getAdminSettings = () => apiRequest<AdminSettings>('/api/admin/settings')
+export const updateAdminSettings = (settings: AdminSettings) => apiRequest<AdminSettings>('/api/admin/settings', { method: 'PUT', body: settings })

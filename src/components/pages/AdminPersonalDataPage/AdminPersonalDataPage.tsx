@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useAuth } from "../../../hooks/useAuth";
 import { changePasswordApi, requestEmailChangeApi } from "../../../services/api/authApi";
+import { getAdminSettings, updateAdminSettings } from "../../../services/api/adminContentApi";
 import "./adminPersonalDataPage.scss";
 
 type FieldName = "name" | "phone" | "email" | "newPassword" | "repeatPassword";
@@ -85,6 +86,11 @@ export function AdminPersonalDataPage() {
   const [name, setName] = useState(user?.name ?? "");
   const [phone, setPhone] = useState(() => localPhone(user?.phone));
   const [email, setEmail] = useState(user?.email ?? "");
+  const [notificationEmail, setNotificationEmail] = useState("");
+  const [savedNotificationEmail, setSavedNotificationEmail] = useState("");
+  const [shopMode, setShopMode] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [notificationEmailTouched, setNotificationEmailTouched] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -101,7 +107,8 @@ export function AdminPersonalDataPage() {
   const initialName = user?.name ?? "";
   const initialPhone = localPhone(user?.phone);
   const initialEmail = user?.email ?? "";
-  const hasChanges = name.trim() !== initialName || phone !== initialPhone || email.trim() !== initialEmail || Boolean(newPassword || repeatPassword);
+  const notificationEmailError = notificationEmailTouched ? validateEmail(notificationEmail) : "";
+  const hasChanges = name.trim() !== initialName || phone !== initialPhone || email.trim() !== initialEmail || notificationEmail.trim() !== savedNotificationEmail || Boolean(newPassword || repeatPassword);
   const needsConfirmation = email.trim() !== initialEmail || Boolean(newPassword);
 
   useEffect(() => {
@@ -109,6 +116,31 @@ export function AdminPersonalDataPage() {
     setPhone(localPhone(user?.phone));
     setEmail(user?.email ?? "");
   }, [user]);
+
+  useEffect(() => {
+    const demoMode = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEMO_MODE === "true";
+    if (demoMode) {
+      const demoEmail = user?.email ?? "admin@plishka.com.ua";
+      setNotificationEmail(demoEmail);
+      setSavedNotificationEmail(demoEmail);
+      setShopMode(true);
+      setSettingsLoaded(true);
+      return;
+    }
+    let cancelled = false;
+    getAdminSettings()
+      .then((settings) => {
+        if (cancelled) return;
+        setNotificationEmail(settings.adminEmail);
+        setSavedNotificationEmail(settings.adminEmail);
+        setShopMode(settings.isShopModeEnabled);
+        setSettingsLoaded(true);
+      })
+      .catch(() => {
+        if (!cancelled) setMessage({ kind: "error", text: "Не вдалося завантажити email для сповіщень." });
+      });
+    return () => { cancelled = true; };
+  }, [user?.email]);
 
   function changeField(field: FieldName, value: string) {
     if (field === "name") setName(value);
@@ -136,9 +168,11 @@ export function AdminPersonalDataPage() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextErrors = validateAll(name, phone, email, newPassword, repeatPassword, Boolean(newPassword || repeatPassword));
+    const nextNotificationEmailError = validateEmail(notificationEmail);
     setTouched({ name: true, phone: true, email: true, newPassword: Boolean(newPassword), repeatPassword: Boolean(newPassword || repeatPassword) });
+    setNotificationEmailTouched(true);
     setErrors(nextErrors);
-    if (Object.values(nextErrors).some(Boolean) || !hasChanges) return;
+    if (Object.values(nextErrors).some(Boolean) || nextNotificationEmailError || !hasChanges || !settingsLoaded) return;
     if (needsConfirmation) {
       setCurrentPassword("");
       setIsPasswordDialogOpen(true);
@@ -150,12 +184,19 @@ export function AdminPersonalDataPage() {
   async function saveChanges(password: string) {
     const profileChanged = name.trim() !== initialName || phone !== initialPhone;
     const emailChanged = email.trim() !== initialEmail;
+    const notificationEmailChanged = notificationEmail.trim() !== savedNotificationEmail;
     const passwordChanged = Boolean(newPassword);
     setIsSubmitting(true);
     setMessage(null);
 
     try {
       if (profileChanged) await updateProfile({ name: name.trim(), phone: phone ? `+38${phone}` : undefined });
+      if (notificationEmailChanged) {
+        const settings = await updateAdminSettings({ isShopModeEnabled: shopMode, adminEmail: notificationEmail.trim() });
+        setNotificationEmail(settings.adminEmail);
+        setSavedNotificationEmail(settings.adminEmail);
+        setShopMode(settings.isShopModeEnabled);
+      }
       if (emailChanged) await requestEmailChangeApi({ newEmail: email.trim(), currentPassword: password });
       if (passwordChanged) {
         await changePasswordApi({ currentPassword: password, newPassword, confirmPassword: repeatPassword });
@@ -172,6 +213,7 @@ export function AdminPersonalDataPage() {
       setNewPassword("");
       setRepeatPassword("");
       setTouched(EMPTY_TOUCHED);
+      setNotificationEmailTouched(false);
       if (!emailChanged) setMessage({ kind: "success", text: "Зміни збережено." });
     } catch (error) {
       setMessage({ kind: "error", text: error instanceof Error ? error.message : "Не вдалося зберегти зміни." });
@@ -207,6 +249,9 @@ export function AdminPersonalDataPage() {
           <Field id="admin-email" label="Email" error={fieldError("email")}>
             <input id="admin-email" type="email" autoComplete="email" value={email} disabled={isSubmitting} onChange={(event) => changeField("email", event.target.value)} onBlur={() => blurField("email")} />
           </Field>
+          <Field id="admin-notification-email" label="Email для сповіщень" error={notificationEmailError}>
+            <input id="admin-notification-email" type="email" autoComplete="email" value={notificationEmail} disabled={isSubmitting || !settingsLoaded} onChange={(event) => { setNotificationEmail(event.target.value); setMessage(null); }} onBlur={() => setNotificationEmailTouched(true)} />
+          </Field>
         </div>
 
         <div className="admin-personal-data__password-grid">
@@ -219,7 +264,7 @@ export function AdminPersonalDataPage() {
         </div>
 
         <div className="admin-personal-data__actions">
-          <button className="admin-personal-data__submit" type="submit" disabled={!hasChanges || isSubmitting}>{isSubmitting ? "Збереження…" : "Підтвердити зміни"}</button>
+          <button className="admin-personal-data__submit" type="submit" disabled={!hasChanges || isSubmitting || !settingsLoaded}>{isSubmitting ? "Збереження…" : "Підтвердити зміни"}</button>
           <button className="admin-personal-data__logout" type="button" disabled={isSubmitting} onClick={() => void handleLogout()}><LogoutIcon />Вийти з акаунта</button>
         </div>
       </form>
