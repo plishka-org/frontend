@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useToast } from '../../../hooks/useToast'
+import { useDebouncedValue } from '../../../hooks/useDebouncedValue'
 import {
   getAdminCallbackRequests,
   type AdminCallbackRequest,
@@ -135,6 +136,7 @@ export function AdminCallbackRequestsPage() {
   const isDemo = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEMO_MODE === 'true'
   const [requests, setRequests] = useState<AdminCallbackRequest[]>(isDemo ? DEMO_REQUESTS : [])
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search.trim())
   const [sort, setSort] = useState<AdminCallbackRequestsSort>('newest')
   const [page, setPage] = useState(1)
   const [mobilePages, setMobilePages] = useState(1)
@@ -148,10 +150,14 @@ export function AdminCallbackRequestsPage() {
     if (isDemo) return
     const requestId = requestIdRef.current + 1
     requestIdRef.current = requestId
+    if (search.trim() !== debouncedSearch) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const result = await getAdminCallbackRequests(
-        search,
+        debouncedSearch,
         sort,
         isMobile ? mobilePages - 1 : page - 1,
         PAGE_SIZE,
@@ -178,7 +184,7 @@ export function AdminCallbackRequestsPage() {
         setLoading(false)
       }
     }
-  }, [isDemo, isMobile, mobilePages, page, search, showToast, sort])
+  }, [debouncedSearch, isDemo, isMobile, mobilePages, page, search, showToast, sort])
 
   useEffect(() => { void load() }, [load])
   useEffect(() => {

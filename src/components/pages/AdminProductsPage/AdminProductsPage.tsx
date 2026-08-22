@@ -26,6 +26,7 @@ import {
   uploadAdminProductMediaApi,
 } from "../../../services/api/adminProductsApi";
 import { useToast } from "../../../hooks/useToast";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
 import trashIcon from "../../../icons/trash.png";
 import editIcon from "../../../icons/Type=Edit.png";
 import roundIcon from "../../../icons/Round.png";
@@ -1447,6 +1448,7 @@ export function AdminProductsPage() {
     useState<number | "">("");
   const [changeCategoryTo, setChangeCategoryTo] = useState<number | "">("");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search.trim());
 
   const [selected, setSelected] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -1458,17 +1460,24 @@ export function AdminProductsPage() {
 
   const dragIdRef = useRef<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
+  const requestIdRef = useRef(0);
 
   const buildCurrentFilters = useCallback((): AdminProductFilters => {
     const categoryIds = filterCategoryIds.filter((id) => id !== NO_CATEGORY_ID);
     const filters: AdminProductFilters = {};
     if (categoryIds.length > 0) filters.categoryIds = categoryIds;
     if (filterCategoryIds.includes(NO_CATEGORY_ID)) filters.uncategorized = true;
-    if (search.trim()) filters.search = search.trim();
+    if (debouncedSearch) filters.search = debouncedSearch;
     return filters;
-  }, [filterCategoryIds, search]);
+  }, [debouncedSearch, filterCategoryIds]);
 
   const loadProducts = useCallback(async () => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    if (!isAdminDemoMode && search.trim() !== debouncedSearch) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     if (isAdminDemoMode) {
       const demoCatalog = DEMO_PRODUCTS.filter((product) => !product.isOnHome);
@@ -1495,6 +1504,7 @@ export function AdminProductsPage() {
     try {
       const filters = buildCurrentFilters();
       const homeIds = await fetchHomeProductIdsApi();
+      if (requestId !== requestIdRef.current) return;
       const [page, uncategorizedPage, currentHomeProducts] = await Promise.all([
         fetchAdminProductsApi(
           {
@@ -1508,6 +1518,7 @@ export function AdminProductsPage() {
         fetchAdminProductsApi({ uncategorized: true, page: 0, size: 1 }),
         Promise.all(homeIds.map((id) => fetchAdminProductApi(id, homeIds))),
       ]);
+      if (requestId !== requestIdRef.current) return;
       setHomeProductIds(homeIds);
       setProducts(page.content);
       setMainProducts(currentHomeProducts);
@@ -1521,11 +1532,13 @@ export function AdminProductsPage() {
         setCurrentPage(page.totalPages);
       }
     } catch (e) {
-      showToast(e instanceof Error ? e.message : "Помилка завантаження даних");
+      if (requestId === requestIdRef.current) {
+        showToast(e instanceof Error ? e.message : "Помилка завантаження даних");
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
-  }, [buildCurrentFilters, currentPage, filterCategoryIds, isAdminDemoMode, search, showToast]);
+  }, [buildCurrentFilters, currentPage, debouncedSearch, filterCategoryIds, isAdminDemoMode, search, showToast]);
 
   useEffect(() => {
     if (isAdminDemoMode) {
@@ -1906,7 +1919,7 @@ export function AdminProductsPage() {
   const allPageSelected =
     pageIds.length > 0 && pageIds.every((id) => selected.includes(id));
 
-  if (loading) {
+  if (loading && products.length === 0 && mainProducts.length === 0) {
     return (
       <div className="admin-products__loading">
         <span>Завантаження...</span>
