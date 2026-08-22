@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   getAdminOrder,
   getAdminOrders,
@@ -7,6 +7,7 @@ import {
   type AdminOrdersSort,
 } from '../../../services/api/adminOrdersApi'
 import { useToast } from '../../../hooks/useToast'
+import { useDebouncedValue } from '../../../hooks/useDebouncedValue'
 import gazeboImage from '../../../assets/best-products-block/product-1.webp'
 import swingImage from '../../../assets/best-products-block/product-2.webp'
 import './adminOrdersPage.scss'
@@ -172,6 +173,7 @@ export function AdminOrdersPage() {
   const isDemo = import.meta.env.DEV && import.meta.env.VITE_ADMIN_DEMO_MODE === 'true'
   const [orders, setOrders] = useState<AdminOrderSummary[]>(isDemo ? DEMO_ORDERS : [])
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search.trim())
   const [sort, setSort] = useState<AdminOrdersSort>('newest')
   const [page, setPage] = useState(1)
   const [mobilePages, setMobilePages] = useState(1)
@@ -179,20 +181,28 @@ export function AdminOrdersPage() {
   const [loading, setLoading] = useState(!isDemo)
   const [selectedOrder, setSelectedOrder] = useState<AdminOrderDetail | null>(null)
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 600px)').matches)
+  const requestIdRef = useRef(0)
 
   const load = useCallback(async () => {
     if (isDemo) return
+    const requestId = requestIdRef.current + 1
+    requestIdRef.current = requestId
+    if (search.trim() !== debouncedSearch) {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
-      const result = await getAdminOrders(search, sort, page - 1, PAGE_SIZE)
+      const result = await getAdminOrders(debouncedSearch, sort, page - 1, PAGE_SIZE)
+      if (requestId !== requestIdRef.current) return
       setOrders(result.content)
       setTotalPages(Math.max(1, result.totalPages))
     } catch {
-      showToast('Не вдалося завантажити замовлення')
+      if (requestId === requestIdRef.current) showToast('Не вдалося завантажити замовлення')
     } finally {
-      setLoading(false)
+      if (requestId === requestIdRef.current) setLoading(false)
     }
-  }, [isDemo, page, search, showToast, sort])
+  }, [debouncedSearch, isDemo, page, search, showToast, sort])
 
   useEffect(() => { void load() }, [load])
   useEffect(() => {

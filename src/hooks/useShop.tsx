@@ -169,8 +169,7 @@ useEffect(() => {
           persistCart([])
         })
         .catch(() => {
-          const fallbackCancel = loadServerCart()
-          fallbackCancel?.()
+          loadServerCart()
         })
     }
 

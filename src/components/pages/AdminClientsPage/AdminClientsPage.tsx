@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   banAdminUser,
   bulkBanAdminUsers,
@@ -9,6 +9,7 @@ import {
   type AdminUser,
 } from "../../../services/api/adminUsersApi";
 import { useToast } from "../../../hooks/useToast";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
 import "./adminClientsPage.scss";
 
 const PAGE_SIZE = 10;
@@ -105,6 +106,7 @@ export function AdminClientsPage() {
   const [clients, setClients] = useState<AdminUser[]>(isDemo ? DEMO_CLIENTS : []);
   const [banned, setBanned] = useState<AdminUser[]>(isDemo ? DEMO_BANNED : []);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search.trim());
   const [page, setPage] = useState(1);
   const [mobilePages, setMobilePages] = useState(1);
   const [selectedClients, setSelectedClients] = useState<number[]>([]);
@@ -114,21 +116,32 @@ export function AdminClientsPage() {
   const [busy, setBusy] = useState(false);
   const [pendingBan, setPendingBan] = useState<number[]>([]);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 600px)").matches);
+  const requestIdRef = useRef(0);
 
   const load = useCallback(async () => {
     if (isDemo) return;
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    if (search.trim() !== debouncedSearch) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const [usersPage, bannedPage] = await Promise.all([
-        getAdminUsers(search, page - 1, PAGE_SIZE),
-        getBannedAdminUsers(search, 0, 100),
+        getAdminUsers(debouncedSearch, page - 1, PAGE_SIZE),
+        getBannedAdminUsers(debouncedSearch, 0, 100),
       ]);
+      if (requestId !== requestIdRef.current) return;
       setClients(usersPage.content);
       setBanned(bannedPage.content);
       setTotalPages(Math.max(1, usersPage.totalPages));
-    } catch { showToast("Не вдалося завантажити клієнтів"); }
-    finally { setLoading(false); }
-  }, [isDemo, page, search, showToast]);
+    } catch {
+      if (requestId === requestIdRef.current) showToast("Не вдалося завантажити клієнтів");
+    } finally {
+      if (requestId === requestIdRef.current) setLoading(false);
+    }
+  }, [debouncedSearch, isDemo, page, search, showToast]);
 
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {

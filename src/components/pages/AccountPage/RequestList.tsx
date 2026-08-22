@@ -8,7 +8,7 @@ type Props = {
 }
 
 export function RequestList({ requests }: Props) {
-  const visible = requests.slice(0, MAX_VISIBLE)
+  const visible = requests
 
   return (
     <div className="request-list">
