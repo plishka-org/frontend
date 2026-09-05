@@ -1,16 +1,14 @@
-import type { SiteVariant } from './siteVariant'
-
 export function getBasePath() {
   return import.meta.env.BASE_URL.replace(/\/$/, '')
 }
 
-function withSiteVariant(path: string, siteVariant: SiteVariant, useHashRoute = false) {
+function getRouteUrl(path: string, useHashRoute = false) {
   const basePath = getBasePath()
   const documentPath = basePath ? `${basePath}/` : '/'
   const routePath = path === '/' ? '/' : path
   const hashRoute = useHashRoute ? `#${routePath}` : ''
 
-  return `${documentPath}?site=${siteVariant}${hashRoute}`
+  return `${documentPath}${hashRoute}`
 }
 
 export function getAppPath(pathname: string, hash = '') {
@@ -27,24 +25,28 @@ export function getAppPath(pathname: string, hash = '') {
   return pathname
 }
 
-export function getHomeUrl(siteVariant: SiteVariant = 'usual') {
-  return withSiteVariant('/', siteVariant)
+export function getHomeUrl() {
+  return getRouteUrl('/')
 }
 
-export function getGalleryUrl(siteVariant: SiteVariant = 'usual') {
-  return withSiteVariant('/gallery', siteVariant, true)
+export function getGalleryUrl() {
+  return getRouteUrl('/gallery', true)
 }
 
-export function getAboutUrl(siteVariant: SiteVariant = 'usual') {
-  return withSiteVariant('/about', siteVariant, true)
+export function getAboutUrl() {
+  return getRouteUrl('/about', true)
 }
 
-export function getReviewsUrl(siteVariant: SiteVariant = 'usual') {
-  return withSiteVariant('/reviews', siteVariant, true)
+export function getReviewsUrl() {
+  return getRouteUrl('/reviews', true)
 }
 
-export function getProductUrl(productId: string, siteVariant: SiteVariant = 'usual') {
-  return withSiteVariant(`/products/${productId}`, siteVariant, true)
+export function getFavoritesUrl() {
+  return getRouteUrl('/favorites', true)
+}
+
+export function getProductUrl(productId: string) {
+  return getRouteUrl(`/products/${productId}`, true)
 }
 
 export function getAccountUrl(subpath: 'orders' | 'requests' | 'settings' = 'settings') {

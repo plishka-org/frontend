@@ -20,7 +20,7 @@ import { getProductDetailApi, type ProductUi } from "./services/api/productsApi"
 import { hasApiBaseUrl } from "./services/api/client";
 import { getSettingsApi } from './services/api/contentApi'
 import { getAppPath } from "./utils/productUrl";
-import { getRequestedSiteVariant, getSiteVariant } from "./utils/siteVariant";
+import type { SiteVariant } from "./utils/siteVariant";
 import "./App.scss";
 import { InformBlock } from "./components/sections/InformBlock/InformBlock";
 import Advantages from "./components/sections/Advantages/Advantages";
@@ -70,19 +70,33 @@ function App() {
   }, [appPath]);
 
   const productMatch = appPath.match(/^\/products\/([^/]+)\/?$/);
-  const requestedVariant = getRequestedSiteVariant();
-  const fallbackVariant = getSiteVariant();
-  const [siteVariant, setSiteVariant] = useState(fallbackVariant)
+  const [siteVariant, setSiteVariant] = useState<SiteVariant>('usual')
 
   useEffect(() => {
-    if (requestedVariant) {
+    let cancelled = false
+
+    if (!hasApiBaseUrl()) {
       return
     }
 
-    if (!hasApiBaseUrl()) return
-    getSettingsApi().then((settings) => setSiteVariant(settings.isShopModeEnabled ? 'order' : 'usual')).catch(() => setSiteVariant(fallbackVariant))
-  }, [fallbackVariant, requestedVariant])
-  const activeSiteVariant = requestedVariant ?? siteVariant
+    getSettingsApi()
+      .then((settings) => {
+        if (!cancelled) {
+          setSiteVariant(settings.isShopModeEnabled ? 'order' : 'usual')
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSiteVariant('usual')
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [appPath])
+
+  const activeSiteVariant = siteVariant
   const adminMatch = appPath.match(/^\/admin\/?(.*)$/);
 
   let pageContent;
@@ -172,7 +186,7 @@ function ProductRoute({
   siteVariant,
 }: {
   productId: string;
-  siteVariant: ReturnType<typeof getSiteVariant>;
+  siteVariant: SiteVariant;
 }) {
   const localProduct = useMemo(() => getProductById(productId), [productId]);
   const [product, setProduct] = useState<ProductUi | undefined>(localProduct);
@@ -230,15 +244,15 @@ function ProductRoute({
 function HomePage({
   siteVariant,
 }: {
-  siteVariant: ReturnType<typeof getSiteVariant>;
+  siteVariant: SiteVariant;
 }) {
   return (
     <main className="page-shell">
       <Header activePage="home" siteVariant={siteVariant} />
-      <InformBlock siteVariant={siteVariant} />
+      <InformBlock />
       <Advantages />
       <BestProductsSection siteVariant={siteVariant} />
-      <ReviewsSection siteVariant={siteVariant} />
+      <ReviewsSection />
       <ContactForm />
       <ContactsSection />
       <Footer />

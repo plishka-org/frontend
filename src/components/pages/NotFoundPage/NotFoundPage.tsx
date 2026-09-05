@@ -22,10 +22,10 @@ export function NotFoundPage({
         <h1 id="not-found-title">{title}</h1>
         <p>{description}</p>
         <div className="not-found-page__actions">
-          <a className="not-found-page__primary" href={getHomeUrl(siteVariant)}>
+          <a className="not-found-page__primary" href={getHomeUrl()}>
             На головну
           </a>
-          <a className="not-found-page__secondary" href={getGalleryUrl(siteVariant)}>
+          <a className="not-found-page__secondary" href={getGalleryUrl()}>
             До галереї
           </a>
         </div>

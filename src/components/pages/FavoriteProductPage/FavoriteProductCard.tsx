@@ -12,7 +12,7 @@ type FavoriteProductCardProps = {
 }
 
 export function FavoriteProductCard({ product, siteVariant }: FavoriteProductCardProps) {
-  const href = getProductUrl(product.id, siteVariant)
+  const href = getProductUrl(product.id)
   const { isFavorite, toggleFavorite } = useShop()
   const features = siteVariantFeatures[siteVariant]
   const productIsFavorite = isFavorite(product.id)

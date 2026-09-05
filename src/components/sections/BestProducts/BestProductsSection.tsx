@@ -36,7 +36,7 @@ export function BestProductsSection({ siteVariant = 'usual' }: BestProductsSecti
         <div className="best-products-section__header">
           <h1 id="best-products-title">Наші найкращі вироби</h1>
 
-          <a className="best-products-section__link" href={getGalleryUrl(siteVariant)}>
+          <a className="best-products-section__link" href={getGalleryUrl()}>
             <span>УСІ ВИРОБИ</span>
             <span aria-hidden="true">→</span>
           </a>
@@ -87,7 +87,7 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
 
   return (
     <article className="best-product-card" data-cart-actions={features.showCartActions}>
-      <a className="best-product-card__link" href={getProductUrl(product.id, siteVariant)}>
+      <a className="best-product-card__link" href={getProductUrl(product.id)}>
         <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
 
         <div className="best-product-card__body">

@@ -4,6 +4,7 @@ import { BrandMark } from "../Footer/BrandMark";
 import { CloseIcon, HeartIcon, MenuIcon, UserIcon } from "../../icons/UiIcons";
 import {
   getAboutUrl,
+  getFavoritesUrl,
   getGalleryUrl,
   getHomeUrl,
   getReviewsUrl,
@@ -27,16 +28,13 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const { cartCount } = useShop();
   const { user } = useAuth();
-  const homeHref = getHomeUrl(siteVariant);
-  const switchHref = getVariantSwitchUrl(
-    siteVariant === "order" ? "usual" : "order",
-  );
-  const favoritesHref = getFavoritesUrl(siteVariant);
+  const homeHref = getHomeUrl();
+  const favoritesHref = getFavoritesUrl();
   const navItems = [
     { href: homeHref, label: "Головна", page: "home" },
-    { href: getGalleryUrl(siteVariant), label: "Галерея", page: "gallery" },
-    { href: getAboutUrl(siteVariant), label: "Про майстерню", page: "about" },
-    { href: getReviewsUrl(siteVariant), label: "Відгуки", page: "reviews" },
+    { href: getGalleryUrl(), label: "Галерея", page: "gallery" },
+    { href: getAboutUrl(), label: "Про майстерню", page: "about" },
+    { href: getReviewsUrl(), label: "Відгуки", page: "reviews" },
     { href: favoritesHref, label: "Обрані", page: "favorites" },
     {
       href: "#/account/settings",
@@ -105,7 +103,6 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
       </nav>
 
       <div className="site-header__actions">
-        <VariantSwitch siteVariant={siteVariant} href={switchHref} />
         <a
           className="icon-button"
           href={favoritesHref}
@@ -176,7 +173,6 @@ export function Header({ activePage, siteVariant }: HeaderProps) {
           className="site-header__drawer-nav"
           aria-label="Мобільна навігація"
         >
-          <VariantSwitch siteVariant={siteVariant} href={switchHref} />
           {navItems.map((item) => (
             <a
               className={getNavItemClassName(item)}
@@ -235,44 +231,5 @@ function CartButton({ cartCount, onClick }: CartButtonProps) {
       <img src={cartIcon} alt="" aria-hidden="true" />
       <span>({cartCount})</span>
     </button>
-  );
-}
-
-function getVariantSwitchUrl(siteVariant: SiteVariant) {
-  if (typeof window === "undefined") {
-    return siteVariant === "order" ? "?site=order" : "/";
-  }
-
-  const nextUrl = new URL(window.location.href);
-
-  if (siteVariant === "order") {
-    nextUrl.searchParams.set("site", "order");
-  } else {
-    nextUrl.searchParams.set("site", "usual");
-  }
-
-  return `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
-}
-
-function getFavoritesUrl(siteVariant: SiteVariant) {
-  const search = `?site=${siteVariant}`;
-  return `${search}#/favorites`;
-}
-
-type VariantSwitchProps = {
-  href: string;
-  siteVariant: SiteVariant;
-};
-
-function VariantSwitch({ href, siteVariant }: VariantSwitchProps) {
-  return (
-    <a
-      className="site-variant-switch"
-      data-variant={siteVariant}
-      href={href}
-      aria-label={`Перемкнути на ${siteVariant === "order" ? "звичайний сайт" : "сайт замовлення"}`}
-    >
-      <span aria-hidden="true" />
-    </a>
   );
 }
