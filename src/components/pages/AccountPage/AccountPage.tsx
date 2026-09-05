@@ -15,6 +15,8 @@ import { RequestList } from './RequestList'
 import type { Order } from '../../../types/order'
 import type { Request } from '../../../types/request'
 
+const REQUESTS_PAGE_SIZE = 10
+
 type AccountPageProps = {
   siteVariant: SiteVariant
 }
@@ -30,6 +32,11 @@ function mapContactRequestToRequest(request: ContactRequestResponse): Request {
 export function AccountPage({ siteVariant }: AccountPageProps) {
   const currentPath = getAppPath(window.location.pathname, window.location.hash)
   const [requests, setRequests] = useState<Request[]>([])
+  const [requestsPage, setRequestsPage] = useState(0)
+  const [requestsTotalPages, setRequestsTotalPages] = useState(0)
+  const [requestsLoading, setRequestsLoading] = useState(true)
+  const [requestsError, setRequestsError] = useState<string | null>(null)
+  const [requestsReloadKey, setRequestsReloadKey] = useState(0)
   const [orders, setOrders] = useState<Order[]>([])
 
   useEffect(() => {
@@ -37,12 +44,29 @@ export function AccountPage({ siteVariant }: AccountPageProps) {
       return
     }
 
-    getContactRequests()
-      .then((contactRequests) =>
-        setRequests(contactRequests.map(mapContactRequestToRequest).reverse()),
-      )
-      .catch(() => setRequests([]))
-  }, [currentPath])
+    let cancelled = false
+
+    getContactRequests(requestsPage, REQUESTS_PAGE_SIZE)
+      .then((response) => {
+        if (cancelled) return
+        setRequests(response.content.map(mapContactRequestToRequest))
+        setRequestsTotalPages(response.totalPages)
+        setRequestsError(null)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setRequests([])
+        setRequestsTotalPages(0)
+        setRequestsError('Не вдалося завантажити історію заявок.')
+      })
+      .finally(() => {
+        if (!cancelled) setRequestsLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentPath, requestsPage, requestsReloadKey])
 
   useEffect(() => {
     if (!currentPath.startsWith('/account/orders')) {
@@ -59,7 +83,26 @@ export function AccountPage({ siteVariant }: AccountPageProps) {
   if (currentPath.startsWith('/account/orders')) {
     section = <OrderList orders={orders} siteVariant={siteVariant} />
   } else if (currentPath.startsWith('/account/requests')) {
-    section = <RequestList requests={requests} />
+    section = (
+      <RequestList
+        requests={requests}
+        currentPage={requestsPage + 1}
+        totalPages={requestsTotalPages}
+        isLoading={requestsLoading}
+        error={requestsError}
+        onPageChange={(page) => {
+          setRequestsLoading(true)
+          setRequestsError(null)
+          setRequestsPage(page - 1)
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }}
+        onRetry={() => {
+          setRequestsLoading(true)
+          setRequestsError(null)
+          setRequestsReloadKey((key) => key + 1)
+        }}
+      />
+    )
   } else {
     section = <AccountSettingsSection />
   }

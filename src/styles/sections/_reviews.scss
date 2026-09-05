@@ -47,6 +47,13 @@
       height: 22px;
     }
   }
+
+  &__empty {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 20px;
+    line-height: 1.4;
+  }
 }
 
 .reviews-showcase {

@@ -1,20 +1,38 @@
 import type { Request } from '../../../types/request'
+import { AccountPagination } from './AccountPagination'
 import { RequestItem } from './RequestItem'
-
-const MAX_VISIBLE = 10
 
 type Props = {
   requests: Request[]
+  currentPage: number
+  totalPages: number
+  isLoading: boolean
+  error: string | null
+  onPageChange: (page: number) => void
+  onRetry: () => void
 }
 
-export function RequestList({ requests }: Props) {
-  const visible = requests
-
+export function RequestList({
+  requests,
+  currentPage,
+  totalPages,
+  isLoading,
+  error,
+  onPageChange,
+  onRetry,
+}: Props) {
   return (
     <div className="request-list">
       <h2 className="request-list__title">Історія заявок</h2>
 
-      {requests.length === 0 ? (
+      {isLoading ? (
+        <p className="request-list__status" aria-live="polite">Завантаження…</p>
+      ) : error ? (
+        <div className="request-list__error" role="alert">
+          <p>{error}</p>
+          <button type="button" onClick={onRetry}>Спробувати ще раз</button>
+        </div>
+      ) : requests.length === 0 ? (
         <div className="no-orders">
           <div className="no-orders__icon-wrap">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -26,14 +44,19 @@ export function RequestList({ requests }: Props) {
           <p className="no-orders__text">Поки що немає заявок</p>
         </div>
       ) : (
-        <ul
-          className="request-list__items"
-          style={requests.length >= MAX_VISIBLE ? { maxHeight: '640px', overflowY: 'auto' } : undefined}
-        >
-          {visible.map((r) => (
-            <RequestItem key={r.id} request={r} />
-          ))}
-        </ul>
+        <>
+          <ul className="request-list__items">
+            {requests.map((request) => (
+              <RequestItem key={request.id} request={request} />
+            ))}
+          </ul>
+          <AccountPagination
+            current={currentPage}
+            total={totalPages}
+            ariaLabel="Пагінація заявок"
+            onChange={onPageChange}
+          />
+        </>
       )}
     </div>
   )

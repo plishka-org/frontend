@@ -6,8 +6,10 @@ import {
   getTopReviews,
 } from '../services/api/reviewsApi'
 
+const FEATURED_REVIEWS_LIMIT = 5
+
 function getFallbackReviews(topOnly?: boolean) {
-  return topOnly ? getTopReviews(3) : getReviews()
+  return topOnly ? getTopReviews(FEATURED_REVIEWS_LIMIT) : getReviews()
 }
 
 export function useReviews(options?: { topOnly?: boolean }) {
@@ -17,10 +19,14 @@ export function useReviews(options?: { topOnly?: boolean }) {
   useEffect(() => {
     let isCancelled = false
 
-    loadReviews(options?.topOnly ? 3 : undefined)
+    loadReviews(options?.topOnly ? FEATURED_REVIEWS_LIMIT : undefined)
       .then((nextReviews) => {
         if (!isCancelled) {
-          setReviews(nextReviews.length ? nextReviews : getFallbackReviews(options?.topOnly))
+          setReviews(
+            options?.topOnly || nextReviews.length
+              ? nextReviews
+              : getFallbackReviews(false),
+          )
         }
       })
       .catch(() => {
@@ -33,8 +39,14 @@ export function useReviews(options?: { topOnly?: boolean }) {
   }, [loadReviews, options?.topOnly])
 
   function refresh() {
-    loadReviews(options?.topOnly ? 3 : undefined)
-      .then((nextReviews) => setReviews(nextReviews.length ? nextReviews : getFallbackReviews(options?.topOnly)))
+    loadReviews(options?.topOnly ? FEATURED_REVIEWS_LIMIT : undefined)
+      .then((nextReviews) => {
+        setReviews(
+          options?.topOnly || nextReviews.length
+            ? nextReviews
+            : getFallbackReviews(false),
+        )
+      })
       .catch(() => setReviews(getFallbackReviews(options?.topOnly)))
   }
 

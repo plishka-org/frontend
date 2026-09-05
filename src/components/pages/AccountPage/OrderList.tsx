@@ -1,76 +1,11 @@
 import { useState } from 'react'
 import type { Order } from '../../../types/order'
 import type { SiteVariant } from '../../../utils/siteVariant'
+import { AccountPagination } from './AccountPagination'
 import { NoOrdersMessage } from './NoOrdersMessage'
 import { OrderItem } from './OrderItem'
 
 const PAGE_SIZE = 7
-
-type PaginationProps = {
-  current: number
-  total: number
-  onChange: (page: number) => void
-}
-
-function Pagination({ current, total, onChange }: PaginationProps) {
-  if (total <= 1) return null
-
-  const pages: (number | '...')[] = []
-
-  if (total <= 7) {
-    for (let i = 1; i <= total; i++) pages.push(i)
-  } else {
-    pages.push(1)
-    if (current > 3) pages.push('...')
-    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
-      pages.push(i)
-    }
-    if (current < total - 2) pages.push('...')
-    pages.push(total)
-  }
-
-  return (
-    <nav className="order-pagination" aria-label="Пагінація замовлень">
-      <button
-        className="order-pagination__btn order-pagination__btn--arrow"
-        onClick={() => onChange(current - 1)}
-        disabled={current === 1}
-        aria-label="Попередня сторінка"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-      </button>
-
-      {pages.map((p, i) =>
-        p === '...' ? (
-          <span key={`dots-${i}`} className="order-pagination__dots">...</span>
-        ) : (
-          <button
-            key={p}
-            className={`order-pagination__btn${p === current ? ' order-pagination__btn--active' : ''}`}
-            onClick={() => onChange(p as number)}
-            aria-label={`Сторінка ${p}`}
-            aria-current={p === current ? 'page' : undefined}
-          >
-            {p}
-          </button>
-        )
-      )}
-
-      <button
-        className="order-pagination__btn order-pagination__btn--arrow"
-        onClick={() => onChange(current + 1)}
-        disabled={current === total}
-        aria-label="Наступна сторінка"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-      </button>
-    </nav>
-  )
-}
 
 type OrderListProps = {
   orders: Order[]
@@ -112,7 +47,12 @@ export function OrderList({ orders, siteVariant }: OrderListProps) {
               <OrderItem key={order.id} order={order} siteVariant={siteVariant} />
             ))}
           </div>
-          <Pagination current={page} total={totalPages} onChange={handlePageChange} />
+          <AccountPagination
+            current={page}
+            total={totalPages}
+            ariaLabel="Пагінація замовлень"
+            onChange={handlePageChange}
+          />
         </>
       )}
     </section>

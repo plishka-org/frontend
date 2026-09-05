@@ -25,7 +25,14 @@ type CallbackRequestDto = {
 
 type PageResponse<T> = {
   content: T[]
+  pageNumber: number
+  pageSize: number
+  totalElements: number
+  totalPages: number
+  last: boolean
 }
+
+export type ContactRequestsPage = PageResponse<ContactRequestResponse>
 
 function normalizeCallback(dto: CallbackRequestDto): ContactRequestResponse {
   return {
@@ -98,14 +105,31 @@ export async function createContactRequest(
   return normalizeCallback(response)
 }
 
-export async function getContactRequests(): Promise<ContactRequestResponse[]> {
+export async function getContactRequests(page = 0, size = 10): Promise<ContactRequestsPage> {
   if (!hasApiBaseUrl()) {
-    return getLocalContactRequests()
+    const requests = [...getLocalContactRequests()].sort(
+      (first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt),
+    )
+    const content = requests.slice(page * size, (page + 1) * size)
+    const totalPages = Math.ceil(requests.length / size)
+
+    return {
+      content,
+      pageNumber: page,
+      pageSize: size,
+      totalElements: requests.length,
+      totalPages,
+      last: page >= totalPages - 1,
+    }
   }
 
+  const params = new URLSearchParams({ page: String(page), size: String(size) })
   const response = await apiRequest<PageResponse<CallbackRequestDto>>(
-    '/api/users/me/callback-requests?size=100',
+    `/api/users/me/callback-requests?${params}`,
   )
 
-  return response.content.map(normalizeCallback)
+  return {
+    ...response,
+    content: response.content.map(normalizeCallback),
+  }
 }
