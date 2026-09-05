@@ -19,22 +19,3 @@ export const siteVariantFeatures = {
     showPrices: boolean
   }
 >
-
-export function getSiteVariant(): SiteVariant {
-  return getRequestedSiteVariant() ?? 'usual'
-}
-
-export function getRequestedSiteVariant(): SiteVariant | null {
-  if (typeof window === 'undefined') {
-    return null
-  }
-
-  const searchParams = new URLSearchParams(window.location.search)
-  const requestedSite = searchParams.get('site')
-
-  if (requestedSite === 'order' || requestedSite === 'usual') {
-    return requestedSite
-  }
-
-  return null
-}

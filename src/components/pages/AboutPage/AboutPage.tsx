@@ -119,7 +119,7 @@ export function AboutPage({ siteVariant }: AboutPageProps) {
           </div>
         </div>
       </section>
-      <ReviewsSection siteVariant={siteVariant} />
+      <ReviewsSection />
       <ContactForm />
       <ContactsSection />
       <Footer />

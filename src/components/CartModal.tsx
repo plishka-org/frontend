@@ -106,12 +106,12 @@ export function CartModal({ isOpen, onClose }: CartModalProps) {
 
   function handleGoToProducts() {
     handleClose()
-    window.location.href = getGalleryUrl('order')
+    window.location.href = getGalleryUrl()
   }
 
   function handleGoHome() {
     handleClose()
-    window.location.href = getHomeUrl('order')
+    window.location.href = getHomeUrl()
   }
 
   function handleCheckout() {

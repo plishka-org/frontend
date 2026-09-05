@@ -17,7 +17,7 @@ export function GalleryProductCard({ product, siteVariant }: GalleryProductCardP
   const features = siteVariantFeatures[siteVariant]
   const productIsFavorite = isFavorite(product.id)
   const productIsInCart = isInCart(product.id)
-  const productUrl = getProductUrl(product.id, siteVariant)
+  const productUrl = getProductUrl(product.id)
 
   function handleCartClick(event: MouseEvent<HTMLButtonElement>) {
     if (event.detail > 0) {
