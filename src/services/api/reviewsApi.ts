@@ -135,7 +135,7 @@ export async function getReviewsApi(limit?: number): Promise<Testimonial[]> {
   return limit ? reviews.slice(0, limit) : reviews
 }
 
-export async function getFeaturedReviewsApi(limit = 3): Promise<Testimonial[]> {
+export async function getFeaturedReviewsApi(limit = 5): Promise<Testimonial[]> {
   if (!hasApiBaseUrl()) return getTopReviews(limit)
 
   const home = await getHomeApi()

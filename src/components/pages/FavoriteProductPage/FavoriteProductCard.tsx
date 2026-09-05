@@ -1,6 +1,7 @@
 import type { ProductUi } from '../../../services/api/productsApi'
 import { useShop } from '../../../hooks/useShop'
 import { formatPrice } from '../../../utils/formatPrice'
+import { siteVariantFeatures } from '../../../utils/siteVariant'
 import type { SiteVariant } from '../../../utils/siteVariant'
 import { getProductUrl } from '../../../utils/productUrl'
 import { HeartIcon } from '../../icons/UiIcons'
@@ -13,10 +14,11 @@ type FavoriteProductCardProps = {
 export function FavoriteProductCard({ product, siteVariant }: FavoriteProductCardProps) {
   const href = getProductUrl(product.id, siteVariant)
   const { isFavorite, toggleFavorite } = useShop()
+  const features = siteVariantFeatures[siteVariant]
   const productIsFavorite = isFavorite(product.id)
 
   return (
-    <article className="gallery-card" data-has-price={siteVariant === 'order'}>
+    <article className="gallery-card" data-has-price={features.showPrices}>
       <a className="gallery-card__image-link" href={href}>
         <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
       </a>
@@ -27,11 +29,11 @@ export function FavoriteProductCard({ product, siteVariant }: FavoriteProductCar
         <h2 title={product.name}>{product.displayName ?? product.name}</h2>
       </a>
 
-      {siteVariant === 'order' && (
+      {features.showPrices && (
         <span className="gallery-card__price">{formatPrice(product.price)}</span>
       )}
 
-      {siteVariant === 'usual' && (
+      {features.showFavorites && (
         <div className="gallery-card__actions favorite-card__actions">
           <button
             className="gallery-card__favorite"

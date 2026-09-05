@@ -78,8 +78,8 @@ function CheckBox({ checked, onChange, label }: { checked: boolean; onChange: ()
   return <label className="admin-reviews__checkbox"><input type="checkbox" checked={checked} onChange={onChange} /><i />{label && <span>{label}</span>}</label>;
 }
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
-  return <button type="button" className="admin-reviews__toggle" data-active={checked} aria-label="Показувати на головній" aria-pressed={checked} onClick={onChange}><i /></button>;
+function Toggle({ checked, disabled, onChange }: { checked: boolean; disabled?: boolean; onChange: () => void }) {
+  return <button type="button" className="admin-reviews__toggle" data-active={checked} aria-label="Показувати на головній" aria-pressed={checked} aria-busy={disabled} disabled={disabled} onClick={onChange}><i /></button>;
 }
 
 type ModalMedia = AdminReview["media"][number] & { url: string };
@@ -284,6 +284,7 @@ export function AdminReviewsPage() {
   const [editingReview, setEditingReview] = useState<AdminReviewSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<number[]>([]);
+  const [pendingFeatured, setPendingFeatured] = useState<number[]>([]);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const addFormRef = useRef<HTMLElement>(null);
   const createMediaInputRef = useRef<HTMLInputElement>(null);
@@ -380,17 +381,23 @@ export function AdminReviewsPage() {
   }
 
   async function toggleFeatured(review: AdminReviewSummary) {
+    if (pendingFeatured.includes(review.reviewId)) return;
     if (!review.isFeatured && reviews.filter((item) => item.isFeatured).length >= 5) { showToast("На головній може бути не більше 5 відгуків"); return; }
     const next = !review.isFeatured;
+    setPendingFeatured((ids) => [...ids, review.reviewId]);
     setReviews((items) => items.map((item) => item.reviewId === review.reviewId ? { ...item, isFeatured: next } : item));
     try {
       if (!isDemo) {
         const updated = await setReviewFeatured(review.reviewId, next);
         setReviews((items) => items.map((item) => item.reviewId === review.reviewId ? { ...item, isFeatured: updated.isFeatured } : item));
-        await load();
       }
+      showToast(next ? "Відгук додано на головну" : "Відгук прибрано з головної");
     }
-    catch { await load(); showToast("Не вдалося змінити статус відгуку"); }
+    catch (error) {
+      setReviews((items) => items.map((item) => item.reviewId === review.reviewId ? { ...item, isFeatured: review.isFeatured } : item));
+      showToast(error instanceof Error ? error.message : "Не вдалося змінити статус відгуку");
+    }
+    finally { setPendingFeatured((ids) => ids.filter((id) => id !== review.reviewId)); }
   }
 
   function remove(ids: number[]) {
@@ -426,7 +433,7 @@ export function AdminReviewsPage() {
       <strong>{review.authorName}</strong>
       <p>{review.content}</p>
       <span className="admin-reviews__media-count">{mediaCount}</span>
-      <div className="admin-reviews__featured-control"><small>На головній</small><Toggle checked={review.isFeatured} onChange={() => void toggleFeatured(review)} /></div>
+      <div className="admin-reviews__featured-control"><small>На головній</small><Toggle checked={review.isFeatured} disabled={pendingFeatured.includes(review.reviewId)} onChange={() => void toggleFeatured(review)} /></div>
       <div className="admin-reviews__actions"><button type="button" onClick={() => edit(review)} aria-label="Редагувати"><EditIcon /></button><button type="button" className="admin-reviews__delete" onClick={() => remove([review.reviewId])} aria-label="Видалити"><DeleteIcon /></button></div>
     </article>;
   }
