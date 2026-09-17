@@ -14,7 +14,6 @@ export function ContactsSection() {
     email: contacts.email,
     address: 'Село Город, Косівський район, Івано-Франківська обл., вул. Незалежності, 55',
     mapEmbedUrl: contacts.mapEmbedUrl,
-    mapLinkUrl: contacts.mapUrl,
     socialLinks: [{ socialLinkId: 0, name: 'Facebook', url: contacts.facebookUrl }],
   })
 
@@ -30,7 +29,6 @@ export function ContactsSection() {
         email: email && email !== 'team@plishka.com.ua' ? email : contacts.email,
         address: address && address !== 'Косівщина, Україна' ? address : contacts.address,
         mapEmbedUrl: googleMapsUrl || contacts.mapEmbedUrl,
-        mapLinkUrl: googleMapsUrl || contacts.mapUrl,
         socialLinks: response.socialLinks.filter((link) => link.url.trim()),
       })
     }).catch(() => undefined)
@@ -72,12 +70,7 @@ export function ContactsSection() {
 
             <article className="contact-card contact-card--wide">
               <h2>Адреса майстерні</h2>
-              <a
-                href={content.mapLinkUrl}
-                className="contact-link contact-link--address"
-                target="_blank"
-                rel="noreferrer"
-              >
+              <div className="contact-link contact-link--address">
                 <PinIcon />
                 <span className="contact-address-text">
                   <span className="contact-address-text__desktop">
@@ -87,7 +80,7 @@ export function ContactsSection() {
                     {content.address}
                   </span>
                 </span>
-              </a>
+              </div>
             </article>
           </div>
         </div>
