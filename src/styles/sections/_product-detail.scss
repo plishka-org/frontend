@@ -173,6 +173,7 @@
     font-weight: 600;
     line-height: 1.2;
     text-transform: uppercase;
+    overflow-wrap: anywhere;
   }
 
   h2 {
@@ -402,6 +403,8 @@
   }
 
   &__caption {
+    max-width: min(500px, 72vw);
+    overflow-wrap: anywhere;
     font-size: 15px;
     font-weight: 500;
     color: #fff;

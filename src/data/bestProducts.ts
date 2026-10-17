@@ -8,7 +8,6 @@ export type BestProduct = {
   id: string
   category: string
   name: string
-  displayName?: string
   description: string
   image: string
   gallery: string[]
@@ -40,7 +39,6 @@ export const bestProducts: BestProduct[] = [
     id: 'gazebo-octagonal',
     category: 'Альтанки',
     name: 'Восьмикутна альтанка',
-    displayName: 'Восьмикутна альтан...',
     description:
       'Восьмикутна альтанка створена для просторого й красивого відпочинку на подвір’ї. Її форма додає виробу виразності, а натуральна деревина та ручна робота роблять конструкцію міцною, охайною і довговічною.',
     image: product3,

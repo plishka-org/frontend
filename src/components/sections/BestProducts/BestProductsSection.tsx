@@ -92,7 +92,7 @@ function BestProductCard({ product, siteVariant }: BestProductCardProps) {
 
         <div className="best-product-card__body">
           <p>{product.category}</p>
-          <h2 title={product.name}>{product.displayName ?? product.name}</h2>
+          <h2 title={product.name}>{product.name}</h2>
           {features.showPrices && <span>{formatPrice(product.price)}</span>}
         </div>
       </a>

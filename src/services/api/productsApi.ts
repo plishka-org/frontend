@@ -49,7 +49,6 @@ export type ProductUi = {
   id: string;
   category: string;
   name: string;
-  displayName?: string;
   description: string;
   image: string;
   gallery: string[];
