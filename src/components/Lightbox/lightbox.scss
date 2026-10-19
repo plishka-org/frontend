@@ -106,6 +106,8 @@
   }
 
   &__caption {
+    max-width: 75vw;
+    overflow-wrap: anywhere;
     font-size: 16px;
     font-weight: 500;
     color: #fff;

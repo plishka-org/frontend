@@ -26,7 +26,7 @@ export function FavoriteProductCard({ product, siteVariant }: FavoriteProductCar
       <p>{product.category}</p>
 
       <a className="gallery-card__title-link" href={href}>
-        <h2 title={product.name}>{product.displayName ?? product.name}</h2>
+        <h2 title={product.name}>{product.name}</h2>
       </a>
 
       {features.showPrices && (

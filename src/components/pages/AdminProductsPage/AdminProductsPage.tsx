@@ -2326,7 +2326,7 @@ export function AdminProductsPage() {
                         )}
                       </div>
                     </td>
-                    <td>{p.name}</td>
+                    <td className="admin-products__product-name">{p.name}</td>
                     <td
                       className={
                         !p.categoryId
@@ -2467,7 +2467,7 @@ export function AdminProductsPage() {
                           )}
                         </div>
                       </td>
-                      <td>{p.name}</td>
+                      <td className="admin-products__product-name">{p.name}</td>
                       <td
                         className={
                           !p.categoryId

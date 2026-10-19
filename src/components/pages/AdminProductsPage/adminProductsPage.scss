@@ -516,6 +516,10 @@
     }
   }
 
+  &__product-name {
+    overflow-wrap: anywhere;
+  }
+
   &__th--check,
   &__td--check { width: 36px; }
 
