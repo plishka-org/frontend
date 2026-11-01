@@ -12,7 +12,7 @@ export function ContactsSection() {
   const [content, setContent] = useState({
     phone: contacts.phoneDisplay,
     email: contacts.email,
-    address: 'Село Город, Косівський район, Івано-Франківська обл., вул. Незалежності, 55',
+    address: contacts.address,
     mapEmbedUrl: contacts.mapEmbedUrl,
     socialLinks: [{ socialLinkId: 0, name: 'Facebook', url: contacts.facebookUrl }],
   })
@@ -27,7 +27,7 @@ export function ContactsSection() {
       setContent({
         phone: phoneNumber && phoneNumber !== '+380000000000' ? phoneNumber : contacts.phoneDisplay,
         email: email && email !== 'team@plishka.com.ua' ? email : contacts.email,
-        address: address && address !== 'Косівщина, Україна' ? address : contacts.address,
+        address: address || contacts.address,
         mapEmbedUrl: googleMapsUrl || contacts.mapEmbedUrl,
         socialLinks: response.socialLinks.filter((link) => link.url.trim()),
       })
