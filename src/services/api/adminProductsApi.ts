@@ -48,7 +48,7 @@ type BulkOperationResultDto = {
   affectedCount: number;
 };
 
-type BulkSelectionPayload = {
+export type BulkSelectionPayload = {
   selectionMode: SelectionMode;
   productIds: number[];
   filters: AdminProductFilters | null;

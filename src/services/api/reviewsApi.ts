@@ -30,6 +30,12 @@ type ReviewDetailDto = {
   media: ReviewMediaDto[]
 }
 
+function orderReviewMedia<T extends { isPrimary: boolean; displayOrder: number }>(media: T[]): T[] {
+  return [...media].sort((first, second) =>
+    Number(second.isPrimary) - Number(first.isPrimary) || first.displayOrder - second.displayOrder,
+  )
+}
+
 function cloneDefaultReviews() {
   return testimonials.map((review) => ({
     ...review,
@@ -61,7 +67,7 @@ async function normalizeReviewDto(summary: ReviewSummaryDto): Promise<Testimonia
   }
 
   const media = detail?.media?.length
-    ? detail.media
+    ? orderReviewMedia(detail.media)
     : summary.primaryMedia
       ? [summary.primaryMedia]
       : []
@@ -88,7 +94,7 @@ async function normalizeReviewDto(summary: ReviewSummaryDto): Promise<Testimonia
 
 async function normalizeFeaturedReviewDto(review: HomeReview): Promise<Testimonial> {
   const fallback = testimonials[review.reviewId % testimonials.length] ?? testimonials[0]
-  const orderedMedia = [...review.media].sort((first, second) => first.displayOrder - second.displayOrder)
+  const orderedMedia = orderReviewMedia(review.media)
   const resolvedMedia = await Promise.all(orderedMedia.map(async (item) => ({
     url: await resolveMediaUrl(item.s3Key, fallback.cardImage),
     mediaType: item.mediaType,

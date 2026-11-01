@@ -9,6 +9,7 @@ import type {
   PriceTargetType,
 } from "../../../types/product";
 import {
+  type BulkSelectionPayload,
   bulkDeleteAdminProductsApi,
   bulkUpdateAdminCategoriesApi,
   bulkUpdateAdminPricesApi,
@@ -94,12 +95,9 @@ const PRICE_OPERATION_BY_ACTION: Record<PriceActionType, BulkPriceOperation> = {
 
 type BulkTargetType = "selected" | "unselected" | "all" | "category";
 
-type DeleteConfirmState = {
-  count: number;
-  ids?: number[];
-  selectionMode?: "SELECTED" | "EXCEPT_SELECTED";
-  filters?: AdminProductFilters | null;
-};
+type DeleteConfirmState =
+  | { count: 1; productId: number }
+  | { count: number; selection: BulkSelectionPayload };
 
 function pluralizeProductWord(count: number): string {
   const mod10 = count % 10;
@@ -1588,7 +1586,7 @@ export function AdminProductsPage() {
   function getBulkSelection(
     target: BulkTargetType | ChangeCategoryFromType | PriceTargetType,
     categoryId?: number | "",
-  ) {
+  ): BulkSelectionPayload {
     if (target === "selected") {
       return {
         selectionMode: "SELECTED" as const,
@@ -1727,25 +1725,21 @@ export function AdminProductsPage() {
         ? selected.length
         : Math.max(totalProducts - (deleteTarget === "unselected" ? selected.length : 0), 1);
     if (count <= 0) return;
-    setDeleteConfirm({ ...selection, count });
+    setDeleteConfirm({ selection, count });
   }
 
   function requestDeleteOne(id: number) {
-    setDeleteConfirm({ count: 1, ids: [id] });
+    setDeleteConfirm({ count: 1, productId: id });
   }
 
   async function handleConfirmDelete() {
     if (!deleteConfirm) return;
     setDeleteConfirmLoading(true);
     try {
-      if (deleteConfirm.ids?.length === 1) {
-        await deleteAdminProductApi(deleteConfirm.ids[0]);
+      if ("productId" in deleteConfirm) {
+        await deleteAdminProductApi(deleteConfirm.productId);
       } else {
-        await bulkDeleteAdminProductsApi({
-          selectionMode: deleteConfirm.selectionMode ?? "SELECTED",
-          productIds: deleteConfirm.ids ?? [],
-          filters: deleteConfirm.filters ?? null,
-        });
+        await bulkDeleteAdminProductsApi(deleteConfirm.selection);
       }
       setSelected([]);
       setDeleteConfirm(null);
